@@ -13,6 +13,9 @@ import {
   resetPassword as authResetPassword,
 } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
+
+const IS_SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED === 'true';
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
@@ -38,6 +41,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    if (IS_SELF_HOSTED) {
+      const token = localStorage.getItem('atria_token');
+      if (token) {
+        api.getMe()
+          .then((userData) => {
+            if (mounted) {
+              setUser(userData);
+              setLoading(false);
+            }
+          })
+          .catch(() => {
+            if (mounted) {
+              localStorage.removeItem('atria_token');
+              setUser(null);
+              setLoading(false);
+            }
+          });
+      } else {
+        setLoading(false);
+      }
+      return () => { mounted = false; };
+    }
+
+    // Supabase Mode
     supabase.auth.getUser().then(({ data }) => {
       if (!mounted) return;
 
@@ -68,21 +95,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (IS_SELF_HOSTED) {
+      const response = await api.signIn({ email, password });
+      localStorage.setItem('atria_token', response.token);
+      setUser(response.user);
+      return;
+    }
     await authSignIn(email, password);
   };
 
   const signUp = async (signUpData: SignUpData) => {
+    if (IS_SELF_HOSTED) {
+      await api.signUp(signUpData);
+      // Local API signs up but doesn't auto-login usually, or we can handle it
+      return;
+    }
     await authSignUp(signUpData);
     await supabase.auth.signOut(); // força confirmação de email
     setUser(null);
   };
 
   const signOut = async () => {
+    if (IS_SELF_HOSTED) {
+      localStorage.removeItem('atria_token');
+      setUser(null);
+      return;
+    }
     await authSignOut();
     setUser(null);
   };
 
   const resetPassword = async (email: string) => {
+    if (IS_SELF_HOSTED) {
+      // API currently doesn't have reset password refined, but we can add the route
+      console.warn('Reset password not implemented for Self-Hosted yet');
+      return;
+    }
     await authResetPassword(email);
   };
 
