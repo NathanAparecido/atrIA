@@ -52,7 +52,8 @@ export function adminMiddleware(req: AuthRequest, res: Response, next: NextFunct
 }
 
 export function generateToken(payload: AuthPayload): string {
-    return jwt.sign(payload, JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRATION || '7d',
-    });
+    const signOptions: jwt.SignOptions = {
+        expiresIn: (process.env.JWT_EXPIRATION as any) || '7d',
+    };
+    return jwt.sign(payload, JWT_SECRET as jwt.Secret, signOptions);
 }
