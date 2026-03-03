@@ -38,12 +38,12 @@ export function Sidebar({
         {/* Header */}
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-1 group cursor-default">
-              <span className="text-2xl font-light text-gray-500 dark:text-gray-400 font-inter tracking-tight">atr</span>
-              <div className="relative">
-                <span className="text-2xl font-black text-primary-900 dark:text-accent-neon font-orbitron tracking-tighter">IA</span>
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent-neon rounded-full animate-pulse-neon"></span>
+            <div className="flex items-center gap-3 group cursor-default">
+              <div className="w-10 h-10 rounded-full bg-primary-900 border border-white/20 flex items-center justify-center relative overflow-hidden shadow-inner">
+                <span className="text-2xl font-black text-white font-orbitron tracking-tighter">a</span>
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent-blue rounded-full animate-pulse-blue"></span>
               </div>
+              <span className="text-xl font-bold text-primary-900 dark:text-white font-inter tracking-tight">atrIA</span>
             </div>
           </div>
 
@@ -62,12 +62,12 @@ export function Sidebar({
             <div
               key={session.id}
               className={`group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-300 ${currentSessionId === session.id
-                ? 'bg-primary-600/10 dark:bg-accent-neon/10 border border-primary-600/20 dark:border-accent-neon/20 shadow-sm'
+                ? 'bg-primary-600/10 dark:bg-accent-blue/10 border border-primary-600/20 dark:border-accent-blue/20 shadow-sm'
                 : 'hover:bg-gray-100 dark:hover:bg-white/5 border border-transparent'
                 }`}
               onClick={() => onSelectSession(session.id)}
             >
-              <div className={`p-2 rounded-lg ${currentSessionId === session.id ? 'text-primary-600 dark:text-accent-neon' : 'text-gray-500 dark:text-gray-400 group-hover:text-primary-500 dark:group-hover:text-accent-neon'}`}>
+              <div className={`p-2 rounded-lg ${currentSessionId === session.id ? 'text-primary-600 dark:text-accent-blue' : 'text-gray-500 dark:text-gray-400 group-hover:text-primary-500 dark:group-hover:text-accent-blue'}`}>
                 <MessageSquare className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">

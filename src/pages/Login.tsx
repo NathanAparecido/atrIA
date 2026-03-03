@@ -4,7 +4,8 @@ import { useAuth } from '../components/AuthContext';
 import { useToast } from '../components/ToastContext';
 import { useTheme } from '../components/ThemeContext';
 import { Department } from '../types';
-import { LogIn, Moon, Sun } from 'lucide-react';
+import { Moon, Sun, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ParticleBackground } from '../components/ParticleBackground';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -115,179 +116,199 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4 transition-colors">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md transition-colors">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex-1 flex justify-center">
-            <div className="bg-primary dark:bg-blue-600 p-3 rounded-full transition-colors">
-              <LogIn className="w-8 h-8 text-white" />
+    <div className="relative min-h-screen flex overflow-hidden bg-[#020617]">
+      {/* Particle Background Layer */}
+      <ParticleBackground />
+
+      {/* Hero Section (Left - Hidden on mobile) */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col items-center justify-center p-12 overflow-hidden border-r border-white/5">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=2074&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-950/80 via-transparent to-primary-900/40"></div>
+
+        <div className="relative z-10 max-w-lg text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-600/10 border border-primary-600/20 mb-8 animate-fade-in">
+            <ShieldCheck className="w-4 h-4 text-accent-blue" />
+            <span className="text-xs font-bold text-accent-blue uppercase tracking-widest">Enterprise AI Security</span>
+          </div>
+
+          <h1 className="text-6xl font-black text-white mb-6 font-orbitron leading-tight tracking-tighter">
+            Elevando a <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-blue-400">Inteligência</span>
+          </h1>
+
+          <p className="text-xl text-gray-400 font-inter mb-12 leading-relaxed">
+            Bem-vindo ao <span className="text-white font-bold italic">atrIA</span>. A plataforma definitiva para orquestração de redes e inteligência coletiva.
+          </p>
+
+          <div className="grid grid-cols-2 gap-6 text-left">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+              <p className="text-2xl font-bold text-white mb-1">99.9%</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-bold">Uptime</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+              <p className="text-2xl font-bold text-white mb-1">AES-256</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider font-bold">Encrypted</p>
             </div>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-primary-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            {isDark ? <Sun className="w-5 h-5 text-gray-300" /> : <Moon className="w-5 h-5 text-primary-600" />}
-          </button>
         </div>
+      </div>
 
-        <h1 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-2 transition-colors">
-          {isForgotPassword ? 'Recuperar Senha' : isSignUp ? 'Criar Conta' : 'Bem-vindo'}
-        </h1>
-        <p className="text-center text-gray-600 dark:text-gray-300 mb-8 transition-colors">
-          {isForgotPassword ? 'Digite seu email para receber o link de recuperação' : isSignUp ? 'Cadastre-se para começar' : 'Entre para continuar'}
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors">
-              E-mail
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-600 dark:focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-              placeholder="seu@email.com"
-            />
+      {/* Login Section (Right) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative z-10 transition-colors">
+        <div className="w-full max-w-md">
+          {/* Logo 'a' Minimalist */}
+          <div className="flex justify-center mb-12 lg:hidden">
+            <div className="w-16 h-16 rounded-full bg-primary-900 border border-white/20 flex items-center justify-center relative overflow-hidden shadow-inner animate-pulse-blue">
+              <span className="text-3xl font-black text-white font-orbitron tracking-tighter">a</span>
+            </div>
           </div>
 
-          {isSignUp && (
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors">
-                Primeiro Nome *
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-600 dark:focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-                placeholder="João"
-              />
-            </div>
-          )}
-
-          {isSignUp && (
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors">
-                Telefone *
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                required
-                minLength={10}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-600 dark:focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-                placeholder="(11) 98765-4321"
-              />
-            </div>
-          )}
-
-          {isSignUp && (
-            <div>
-              <label htmlFor="department" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors">
-                Departamento *
-              </label>
-              <select
-                id="department"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value as Department)}
-                required
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-600 dark:focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+          {/* Glass Form Card */}
+          <div className="glass-card p-10 border border-white/10 dark:bg-primary-950/40 backdrop-blur-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4">
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
               >
-                <option value="comercial">Comercial</option>
-                <option value="diretoria">Diretoria</option>
-                <option value="financeiro">Financeiro</option>
-                <option value="gerencia">Gerência</option>
-                <option value="infra">Infraestrutura</option>
-                <option value="n2">N2 - Suporte Nível 2</option>
-                <option value="n3">N3 - Suporte Nível 3</option>
-                <option value="noc">NOC - Centro de Operações</option>
-                <option value="tecnico_campo">Técnico de Campo</option>
-              </select>
+                {isDark ? <Sun className="w-5 h-5 text-yellow-500 animate-spin-slow" /> : <Moon className="w-5 h-5 text-accent-blue" />}
+              </button>
             </div>
-          )}
 
-          {!isForgotPassword && (
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors">
-                Senha {isSignUp && '*'}
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => handlePasswordChange(e.target.value)}
-                required
-                minLength={8}
-                className={`w-full px-4 py-3 border ${passwordError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-600 dark:focus:ring-blue-500 focus:border-transparent outline-none transition-colors`}
-                placeholder="••••••••"
-              />
+            <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-2 font-orbitron tracking-tighter">
+              {isForgotPassword ? 'Rescue' : isSignUp ? 'Discovery' : 'Authentication'}
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-10 font-inter font-medium">
+              {isForgotPassword ? 'Initial recovery protocol' : isSignUp ? 'Create your neural identity' : 'Initialize system access'}
+            </p>
 
-              {isSignUp && password && (
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Força da senha:</span>
-                    <span className={`text-xs font-semibold ${getPasswordStrength(password).color === 'bg-red-500' ? 'text-red-600 dark:text-red-400' : getPasswordStrength(password).color === 'bg-orange-500' ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
-                      {getPasswordStrength(password).level === 'weak' ? 'Fraca' : getPasswordStrength(password).level === 'medium' ? 'Média' : 'Forte'}
-                    </span>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
+                  System Identifier (E-mail)
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-5 py-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl focus:ring-2 focus:ring-accent-blue focus:border-transparent outline-none transition-all font-medium"
+                  placeholder="name@netwise.com.br"
+                />
+              </div>
+
+              {isSignUp && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">First Name</label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      className="w-full px-5 py-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl focus:ring-2 focus:ring-accent-blue outline-none transition-all"
+                    />
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-300 ${getPasswordStrength(password).color}`}
-                      style={{ width: `${getPasswordStrength(password).percentage}%` }}
-                    ></div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                      className="w-full px-5 py-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl focus:ring-2 focus:ring-accent-blue outline-none transition-all"
+                    />
                   </div>
                 </div>
               )}
 
-              {isSignUp && passwordError && (
-                <p className="mt-2 text-sm text-red-600 dark:text-red-400">{passwordError}</p>
+              {isSignUp && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">Department</label>
+                  <select
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value as Department)}
+                    required
+                    className="w-full px-5 py-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white rounded-2xl focus:ring-2 focus:ring-accent-blue outline-none transition-all"
+                  >
+                    <option value="comercial">Comercial</option>
+                    <option value="diretoria">Diretoria</option>
+                    <option value="financeiro">Financeiro</option>
+                    <option value="gerencia">Gerência</option>
+                    <option value="infra">Infraestrutura</option>
+                    <option value="n2">Suporte N2</option>
+                    <option value="n3">Suporte N3</option>
+                    <option value="noc">NOC</option>
+                    <option value="tecnico_campo">Campo</option>
+                  </select>
+                </div>
               )}
-              {isSignUp && !passwordError && password && (
-                <p className="mt-2 text-sm text-green-600 dark:text-green-400">✓ Senha forte</p>
+
+              {!isForgotPassword && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-1">
+                    <label htmlFor="password" className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                      Cyber-Key (Password)
+                    </label>
+                    {!isSignUp && (
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotPassword(true)}
+                        className="text-[10px] font-bold text-accent-blue hover:text-blue-400 uppercase tracking-widest"
+                      >
+                        Lost Key?
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    required
+                    className={`w-full px-5 py-4 bg-gray-50 dark:bg-white/5 border ${passwordError ? 'border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white rounded-2xl focus:ring-2 focus:ring-accent-blue outline-none transition-all`}
+                    placeholder="••••••••"
+                  />
+                  {isSignUp && password && (
+                    <div className="mt-2 h-1 w-full bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${getPasswordStrength(password).color}`}
+                        style={{ width: `${getPasswordStrength(password).percentage}%` }}
+                      ></div>
+                    </div>
+                  )}
+                </div>
               )}
-              {isSignUp && !password && (
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Mínimo 8 caracteres, com maiúscula, minúscula, número e caractere especial
-                </p>
-              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-5 bg-primary-900 hover:bg-black dark:bg-accent-blue dark:hover:bg-blue-600 text-white font-black rounded-2xl transition-all duration-300 shadow-xl shadow-accent-blue/20 flex items-center justify-center gap-3 group disabled:opacity-50"
+              >
+                {loading ? 'Processing...' : (
+                  <>
+                    <span className="uppercase tracking-[0.2em]">{isForgotPassword ? 'Reset Protocol' : isSignUp ? 'Finalize discovery' : 'Initialize'}</span>
+                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-2" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-10 text-center">
+              <button
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setIsForgotPassword(false);
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white text-xs font-bold uppercase tracking-widest transition-all"
+              >
+                {isSignUp ? 'Back to System Login' : 'Register new Identity'}
+              </button>
             </div>
-          )}
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary hover:bg-primary-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Aguarde...' : isForgotPassword ? 'Enviar Link' : isSignUp ? 'Cadastrar' : 'Entrar'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center space-y-3">
-          {!isForgotPassword && (
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-primary-600 hover:text-primary-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors block w-full"
-            >
-              {isSignUp ? 'Já tem uma conta? Entrar' : 'Não tem uma conta? Cadastre-se'}
-            </button>
-          )}
-          <button
-            onClick={() => {
-              setIsForgotPassword(!isForgotPassword);
-              setIsSignUp(false);
-            }}
-            className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium transition-colors block w-full"
-          >
-            {isForgotPassword ? 'Voltar ao login' : 'Esqueceu a senha?'}
-          </button>
+          <div className="mt-8 text-center text-[10px] text-gray-500 dark:text-gray-600 font-bold uppercase tracking-widest">
+            © 2026 Netwise Inc. | atrIA Neural Gateway
+          </div>
         </div>
       </div>
     </div>
