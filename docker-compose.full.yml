@@ -258,11 +258,29 @@ services:
     networks:
       - atria-network
 
+  # ========================
+  # Nginx Proxy Manager (Visual UI)
+  # ========================
+
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: atria-npm
+    restart: unless-stopped
+    ports:
+      - '81:81'
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+    networks:
+      - atria-network
+
 volumes:
   postgres_data:
   redis_data:
   chromadb_data:
   dify_storage:
+  atria_npm_data:
+  atria_npm_letsencrypt:
 
 
 networks:
