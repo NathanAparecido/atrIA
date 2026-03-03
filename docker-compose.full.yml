@@ -171,12 +171,13 @@ services:
     depends_on:
       - dify-api
     environment:
-      CONSOLE_API_URL: ""
-      APP_API_URL: ""
+      APP_URL: http://database.netwise.com.br
+      CONSOLE_API_URL: http://atria-dify-api:5001
+      APP_API_URL: http://atria-dify-api:5001
       NEXT_PUBLIC_DEPLOY_ENV: PRODUCTION
       NEXT_PUBLIC_EDITION: SELF_HOSTED
-      NEXT_PUBLIC_API_PREFIX: /dify-api/console/api
-      NEXT_PUBLIC_PUBLIC_API_PREFIX: /dify-api/api
+      NEXT_PUBLIC_API_PREFIX: /console/api
+      NEXT_PUBLIC_PUBLIC_API_PREFIX: /api
     networks:
       - atria-network
 
