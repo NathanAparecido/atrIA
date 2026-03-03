@@ -249,9 +249,8 @@ services:
       - atria-api
       - dify-api
       - dify-web
-    ports:
-      - "80:80"
-      - "443:443"
+    # Portas removidas do host para evitar conflito com o Painel Visual (NPM)
+    # O acesso agora é feito via NPM -> atria-nginx:80
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
@@ -267,6 +266,8 @@ services:
     container_name: atria-npm
     restart: unless-stopped
     ports:
+      - '80:80'
+      - '443:443'
       - '81:81'
     volumes:
       - ./npm/data:/data
