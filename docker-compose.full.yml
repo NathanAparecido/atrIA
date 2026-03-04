@@ -124,6 +124,13 @@ services:
       # --- CORS ---
       WEB_API_CORS_ALLOW_ORIGINS: "*"
       CONSOLE_CORS_ALLOW_ORIGINS: "*"
+      # --- Specialized Services ---
+      CODE_EXECUTION_ENDPOINT: http://sandbox:8194
+      CODE_EXECUTION_API_KEY: dify-sandbox
+      PLUGIN_DAEMON_URL: http://plugin-daemon:5002
+      PLUGIN_DAEMON_KEY: ${DIFY_SECRET_KEY:-sk-atriasecretkey2025}
+      SSRF_PROXY_HTTP_URL: http://ssrf_proxy:3128
+      SSRF_PROXY_HTTPS_URL: http://ssrf_proxy:3128
     volumes:
       - dify_storage:/app/api/storage
     networks:
@@ -178,6 +185,44 @@ services:
       NEXT_PUBLIC_EDITION: SELF_HOSTED
       NEXT_PUBLIC_API_PREFIX: /console/api
       NEXT_PUBLIC_PUBLIC_API_PREFIX: /api
+    networks:
+      - atria-network
+
+  # ========================
+  # Dify Specialized Services
+  # ========================
+
+  sandbox:
+    image: langgenius/dify-sandbox:latest
+    container_name: atria-dify-sandbox
+    restart: unless-stopped
+    environment:
+      GIN_MODE: release
+      WORKER_TIMEOUT: 15s
+      ENABLE_NETWORK: "true"
+      HTTP_PROXY: "http://ssrf_proxy:3128"
+      HTTPS_PROXY: "http://ssrf_proxy:3128"
+    networks:
+      - atria-network
+
+  plugin-daemon:
+    image: langgenius/dify-plugin-daemon:latest
+    container_name: atria-dify-plugin-daemon
+    restart: unless-stopped
+    environment:
+      GIN_MODE: release
+      PLUGIN_REMOTE_INSTALL_HOST: dify-api
+      PLUGIN_REMOTE_INSTALL_PORT: "5001"
+      API_AUTHENTICATION_KEY: ${DIFY_SECRET_KEY:-sk-atriasecretkey2025}
+    volumes:
+      - dify_storage:/app/storage
+    networks:
+      - atria-network
+
+  ssrf_proxy:
+    image: ubuntu/squid:latest
+    container_name: atria-ssrf-proxy
+    restart: unless-stopped
     networks:
       - atria-network
 
