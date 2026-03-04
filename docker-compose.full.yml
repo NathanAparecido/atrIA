@@ -166,6 +166,11 @@ services:
       STORAGE_TYPE: opendal
       OPENDAL_SCHEME: fs
       OPENDAL_FS_ROOT: storage
+      # --- Specialized Services ---
+      CODE_EXECUTION_ENDPOINT: http://sandbox:8194
+      CODE_EXECUTION_API_KEY: dify-sandbox
+      PLUGIN_DAEMON_URL: http://plugin-daemon:5002
+      PLUGIN_DAEMON_KEY: ${DIFY_SECRET_KEY:-sk-atriasecretkey2025}
     volumes:
       - dify_storage:/app/api/storage
     networks:
