@@ -30,10 +30,10 @@ export function ParticleBackground() {
             constructor(width: number, height: number) {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.size = Math.random() * 2 + 0.5;
-                this.speedX = Math.random() * 1 - 0.5;
-                this.speedY = Math.random() * 1 - 0.5;
-                this.color = 'rgba(59, 130, 246, 0.5)'; // Professional Blue
+                this.size = Math.random() * 2 + 1; // Slightly larger
+                this.speedX = (Math.random() - 0.5) * 0.8; // Varied speed
+                this.speedY = (Math.random() - 0.5) * 0.8;
+                this.color = 'rgba(0, 243, 255, 0.7)'; // Vibrant Cyan/Neon Blue
             }
 
             update(width: number, height: number) {
@@ -73,7 +73,7 @@ export function ParticleBackground() {
             canvas.height = height;
 
             particles = [];
-            const numberOfParticles = Math.floor((width * height) / 15000);
+            const numberOfParticles = Math.floor((width * height) / 10000); // Higher density (divisor 10k instead of 15k)
             for (let i = 0; i < numberOfParticles; i++) {
                 particles.push(new Particle(width, height));
             }
@@ -92,9 +92,9 @@ export function ParticleBackground() {
                     const dy = particles[a].y - particles[b].y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
 
-                    if (distance < 100) {
-                        ctx.strokeStyle = `rgba(59, 130, 246, ${1 - distance / 100})`;
-                        ctx.lineWidth = 0.5;
+                    if (distance < 120) { // Increased distance
+                        ctx.strokeStyle = `rgba(0, 243, 255, ${1 - distance / 120})`; // Matching cyan color
+                        ctx.lineWidth = 0.8; // Thicker lines
                         ctx.beginPath();
                         ctx.moveTo(particles[a].x, particles[a].y);
                         ctx.lineTo(particles[b].x, particles[b].y);

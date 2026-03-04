@@ -272,8 +272,8 @@ export function Chat() {
                     <Bot className="w-20 h-20 mx-auto text-primary-600 dark:text-accent-neon" />
                     <div className="absolute -top-2 -right-2 w-4 h-4 bg-accent-neon rounded-full animate-pulse-neon"></div>
                   </div>
-                  <h2 className="text-3xl font-black mb-4 text-gray-900 dark:text-white uppercase tracking-tighter">atrIA</h2>
-                  <p className="text-gray-500 dark:text-gray-400 mb-8 font-inter">Sua inteligência local de alta performance. Segura, privada e disruptiva.</p>
+                  <h2 className="text-3xl font-black mb-4 text-gray-900 dark:text-white uppercase tracking-tighter">atrIA Online</h2>
+                  <p className="text-gray-500 dark:text-gray-400 mb-8 font-inter">Terminal de inteligência local de alta performance. Seguro, privado e disruptivo.</p>
                   <button
                     onClick={handleNewChat}
                     className="w-full px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl transition-all duration-300 shadow-xl shadow-primary-900/20 font-bold tracking-wide hover:scale-[1.02]"
@@ -288,8 +288,8 @@ export function Chat() {
                   <div className="w-16 h-16 bg-primary-600/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                     <MessageSquare className="w-8 h-8 text-primary-600 dark:text-accent-neon" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pátio de Inteligência Pronto</h3>
-                  <p className="text-gray-500 dark:text-gray-400 font-inter">Como posso auxiliar nas decisões estratégicas hoje?</p>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pátio de Inteligência atrIA Pronto</h3>
+                  <p className="text-gray-500 dark:text-gray-400 font-inter">Preparado para orquestração estratégica. Como posso auxiliar hoje?</p>
                 </div>
               </div>
             ) : (
@@ -324,7 +324,7 @@ export function Chat() {
                                 <span className="w-2 h-2 bg-primary-600 dark:bg-accent-neon rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
                                 <span className="w-2 h-2 bg-primary-600 dark:bg-accent-neon rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                               </div>
-                              <span className="text-xs font-bold uppercase tracking-widest animate-pulse">Sincronizando Dados...</span>
+                              <span className="text-xs font-bold uppercase tracking-widest animate-pulse">Sincronizando atrIA Core...</span>
                             </div>
                           )}
                         </div>

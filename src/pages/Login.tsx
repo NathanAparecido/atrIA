@@ -174,10 +174,10 @@ export function Login() {
             </div>
 
             <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-2 font-orbitron tracking-tighter">
-              {isForgotPassword ? 'Rescue' : isSignUp ? 'Discovery' : 'Authentication'}
+              {isForgotPassword ? 'atrIA Rescue' : isSignUp ? 'atrIA Discovery' : 'atrIA Identity'}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 mb-10 font-inter font-medium">
-              {isForgotPassword ? 'Initial recovery protocol' : isSignUp ? 'Create your neural identity' : 'Initialize system access'}
+              {isForgotPassword ? 'Protocolo de recuperação' : isSignUp ? 'Crie sua identidade neural' : 'Acessar Gateway Central'}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -284,9 +284,9 @@ export function Login() {
                 disabled={loading}
                 className="w-full py-5 bg-primary-900 hover:bg-black dark:bg-accent-blue dark:hover:bg-blue-600 text-white font-black rounded-2xl transition-all duration-300 shadow-xl shadow-accent-blue/20 flex items-center justify-center gap-3 group disabled:opacity-50"
               >
-                {loading ? 'Processing...' : (
+                {loading ? 'Processando atrIA...' : (
                   <>
-                    <span className="uppercase tracking-[0.2em]">{isForgotPassword ? 'Reset Protocol' : isSignUp ? 'Finalize discovery' : 'Initialize'}</span>
+                    <span className="uppercase tracking-[0.2em]">{isForgotPassword ? 'Resetar Protocolo' : isSignUp ? 'Finalizar Descoberta' : 'Inicializar atrIA'}</span>
                     <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-2" />
                   </>
                 )}

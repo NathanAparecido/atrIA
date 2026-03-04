@@ -52,7 +52,7 @@ export function Sidebar({
             className="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-xl flex items-center gap-3 justify-center transition-all duration-300 shadow-lg shadow-primary-900/20 group hover:scale-[1.02]"
           >
             <Plus className="w-5 h-5 transition-transform group-hover:rotate-90" />
-            <span className="font-semibold tracking-wide">Nova Inteligência</span>
+            <span className="font-semibold tracking-wide">Nova Sessão atrIA</span>
           </button>
         </div>
 

@@ -172,8 +172,8 @@ services:
       - dify-api
     environment:
       APP_URL: https://database.netwise.com.br
-      CONSOLE_API_URL: http://dify-api:5001
-      APP_API_URL: http://dify-api:5001
+      CONSOLE_API_URL: ""
+      APP_API_URL: ""
       NEXT_PUBLIC_DEPLOY_ENV: PRODUCTION
       NEXT_PUBLIC_EDITION: SELF_HOSTED
       NEXT_PUBLIC_API_PREFIX: /console/api
