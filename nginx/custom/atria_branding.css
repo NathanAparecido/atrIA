@@ -1,0 +1,34 @@
+/* atrIA Branding - Custom Injection */
+/* Hide Dify Logo in Header */
+div[class*="logo"],
+span[class*="logo"],
+a[href*="dify.ai"] img {
+    visibility: hidden !important;
+    position: relative;
+}
+
+/* Add atrIA text replacement */
+div[class*="logo"]::after,
+a[href*="dify.ai"]::after {
+    content: "atrIA";
+    visibility: visible !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: 800;
+    font-size: 20px;
+    color: #fff;
+    font-family: sans-serif;
+}
+
+/* Hide Discord/Community section */
+div[class*="community"],
+div[class*="discord"],
+div:has(> a[href*="discord.gg"]) {
+    display: none !important;
+}
+
+/* Force dark mode colors to match atrIA */
+:root {
+    --primary-500: #00f3ff !important;
+}
