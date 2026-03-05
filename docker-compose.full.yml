@@ -94,10 +94,10 @@ services:
       DEPLOY_ENV: PRODUCTION
       MIGRATION_ENABLED: "true"
       CONSOLE_API_URL: ""
-      CONSOLE_WEB_URL: ""
-      SERVICE_API_URL: ""
-      APP_WEB_URL: ""
-      FILES_URL: ""
+      CONSOLE_WEB_URL: https://database.netwise.com.br
+      SERVICE_API_URL: https://database.netwise.com.br
+      APP_WEB_URL: https://database.netwise.com.br
+      FILES_URL: https://database.netwise.com.br
       # --- Database ---
       DB_USERNAME: ${POSTGRES_USER:-atria}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-atriadev123}
