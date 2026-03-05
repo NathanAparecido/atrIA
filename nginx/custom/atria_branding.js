@@ -1,35 +1,54 @@
-/* atrIA Branding - Dynamic DOM Replacement */
+/* atrIA Branding - Dynamic DOM Replacement (Hardened) */
 (function () {
+    console.log("atrIA Branding Script Active");
+
     function rebrand() {
-        // Replace text in the whole body
-        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-        let node;
-        while (node = walk.nextNode()) {
-            if (node.nodeValue.includes('Dify')) {
-                node.nodeValue = node.nodeValue.replace(/Dify/g, 'atrIA');
+        try {
+            // 1. Precise Text Replacement in visible Nodes
+            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            while (node = walk.nextNode()) {
+                if (node.nodeValue && /Dify/i.test(node.nodeValue)) {
+                    node.nodeValue = node.nodeValue.replace(/Dify/g, 'atrIA').replace(/dify/g, 'atria');
+                }
             }
-        }
 
-        // Hide specific elements that are hard to reach via CSS
-        const communityHeader = Array.from(document.querySelectorAll('div')).find(el => el.textContent === 'Participe da comunidade');
-        if (communityHeader) {
-            communityHeader.parentElement.style.display = 'none';
-        }
+            // 2. Hide community/Dify specific elements
+            const targets = [
+                'Participe da comunidade',
+                'Discord',
+                'Roadmap',
+                'GitHub',
+                'Documentation'
+            ];
 
-        // Change window title
-        if (document.title.includes('Dify')) {
-            document.title = document.title.replace(/Dify/g, 'atrIA');
-        }
+            document.querySelectorAll('div, span, a').forEach(el => {
+                if (targets.some(t => el.textContent === t)) {
+                    el.style.display = 'none';
+                    if (el.parentElement) el.parentElement.style.display = 'none';
+                }
+            });
 
-        // Hide specific logos by class
-        document.querySelectorAll('[class*="Logo"], [class*="logo"]').forEach(el => {
-            if (el.tagName === 'IMG' && el.src.includes('dify')) {
-                el.style.display = 'none';
+            // 3. Icon and Logo Neutralization
+            document.querySelectorAll('img, svg').forEach(el => {
+                const src = el.src || "";
+                const cls = el.className || "";
+                if (src.includes('dify') || (typeof cls === 'string' && cls.toLowerCase().includes('logo'))) {
+                    el.style.visibility = 'hidden';
+                    el.style.display = 'none';
+                }
+            });
+
+            // 4. Page Title
+            if (document.title.includes('Dify')) {
+                document.title = document.title.replace(/Dify/g, 'atrIA');
             }
-        });
+        } catch (e) {
+            // Silently fail to avoid breaking Next.js hydration
+        }
     }
 
-    // Run periodically to catch Next.js hydration/navigation
-    setInterval(rebrand, 1000);
+    // Run every 500ms to catch dynamic Next.js changes
+    setInterval(rebrand, 500);
     rebrand();
 })();
