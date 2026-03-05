@@ -198,7 +198,7 @@ services:
   # ========================
 
   sandbox:
-    image: langgenius/dify-sandbox:latest
+    image: langgenius/dify-sandbox:0.2.10
     container_name: atria-dify-sandbox
     restart: unless-stopped
     environment:
@@ -211,7 +211,7 @@ services:
       - atria-network
 
   plugin-daemon:
-    image: langgenius/dify-plugin-daemon:latest
+    image: langgenius/dify-plugin-daemon:0.5.3-local
     container_name: atria-dify-plugin-daemon
     restart: unless-stopped
     environment:
