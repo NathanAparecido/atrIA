@@ -20,6 +20,13 @@
         if (document.title.includes('Dify')) {
             document.title = document.title.replace(/Dify/g, 'atrIA');
         }
+
+        // Hide specific logos by class
+        document.querySelectorAll('[class*="Logo"], [class*="logo"]').forEach(el => {
+            if (el.tagName === 'IMG' && el.src.includes('dify')) {
+                el.style.display = 'none';
+            }
+        });
     }
 
     // Run periodically to catch Next.js hydration/navigation
