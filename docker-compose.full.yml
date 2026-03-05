@@ -216,9 +216,14 @@ services:
     restart: unless-stopped
     environment:
       GIN_MODE: release
-      PLUGIN_REMOTE_INSTALL_HOST: dify-api
+      PLUGIN_REMOTE_INSTALL_HOST: atria-dify-api
       PLUGIN_REMOTE_INSTALL_PORT: "5001"
-      API_AUTHENTICATION_KEY: ${DIFY_SECRET_KEY:-sk-atriasecretkey2025}
+      API_AUTHENTICATION_KEY: sk-atriasecretkey2025
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "5002" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     volumes:
       - dify_storage:/app/storage
     networks:
