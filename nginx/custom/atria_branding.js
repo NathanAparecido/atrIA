@@ -4,12 +4,23 @@
 
     function rebrand() {
         try {
-            // 1. Precise Text Replacement in visible Nodes
-            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+            // 1. Precise Text Replacement in visible Nodes (Ignoring Form Elements to prevent React freezing)
+            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+                acceptNode: function (node) {
+                    const parent = node.parentElement;
+                    // Ignore scripts, styles, inputs, labels, and textareas to prevent React hydration errors and form overlap
+                    if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'INPUT' || parent.tagName === 'TEXTAREA' || parent.tagName === 'LABEL' || parent.closest('form'))) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            }, false);
+
             let node;
             while (node = walk.nextNode()) {
                 if (node.nodeValue && /Dify/i.test(node.nodeValue)) {
-                    node.nodeValue = node.nodeValue.replace(/Dify/g, 'atrIA').replace(/dify/g, 'atria');
+                    // Do not replace specific phrases that might break internal rendering or API structures
+                    node.nodeValue = node.nodeValue.replace(/\bDify\b/g, 'atrIA').replace(/\bdify\b/g, 'atria');
                 }
             }
 
