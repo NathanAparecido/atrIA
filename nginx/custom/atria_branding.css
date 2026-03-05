@@ -8,19 +8,7 @@ a[href*="dify.ai"] img {
 }
 
 /* Add atrIA text replacement */
-/* Add atrIA text replacement - Scoped specifically to headers/navbar to prevent form overlap */
-a[href*="dify.ai"]::after {
-    content: "atrIA";
-    visibility: visible !important;
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    font-weight: 800;
-    font-size: 20px;
-    color: #fff;
-    font-family: sans-serif;
-}
+
 
 
 /* Hide Discord/Community section */

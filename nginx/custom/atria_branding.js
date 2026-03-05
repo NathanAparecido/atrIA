@@ -4,25 +4,25 @@
 
     function rebrand() {
         try {
-            // 1. Precise Text Replacement in visible Nodes (Ignoring Form Elements to prevent React freezing)
-            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-                acceptNode: function (node) {
-                    const parent = node.parentElement;
-                    // Ignore scripts, styles, inputs, labels, and textareas to prevent React hydration errors and form overlap
-                    if (parent && (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'INPUT' || parent.tagName === 'TEXTAREA' || parent.tagName === 'LABEL' || parent.closest('form'))) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            }, false);
+            // 1. Safe Logo Replacement (Avoid breaking React)
+            const logoContainers = document.querySelectorAll('a[href*="dify.ai"], div[class*="logo"]');
+            logoContainers.forEach(container => {
+                // If it's the main header logo
+                if (!container.hasAttribute('data-atria-branded')) {
+                    container.setAttribute('data-atria-branded', 'true');
+                    container.style.visibility = 'hidden'; // Hide original
 
-            let node;
-            while (node = walk.nextNode()) {
-                if (node.nodeValue && /Dify/i.test(node.nodeValue)) {
-                    // Do not replace specific phrases that might break internal rendering or API structures
-                    node.nodeValue = node.nodeValue.replace(/\bDify\b/g, 'atrIA').replace(/\bdify\b/g, 'atria');
+                    // Inject our own absolute positioned logo safely next to it
+                    const atriaLogo = document.createElement('div');
+                    atriaLogo.innerText = 'atrIA';
+                    atriaLogo.style.cssText = 'position: absolute; font-weight: 800; font-size: 20px; color: #fff; font-family: sans-serif; cursor: pointer; display: flex; align-items: center; z-index: 9999; margin-top: 5px; margin-left: 10px;';
+
+                    if (container.parentElement) {
+                        container.parentElement.style.position = 'relative';
+                        container.parentElement.insertBefore(atriaLogo, container);
+                    }
                 }
-            }
+            });
 
             // 2. Hide community/Dify specific elements
             const targets = [
