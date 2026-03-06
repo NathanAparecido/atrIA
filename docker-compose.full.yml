@@ -220,6 +220,16 @@ services:
     restart: unless-stopped
     environment:
       GIN_MODE: release
+      # --- Internal API Keys ---
+      SERVER_KEY: sk-atriasecretkey2025
+      DIFY_INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
+      # --- DB Connection for Plugin Daemon ---
+      DB_USERNAME: ${POSTGRES_USER:-atria}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-atriadev123}
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: ${POSTGRES_DB:-atria}
+      # --- Remote Install ---
       PLUGIN_REMOTE_INSTALL_HOST: atria-dify-api
       PLUGIN_REMOTE_INSTALL_PORT: "5001"
       API_AUTHENTICATION_KEY: sk-atriasecretkey2025
