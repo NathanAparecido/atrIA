@@ -237,6 +237,9 @@ services:
       API_AUTHENTICATION_KEY: sk-atriasecretkey2025
       DIFY_INNER_API_URL: http://atria-dify-api:5001
       PLUGIN_DIFY_INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
+      # --- Storage / Working Path ---
+      PLUGIN_WORKING_PATH: /app/storage/cwd
+      PLUGIN_STORAGE_LOCAL_ROOT: /app/storage
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "5002" ]
       interval: 10s
