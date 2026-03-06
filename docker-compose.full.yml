@@ -230,8 +230,8 @@ services:
       DB_PORT: "5432"
       DB_DATABASE: ${POSTGRES_DB:-atria}
       # --- Remote Install ---
-      PLUGIN_REMOTE_INSTALL_HOST: atria-dify-api
-      PLUGIN_REMOTE_INSTALL_PORT: "5001"
+      PLUGIN_REMOTE_INSTALLING_HOST: atria-dify-api
+      PLUGIN_REMOTE_INSTALLING_PORT: "5001"
       API_AUTHENTICATION_KEY: sk-atriasecretkey2025
       DIFY_INNER_API_URL: http://atria-dify-api:5001/console/api
       PLUGIN_DIFY_INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
