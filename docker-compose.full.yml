@@ -93,7 +93,7 @@ services:
       SECRET_KEY: ${DIFY_SECRET_KEY:-sk-atriasecretkey2025}
       DEPLOY_ENV: PRODUCTION
       MIGRATION_ENABLED: "true"
-      CONSOLE_API_URL: ""
+      CONSOLE_API_URL: https://database.netwise.com.br
       CONSOLE_WEB_URL: https://database.netwise.com.br
       SERVICE_API_URL: https://database.netwise.com.br
       APP_WEB_URL: https://database.netwise.com.br
@@ -129,6 +129,8 @@ services:
       CODE_EXECUTION_API_KEY: dify-sandbox
       PLUGIN_DAEMON_URL: http://atria-dify-plugin-daemon:5002
       PLUGIN_DAEMON_KEY: sk-atriasecretkey2025
+      INNER_API: "true"
+      INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
       SSRF_PROXY_HTTP_URL: http://atria-ssrf-proxy:3128
       SSRF_PROXY_HTTPS_URL: http://atria-ssrf-proxy:3128
     volumes:
@@ -171,6 +173,8 @@ services:
       CODE_EXECUTION_API_KEY: dify-sandbox
       PLUGIN_DAEMON_URL: http://atria-dify-plugin-daemon:5002
       PLUGIN_DAEMON_KEY: sk-atriasecretkey2025
+      INNER_API: "true"
+      INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
     volumes:
       - dify_storage:/app/api/storage
     networks:
@@ -219,6 +223,8 @@ services:
       PLUGIN_REMOTE_INSTALL_HOST: atria-dify-api
       PLUGIN_REMOTE_INSTALL_PORT: "5001"
       API_AUTHENTICATION_KEY: sk-atriasecretkey2025
+      DIFY_INNER_API_URL: http://atria-dify-api:5001/console/api
+      PLUGIN_DIFY_INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "5002" ]
       interval: 10s
