@@ -131,6 +131,7 @@ services:
       PLUGIN_DAEMON_KEY: sk-atriasecretkey2025
       INNER_API: "true"
       INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
+      INNER_API_KEY_FOR_PLUGIN: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
       SSRF_PROXY_HTTP_URL: http://atria-ssrf-proxy:3128
       SSRF_PROXY_HTTPS_URL: http://atria-ssrf-proxy:3128
     volumes:
@@ -175,6 +176,7 @@ services:
       PLUGIN_DAEMON_KEY: sk-atriasecretkey2025
       INNER_API: "true"
       INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
+      INNER_API_KEY_FOR_PLUGIN: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
     volumes:
       - dify_storage:/app/api/storage
     networks:
@@ -233,7 +235,7 @@ services:
       PLUGIN_REMOTE_INSTALLING_HOST: atria-dify-api
       PLUGIN_REMOTE_INSTALLING_PORT: "5001"
       API_AUTHENTICATION_KEY: sk-atriasecretkey2025
-      DIFY_INNER_API_URL: http://atria-dify-api:5001/console/api
+      DIFY_INNER_API_URL: http://atria-dify-api:5001
       PLUGIN_DIFY_INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
     healthcheck:
       test: [ "CMD", "nc", "-z", "localhost", "5002" ]
