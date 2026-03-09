@@ -312,6 +312,8 @@ services:
         VITE_APP_NAME: atrIA
     container_name: atria-web
     restart: unless-stopped
+    ports:
+      - "8080:80"
     depends_on:
       - atria-api
       - dify-api
@@ -360,7 +362,7 @@ services:
     networks:
       - atria-network
     extra_hosts:
-      - "atria.netwise.com.br:127.0.0.1"
+      - "cronos.netwise.com.br:127.0.0.1"
       - "database.netwise.com.br:127.0.0.1"
       - "nginx.netwise.com.br:127.0.0.1"
 
