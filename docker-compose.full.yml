@@ -283,7 +283,7 @@ services:
       JWT_EXPIRATION: ${ATRIA_JWT_EXPIRATION:-7d}
       BCRYPT_ROUNDS: ${ATRIA_BCRYPT_ROUNDS:-12}
       PORT: "3001"
-      DIFY_API_URL: http://dify-api:5001/v1
+      DIFY_API_URL: http://atria-dify-api:5001/v1
       DIFY_API_KEY: ${DIFY_API_KEY:-app-change-me}
       # --- SMTP ---
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
@@ -308,7 +308,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: /api
-        VITE_DIFY_API_URL: /dify/v1
+        VITE_SELF_HOSTED: "true"
         VITE_APP_NAME: atrIA
     container_name: atria-web
     restart: unless-stopped

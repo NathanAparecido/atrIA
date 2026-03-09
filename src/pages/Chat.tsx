@@ -5,13 +5,15 @@ import { useToast } from '../components/ToastContext';
 import { useTheme } from '../components/ThemeContext';
 import { MessageRenderer } from '../components/MessageRenderer';
 import { Sidebar } from '../components/Sidebar';
-import { getUserSessions, getSessionMessages, savePendingMessage, createSession, deleteSession, updateSessionTitle } from '../lib/db';
+import { getUserSessions, getSessionMessages, savePendingMessage, saveMessage, createSession, deleteSession, updateSessionTitle } from '../lib/db';
 import { sendWebhook } from '../lib/n8n';
 import { supabase } from '../lib/supabase';
 import { logAudit } from '../lib/auth';
 import { Message, ChatSession } from '../types';
 import { Send, Bot, User as UserIcon, MessageSquare } from 'lucide-react';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+
+const IS_SELF_HOSTED = import.meta.env.VITE_SELF_HOSTED === 'true';
 
 export function Chat() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -88,7 +90,7 @@ export function Chat() {
   };
 
   const subscribeToMessages = (sessionId: string) => {
-    if (!user) return;
+    if (!user || IS_SELF_HOSTED) return;
 
     const channel = supabase
       .channel(`messages-${sessionId}`)
@@ -189,44 +191,44 @@ export function Chat() {
     setLoading(true);
 
     try {
-      const savedMessage = await savePendingMessage(user.id, currentSession.id, userMessage);
+      if (IS_SELF_HOSTED) {
+        // In self-hosted mode, the backend handles the full logic (save + AI)
+        const response = await saveMessage(user.id, currentSession.id, userMessage, '');
+        setMessages((prev) => [...prev, response]);
 
-      // Auto-generate title if it's the first message and title is still default
-      if (messages.length === 0 && (currentSession.title === 'Nova conversa' || currentSession.title === 'Nova Discussão')) {
-        const words = userMessage.split(' ');
-        let generatedTitle = words.slice(0, 5).join(' ');
-        if (generatedTitle.length > 40) generatedTitle = generatedTitle.substring(0, 37) + '...';
-        else if (words.length > 5) generatedTitle += '...';
+        // Auto-generate title if it's the first message
+        if (messages.length === 0 && (currentSession.title === 'Nova conversa' || currentSession.title === 'Nova Discussão')) {
+          const words = userMessage.split(' ');
+          let generatedTitle = words.slice(0, 5).join(' ');
+          if (generatedTitle.length > 40) generatedTitle = generatedTitle.substring(0, 37) + '...';
+          else if (words.length > 5) generatedTitle += '...';
 
-        await updateSessionTitle(currentSession.id, generatedTitle);
-        loadSessions(); // Refresh sidebar
-      }
-      // Removed manual setMessages to prevent duplication with Realtime subscription
-      // The Realtime listener will handle adding the message to the UI
+          await updateSessionTitle(currentSession.id, generatedTitle);
+          loadSessions();
+        }
+      } else {
+        const savedMessage = await savePendingMessage(user.id, currentSession.id, userMessage);
 
-      sendWebhook({
-        event: 'message_sent',
-        user_id: user.id,
-        session_id: currentSession.id,
-        message_id: savedMessage.id,
-        message: userMessage,
-        timestamp: new Date().toISOString(),
-      });
+        // Auto-generate title if it's the first message and title is still default
+        if (messages.length === 0 && (currentSession.title === 'Nova conversa' || currentSession.title === 'Nova Discussão')) {
+          const words = userMessage.split(' ');
+          let generatedTitle = words.slice(0, 5).join(' ');
+          if (generatedTitle.length > 40) generatedTitle = generatedTitle.substring(0, 37) + '...';
+          else if (words.length > 5) generatedTitle += '...';
 
-      setTimeout(() => {
-        setMessages((prev: Message[]) => {
-          const msg = prev.find((m: Message) => m.id === savedMessage.id);
-          if (msg && msg.response === null) {
-            showToast('A IA está demorando para responder. Tente novamente.', 'error');
-            return prev.map((m: Message) =>
-              m.id === savedMessage.id
-                ? { ...m, response: '[Timeout] A IA não respondeu a tempo. Por favor, tente enviar novamente.' }
-                : m
-            );
-          }
-          return prev;
+          await updateSessionTitle(currentSession.id, generatedTitle);
+          loadSessions(); // Refresh sidebar
+        }
+
+        sendWebhook({
+          event: 'message_sent',
+          user_id: user.id,
+          session_id: currentSession.id,
+          message_id: savedMessage.id,
+          message: userMessage,
+          timestamp: new Date().toISOString(),
         });
-      }, 30000);
+      }
 
       logAudit(user.id, `Sent message: ${userMessage.substring(0, 50)}`);
     } catch (error) {

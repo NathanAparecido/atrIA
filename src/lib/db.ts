@@ -20,7 +20,8 @@ export async function getAllUsers(): Promise<User[]> {
 
 export async function getUserSessions(userId: string): Promise<ChatSession[]> {
   if (IS_SELF_HOSTED) {
-    return api.getSessions();
+    const response = await api.getSessions();
+    return response.sessions;
   }
   const { data, error } = await supabase
     .from('chat_sessions')
@@ -34,7 +35,8 @@ export async function getUserSessions(userId: string): Promise<ChatSession[]> {
 
 export async function createSession(userId: string, title?: string): Promise<ChatSession> {
   if (IS_SELF_HOSTED) {
-    return api.createSession(title);
+    const response = await api.createSession(title);
+    return response.session;
   }
   const { data, error } = await supabase
     .from('chat_sessions')
@@ -75,7 +77,8 @@ export async function updateSessionTitle(sessionId: string, title: string): Prom
 
 export async function getSessionMessages(sessionId: string): Promise<Message[]> {
   if (IS_SELF_HOSTED) {
-    return api.getMessages(sessionId);
+    const response = await api.getMessages(sessionId);
+    return response.messages;
   }
   const { data, error } = await supabase
     .from('messages')
@@ -105,7 +108,8 @@ export async function getUserMessages(userId: string): Promise<Message[]> {
 export async function saveMessage(userId: string, sessionId: string, message: string, response: string): Promise<Message> {
   if (IS_SELF_HOSTED) {
     // In Self-Hosted, sendMessage handles both recording and AI response
-    return api.sendMessage(sessionId, message);
+    const response = await api.sendMessage(sessionId, message);
+    return response.message;
   }
   const { data, error } = await supabase
     .from('messages')
