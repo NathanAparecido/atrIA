@@ -73,196 +73,6 @@ services:
       - atria-network
 
   # ========================
-  # Dify Engine
-  # ========================
-
-  dify-api:
-    image: langgenius/dify-api:latest
-    container_name: atria-dify-api
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      chromadb:
-        condition: service_started
-    environment:
-      <<: *shared-env
-      # --- Dify Core ---
-      SECRET_KEY: ${DIFY_SECRET_KEY:-sk-atriasecretkey2025}
-      DEPLOY_ENV: PRODUCTION
-      MIGRATION_ENABLED: "true"
-      CONSOLE_API_URL: https://database.netwise.com.br
-      CONSOLE_WEB_URL: https://database.netwise.com.br
-      SERVICE_API_URL: https://database.netwise.com.br
-      APP_WEB_URL: https://database.netwise.com.br
-      FILES_URL: https://database.netwise.com.br
-      # --- Database ---
-      DB_USERNAME: ${POSTGRES_USER:-atria}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-atriadev123}
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_DATABASE: ${POSTGRES_DB:-atria}
-      # --- Redis ---
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-atriadev123}
-      REDIS_DB: "0"
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-atriadev123}@redis:6379/1
-      # --- Vector Store (ChromaDB) ---
-      VECTOR_STORE: chroma
-      CHROMA_HOST: chromadb
-      CHROMA_PORT: "8000"
-      # --- Storage ---
-      STORAGE_TYPE: opendal
-      OPENDAL_SCHEME: fs
-      OPENDAL_FS_ROOT: storage
-      # --- Server ---
-      DIFY_PORT: "5001"
-      SERVER_WORKER_AMOUNT: "1"
-      # --- CORS ---
-      WEB_API_CORS_ALLOW_ORIGINS: "*"
-      CONSOLE_CORS_ALLOW_ORIGINS: "*"
-      # --- Specialized Services ---
-      CODE_EXECUTION_ENDPOINT: http://atria-dify-sandbox:8194
-      CODE_EXECUTION_API_KEY: dify-sandbox
-      PLUGIN_DAEMON_URL: http://atria-dify-plugin-daemon:5002
-      PLUGIN_DAEMON_KEY: sk-atriasecretkey2025
-      INNER_API: "true"
-      INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
-      INNER_API_KEY_FOR_PLUGIN: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
-      SSRF_PROXY_HTTP_URL: http://atria-ssrf-proxy:3128
-      SSRF_PROXY_HTTPS_URL: http://atria-ssrf-proxy:3128
-    volumes:
-      - dify_storage:/app/api/storage
-    networks:
-      - atria-network
-
-  dify-worker:
-    image: langgenius/dify-api:latest
-    container_name: atria-dify-worker
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      <<: *shared-env
-      SECRET_KEY: ${DIFY_SECRET_KEY:-sk-atriasecretkey2025}
-      DEPLOY_ENV: PRODUCTION
-      MODE: worker
-      DB_USERNAME: ${POSTGRES_USER:-atria}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-atriadev123}
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_DATABASE: ${POSTGRES_DB:-atria}
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-atriadev123}
-      REDIS_DB: "0"
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-atriadev123}@redis:6379/1
-      VECTOR_STORE: chroma
-      CHROMA_HOST: chromadb
-      CHROMA_PORT: "8000"
-      STORAGE_TYPE: opendal
-      OPENDAL_SCHEME: fs
-      OPENDAL_FS_ROOT: storage
-      # --- Specialized Services ---
-      CODE_EXECUTION_ENDPOINT: http://atria-dify-sandbox:8194
-      CODE_EXECUTION_API_KEY: dify-sandbox
-      PLUGIN_DAEMON_URL: http://atria-dify-plugin-daemon:5002
-      PLUGIN_DAEMON_KEY: sk-atriasecretkey2025
-      INNER_API: "true"
-      INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
-      INNER_API_KEY_FOR_PLUGIN: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
-    volumes:
-      - dify_storage:/app/api/storage
-    networks:
-      - atria-network
-
-  dify-web:
-    image: langgenius/dify-web:latest
-    container_name: atria-dify-web
-    restart: unless-stopped
-    depends_on:
-      - dify-api
-    environment:
-      APP_URL: https://database.netwise.com.br
-      CONSOLE_API_URL: https://database.netwise.com.br
-      APP_API_URL: https://database.netwise.com.br
-      NEXT_PUBLIC_DEPLOY_ENV: PRODUCTION
-      NEXT_PUBLIC_EDITION: SELF_HOSTED
-      NEXT_PUBLIC_API_PREFIX: /console/api
-      NEXT_PUBLIC_PUBLIC_API_PREFIX: /api
-    networks:
-      - atria-network
-
-  # ========================
-  # Dify Specialized Services
-  # ========================
-
-  sandbox:
-    image: langgenius/dify-sandbox:0.2.10
-    container_name: atria-dify-sandbox
-    restart: unless-stopped
-    environment:
-      GIN_MODE: release
-      WORKER_TIMEOUT: 15s
-      ENABLE_NETWORK: "true"
-      HTTP_PROXY: "http://ssrf_proxy:3128"
-      HTTPS_PROXY: "http://ssrf_proxy:3128"
-    networks:
-      - atria-network
-
-  plugin-daemon:
-    image: langgenius/dify-plugin-daemon:0.5.3-local
-    container_name: atria-dify-plugin-daemon
-    restart: unless-stopped
-    environment:
-      GIN_MODE: release
-      # --- Internal API Keys ---
-      SERVER_KEY: sk-atriasecretkey2025
-      DIFY_INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
-      # --- DB Connection for Plugin Daemon ---
-      DB_USERNAME: ${POSTGRES_USER:-atria}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-atriadev123}
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_DATABASE: ${POSTGRES_DB:-atria}
-      # --- Remote Install ---
-      PLUGIN_REMOTE_INSTALLING_HOST: atria-dify-api
-      PLUGIN_REMOTE_INSTALLING_PORT: "5001"
-      API_AUTHENTICATION_KEY: sk-atriasecretkey2025
-      DIFY_INNER_API_URL: http://atria-dify-api:5001
-      PLUGIN_DIFY_INNER_API_KEY: ${DIFY_INNER_API_KEY:-atria-inner-api-key-2025}
-      # --- Redis Connection (Required for Go Runtime) ---
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      REDIS_DB: "0"
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-atriadev123}
-      # --- Storage / Working Path ---
-      PLUGIN_WORKING_PATH: /app/storage/cwd
-      PLUGIN_STORAGE_LOCAL_ROOT: /app/storage
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "5002" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    volumes:
-      - dify_storage:/app/storage
-    networks:
-      - atria-network
-
-  ssrf_proxy:
-    image: ubuntu/squid:latest
-    container_name: atria-ssrf-proxy
-    restart: unless-stopped
-    networks:
-      - atria-network
-
-  # ========================
   # Atria Application
   # ========================
 
@@ -283,7 +93,7 @@ services:
       JWT_EXPIRATION: ${ATRIA_JWT_EXPIRATION:-7d}
       BCRYPT_ROUNDS: ${ATRIA_BCRYPT_ROUNDS:-12}
       PORT: "3001"
-      DIFY_API_URL: http://atria-dify-api:5001/v1
+      DIFY_API_URL: https://cronnos.netwise.com.br/v1
       DIFY_API_KEY: ${DIFY_API_KEY:-app-change-me}
       # --- SMTP ---
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
@@ -316,7 +126,6 @@ services:
       - "8080:80"
     depends_on:
       - atria-api
-      - dify-api
     networks:
       - atria-network
 
@@ -331,12 +140,8 @@ services:
     depends_on:
       - atria-web
       - atria-api
-      - dify-api
-      - dify-web
     ports:
       - "8090:80"
-    # Portas removidas do host para evitar conflito com o Painel Visual (NPM)
-    # O acesso agora é feito via NPM -> atria-nginx:80
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
@@ -362,7 +167,7 @@ services:
     networks:
       - atria-network
     extra_hosts:
-      - "cronos.netwise.com.br:127.0.0.1"
+      - "cronnos.netwise.com.br:127.0.0.1"
       - "database.netwise.com.br:127.0.0.1"
       - "nginx.netwise.com.br:127.0.0.1"
 
