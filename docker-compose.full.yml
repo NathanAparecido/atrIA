@@ -167,7 +167,7 @@ services:
     networks:
       - atria-network
     extra_hosts:
-      - "cronnos.netwise.com.br:127.0.0.1"
+      - "cronos.netwise.com.br:127.0.0.1"
       - "database.netwise.com.br:127.0.0.1"
       - "nginx.netwise.com.br:127.0.0.1"
 
