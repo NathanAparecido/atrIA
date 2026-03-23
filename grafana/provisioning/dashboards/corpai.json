@@ -1,0 +1,185 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "CPU do Servidor (%)",
+      "type": "gauge",
+      "datasource": "Zabbix",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 85 }
+            ]
+          },
+          "unit": "percent",
+          "max": 100
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "group": { "filter": "" },
+          "host": { "filter": "" },
+          "application": { "filter": "" },
+          "item": { "filter": "system.cpu.util" },
+          "mode": 0,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Memória RAM Utilizada (%)",
+      "type": "gauge",
+      "datasource": "Zabbix",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent",
+          "max": 100
+        }
+      },
+      "targets": [
+        {
+          "group": { "filter": "" },
+          "host": { "filter": "" },
+          "item": { "filter": "vm.memory.utilization" },
+          "mode": 0,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Espaço em Disco (%)",
+      "type": "gauge",
+      "datasource": "Zabbix",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent",
+          "max": 100
+        }
+      },
+      "targets": [
+        {
+          "group": { "filter": "" },
+          "host": { "filter": "" },
+          "item": { "filter": "vfs.fs.pused[/]" },
+          "mode": 0,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Status dos Containers Docker",
+      "type": "table",
+      "datasource": "Zabbix",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "group": { "filter": "" },
+          "host": { "filter": "" },
+          "application": { "filter": "Docker" },
+          "item": { "filter": "/docker.container.state/" },
+          "mode": 0,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Queries por Setor (últimas 24h)",
+      "type": "barchart",
+      "datasource": "PostgreSQL - CorpAI",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        {
+          "rawSql": "SELECT setor, COUNT(*) as total FROM conversations WHERE criado_em > NOW() - INTERVAL '24 hours' GROUP BY setor ORDER BY total DESC;",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        }
+      }
+    },
+    {
+      "title": "Latência Média das Respostas (ms)",
+      "type": "stat",
+      "datasource": "PostgreSQL - CorpAI",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "rawSql": "SELECT EXTRACT(EPOCH FROM AVG(m2.criado_em - m1.criado_em)) * 1000 as latencia_ms FROM messages m1 JOIN messages m2 ON m1.conversation_id = m2.conversation_id AND m1.role = 'user' AND m2.role = 'assistant' AND m2.criado_em > m1.criado_em WHERE m1.criado_em > NOW() - INTERVAL '1 hour';",
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5000 },
+              { "color": "red", "value": 15000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Total de Conversas por Dia",
+      "type": "timeseries",
+      "datasource": "PostgreSQL - CorpAI",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "rawSql": "SELECT DATE_TRUNC('hour', criado_em) as time, COUNT(*) as total FROM conversations WHERE criado_em > NOW() - INTERVAL '7 days' GROUP BY time ORDER BY time;",
+          "refId": "A",
+          "format": "time_series"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["corpai", "monitoramento"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "America/Sao_Paulo",
+  "title": "CorpAI — Painel de Monitoramento",
+  "uid": "corpai-main-dashboard",
+  "version": 1,
+  "weekStart": ""
+}

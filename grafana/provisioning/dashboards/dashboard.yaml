@@ -1,0 +1,14 @@
+# CorpAI — Provisioning de Dashboards Grafana
+
+apiVersion: 1
+
+providers:
+  - name: 'CorpAI'
+    orgId: 1
+    folder: 'CorpAI'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

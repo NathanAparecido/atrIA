@@ -1,0 +1,398 @@
+################################################################
+# CorpAI — Docker Compose (Infraestrutura Completa)
+# Todos os serviços na rede interna corpai-net.
+# Nenhum dado sai do servidor. Air-gapped.
+################################################################
+
+services:
+
+  # ═══════════════════════════════════════════════════════════
+  # OLLAMA — LLM Runtime (nunca expor externamente)
+  # ═══════════════════════════════════════════════════════════
+  ollama:
+    image: ollama/ollama:latest
+    container_name: corpai-ollama
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"   # bind SOMENTE em localhost
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - corpai-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════
+  # CHROMADB — Banco Vetorial (namespaces por setor)
+  # ═══════════════════════════════════════════════════════════
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: corpai-chromadb
+    restart: unless-stopped
+    environment:
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_AUTH_TOKEN}
+      - CHROMA_SERVER_AUTHN_TOKEN_TRANSPORT_HEADER=Authorization
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - corpai-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════
+  # POSTGRESQL 16 — Banco Relacional Principal
+  # ═══════════════════════════════════════════════════════════
+  postgres:
+    image: postgres:16-alpine
+    container_name: corpai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    networks:
+      - corpai-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════
+  # REDIS — Cache e Sessões
+  # ═══════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: corpai-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - corpai-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ═══════════════════════════════════════════════════════════
+  # DIFY — Orquestração RAG (API + Web + Worker)
+  # ═══════════════════════════════════════════════════════════
+  dify-sandbox:
+    image: langgenius/dify-sandbox:latest
+    container_name: corpai-dify-sandbox
+    restart: unless-stopped
+    environment:
+      API_KEY: dify-sandbox-key
+      GIN_MODE: release
+      WORKER_TIMEOUT: 15
+    networks:
+      - corpai-net
+
+  dify-ssrf-proxy:
+    image: ubuntu/squid:latest
+    container_name: corpai-dify-ssrf-proxy
+    restart: unless-stopped
+    networks:
+      - corpai-net
+
+  dify-api:
+    image: langgenius/dify-api:latest
+    container_name: corpai-dify-api
+    restart: unless-stopped
+    environment:
+      MODE: api
+      LOG_LEVEL: INFO
+      SECRET_KEY: ${DIFY_SECRET_KEY}
+      INIT_PASSWORD: ${DIFY_INIT_PASSWORD}
+      CONSOLE_WEB_URL: ""
+      CONSOLE_API_URL: ""
+      SERVICE_API_URL: ""
+      APP_WEB_URL: ""
+      # Banco de dados
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DIFY_POSTGRES_DB}
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: 1
+      # Celery
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      # Vetor Store
+      VECTOR_STORE: chromadb
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      CHROMA_TENANT: default_tenant
+      CHROMA_DATABASE: default_database
+      CHROMA_AUTH_TOKEN: ${CHROMA_AUTH_TOKEN}
+      # Sandbox
+      CODE_EXECUTION_ENDPOINT: http://dify-sandbox:8194
+      CODE_EXECUTION_API_KEY: dify-sandbox-key
+      # SSRF
+      SSRF_PROXY_HTTP_URL: http://dify-ssrf-proxy:3128
+      SSRF_PROXY_HTTPS_URL: http://dify-ssrf-proxy:3128
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - corpai-net
+
+  dify-worker:
+    image: langgenius/dify-api:latest
+    container_name: corpai-dify-worker
+    restart: unless-stopped
+    environment:
+      MODE: worker
+      LOG_LEVEL: INFO
+      SECRET_KEY: ${DIFY_SECRET_KEY}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DIFY_POSTGRES_DB}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: 1
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/1
+      VECTOR_STORE: chromadb
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      CHROMA_TENANT: default_tenant
+      CHROMA_DATABASE: default_database
+      CHROMA_AUTH_TOKEN: ${CHROMA_AUTH_TOKEN}
+      CODE_EXECUTION_ENDPOINT: http://dify-sandbox:8194
+      CODE_EXECUTION_API_KEY: dify-sandbox-key
+      SSRF_PROXY_HTTP_URL: http://dify-ssrf-proxy:3128
+      SSRF_PROXY_HTTPS_URL: http://dify-ssrf-proxy:3128
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - corpai-net
+
+  dify-web:
+    image: langgenius/dify-web:latest
+    container_name: corpai-dify-web
+    restart: unless-stopped
+    environment:
+      CONSOLE_API_URL: ""
+      APP_API_URL: ""
+    networks:
+      - corpai-net
+
+  # ═══════════════════════════════════════════════════════════
+  # NGINX PROXY MANAGER — Proxy Reverso com GUI
+  # ═══════════════════════════════════════════════════════════
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: corpai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "81:81"       # Painel admin do NPM
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - corpai-net
+
+  # ═══════════════════════════════════════════════════════════
+  # GRAFANA — Dashboards de Monitoramento
+  # ═══════════════════════════════════════════════════════════
+  grafana:
+    image: grafana/grafana:latest
+    container_name: corpai-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_INSTALL_PLUGINS: alexanderzobnin-zabbix-app
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - corpai-net
+
+  # ═══════════════════════════════════════════════════════════
+  # ZABBIX — Monitoramento de Infraestrutura
+  # ═══════════════════════════════════════════════════════════
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:alpine-latest
+    container_name: corpai-zabbix-server
+    restart: unless-stopped
+    environment:
+      DB_SERVER_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${ZABBIX_POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - corpai-net
+
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:alpine-latest
+    container_name: corpai-zabbix-web
+    restart: unless-stopped
+    environment:
+      ZBX_SERVER_HOST: zabbix-server
+      DB_SERVER_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${ZABBIX_POSTGRES_DB}
+      PHP_TZ: America/Sao_Paulo
+    depends_on:
+      - zabbix-server
+    networks:
+      - corpai-net
+
+  # ═══════════════════════════════════════════════════════════
+  # PAPERLESS-NGX — GED Local
+  # ═══════════════════════════════════════════════════════════
+  paperless-ngx:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: corpai-paperless
+    restart: unless-stopped
+    environment:
+      PAPERLESS_DBHOST: postgres
+      PAPERLESS_DBNAME: ${PAPERLESS_POSTGRES_DB}
+      PAPERLESS_DBUSER: ${POSTGRES_USER}
+      PAPERLESS_DBPASS: ${POSTGRES_PASSWORD}
+      PAPERLESS_REDIS: redis://:${REDIS_PASSWORD}@redis:6379/2
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+      PAPERLESS_ADMIN_USER: ${PAPERLESS_ADMIN_USER}
+      PAPERLESS_ADMIN_PASSWORD: ${PAPERLESS_ADMIN_PASSWORD}
+      PAPERLESS_OCR_LANGUAGE: por
+      PAPERLESS_TIME_ZONE: America/Sao_Paulo
+      PAPERLESS_ENABLE_UPDATE_CHECK: "false"
+    volumes:
+      - paperless_data:/usr/src/paperless/data
+      - paperless_media:/usr/src/paperless/media
+      - paperless_consume:/usr/src/paperless/consume
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - corpai-net
+
+  # ═══════════════════════════════════════════════════════════
+  # CORPAI BACKEND — FastAPI
+  # ═══════════════════════════════════════════════════════════
+  corpai-backend:
+    build:
+      context: ./corpai-backend
+      dockerfile: Dockerfile
+    container_name: corpai-backend
+    restart: unless-stopped
+    environment:
+      # PostgreSQL
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Ollama
+      OLLAMA_HOST: ollama
+      OLLAMA_PORT: 11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL}
+      # ChromaDB
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      CHROMA_AUTH_TOKEN: ${CHROMA_AUTH_TOKEN}
+      # JWT
+      SECRET_KEY: ${CORPAI_SECRET_KEY}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${CORPAI_ACCESS_TOKEN_EXPIRE_MINUTES}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${CORPAI_REFRESH_TOKEN_EXPIRE_DAYS}
+      # Admin inicial
+      ADMIN_USERNAME: ${CORPAI_ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${CORPAI_ADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - corpai-net
+
+  # ═══════════════════════════════════════════════════════════
+  # CORPAI FRONTEND — React + Tailwind
+  # ═══════════════════════════════════════════════════════════
+  corpai-frontend:
+    build:
+      context: ./corpai-frontend
+      dockerfile: Dockerfile
+    container_name: corpai-frontend
+    restart: unless-stopped
+    networks:
+      - corpai-net
+
+# ═══════════════════════════════════════════════════════════
+# VOLUMES
+# ═══════════════════════════════════════════════════════════
+volumes:
+  ollama_data:
+    driver: local
+  chroma_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  npm_data:
+    driver: local
+  npm_letsencrypt:
+    driver: local
+  grafana_data:
+    driver: local
+  paperless_data:
+    driver: local
+  paperless_media:
+    driver: local
+  paperless_consume:
+    driver: local
+
+# ═══════════════════════════════════════════════════════════
+# REDE
+# ═══════════════════════════════════════════════════════════
+networks:
+  corpai-net:
+    driver: bridge
+    name: corpai-net

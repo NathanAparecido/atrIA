@@ -1,0 +1,35 @@
+# CorpAI — Datasource Zabbix para Grafana
+# Provisionamento automático
+
+apiVersion: 1
+
+datasources:
+  - name: Zabbix
+    type: alexanderzobnin-zabbix-datasource
+    access: proxy
+    url: http://zabbix-web:8080/api_jsonrpc.php
+    jsonData:
+      username: Admin
+      trends: true
+      trendsFrom: '7d'
+      trendsRange: '4d'
+      cacheTTL: '1h'
+    secureJsonData:
+      password: ${ZABBIX_ADMIN_PASSWORD}
+    isDefault: false
+    editable: true
+
+  - name: PostgreSQL - CorpAI
+    type: postgres
+    url: postgres:5432
+    database: corpai
+    user: ${POSTGRES_USER}
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    isDefault: true
+    editable: true

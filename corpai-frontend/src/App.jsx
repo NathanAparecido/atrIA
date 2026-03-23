@@ -1,0 +1,99 @@
+/**
+ * CorpAI — App Principal
+ * Roteamento, tema, e layout base.
+ */
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './pages/Login';
+import Chat from './pages/Chat';
+import Documents from './pages/Documents';
+import Admin from './pages/Admin';
+import ProtectedRoute from './components/ProtectedRoute';
+
+function AppRoutes() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dark-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-corpai-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-dark-400 text-sm">Carregando CorpAI...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Chat />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/documentos"
+        element={
+          <ProtectedRoute requiredRoles={['lider_setor', 'admin']}>
+            <Documents />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRoles={['admin']}>
+            <Admin />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+function App() {
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('corpai_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+    localStorage.setItem('corpai_theme', theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  }
+
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <div className="min-h-screen transition-theme" style={{ background: 'var(--color-bg)', color: 'var(--color-text)' }}>
+          <AppRoutes />
+        </div>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
+
+// Exportar toggleTheme via window para acesso global
+window.__corpaiToggleTheme = null;
+
+export default App;

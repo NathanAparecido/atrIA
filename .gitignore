@@ -1,0 +1,43 @@
+# Binários e bibliotecas
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/
+dist/
+build/
+
+# Dados persistentes (volumes Docker)
+postgres_data/
+chroma_data/
+redis_data/
+zabbix_db_data/
+paperless_data/
+grafana_data/
+ollama_data/
+npm_data/
+
+# Segurança e segredos
+.env
+.env.local
+*.pem
+*.key
+*.crt
+
+# Logs e arquivos temporários
+*.log
+tmp/
+.temp/
+
+# Sistema
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Configurações locais que não devem subir
+nginx/letsencrypt/
+nginx/data/
+zabbix/data/
+zabbix/db_data/
+zabbix/web_data/

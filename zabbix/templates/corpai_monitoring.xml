@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CorpAI — Template de Monitoramento Zabbix
+  Monitora: containers Docker, CPU/memória do host, disco, endpoint /health
+-->
+<zabbix_export>
+  <version>6.4</version>
+  <template_groups>
+    <template_group>
+      <uuid>corpai-monitoring-group</uuid>
+      <name>CorpAI</name>
+    </template_group>
+  </template_groups>
+  <templates>
+    <template>
+      <uuid>corpai-monitoring-template</uuid>
+      <template>CorpAI Monitoring</template>
+      <name>CorpAI — Monitoramento Completo</name>
+      <groups>
+        <group>
+          <name>CorpAI</name>
+        </group>
+      </groups>
+      <description>Template de monitoramento para a infraestrutura CorpAI. Inclui: status dos containers Docker, recursos do host, e verificação do endpoint /health.</description>
+
+      <items>
+        <!-- ═══ CPU do Host ═══ -->
+        <item>
+          <uuid>corpai-cpu-util</uuid>
+          <name>CPU — Utilização Total (%)</name>
+          <key>system.cpu.util</key>
+          <delay>60s</delay>
+          <value_type>FLOAT</value_type>
+          <units>%</units>
+          <triggers>
+            <trigger>
+              <uuid>corpai-cpu-high</uuid>
+              <expression>avg(/CorpAI Monitoring/system.cpu.util,5m)&gt;85</expression>
+              <name>CPU acima de 85% por mais de 5 minutos</name>
+              <priority>WARNING</priority>
+            </trigger>
+            <trigger>
+              <uuid>corpai-cpu-critical</uuid>
+              <expression>avg(/CorpAI Monitoring/system.cpu.util,5m)&gt;95</expression>
+              <name>CPU acima de 95% — CRÍTICO</name>
+              <priority>HIGH</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <!-- ═══ Memória do Host ═══ -->
+        <item>
+          <uuid>corpai-mem-util</uuid>
+          <name>Memória — Utilização (%)</name>
+          <key>vm.memory.utilization</key>
+          <delay>60s</delay>
+          <value_type>FLOAT</value_type>
+          <units>%</units>
+          <triggers>
+            <trigger>
+              <uuid>corpai-mem-high</uuid>
+              <expression>avg(/CorpAI Monitoring/vm.memory.utilization,5m)&gt;85</expression>
+              <name>Memória acima de 85% por mais de 5 minutos</name>
+              <priority>WARNING</priority>
+            </trigger>
+            <trigger>
+              <uuid>corpai-mem-critical</uuid>
+              <expression>avg(/CorpAI Monitoring/vm.memory.utilization,5m)&gt;95</expression>
+              <name>Memória acima de 95% — CRÍTICO</name>
+              <priority>HIGH</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <!-- ═══ Disco ═══ -->
+        <item>
+          <uuid>corpai-disk-pused</uuid>
+          <name>Disco — Uso do Volume Principal (%)</name>
+          <key>vfs.fs.pused[/]</key>
+          <delay>300s</delay>
+          <value_type>FLOAT</value_type>
+          <units>%</units>
+          <triggers>
+            <trigger>
+              <uuid>corpai-disk-high</uuid>
+              <expression>last(/CorpAI Monitoring/vfs.fs.pused[/])&gt;80</expression>
+              <name>Disco acima de 80%</name>
+              <priority>WARNING</priority>
+            </trigger>
+            <trigger>
+              <uuid>corpai-disk-critical</uuid>
+              <expression>last(/CorpAI Monitoring/vfs.fs.pused[/])&gt;95</expression>
+              <name>Disco acima de 95% — CRÍTICO</name>
+              <priority>DISASTER</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <!-- ═══ Endpoint /health do CorpAI Backend ═══ -->
+        <item>
+          <uuid>corpai-health-check</uuid>
+          <name>CorpAI Backend — Health Check</name>
+          <key>web.page.get[corpai-backend,/api/health,8080]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+          <triggers>
+            <trigger>
+              <uuid>corpai-health-down</uuid>
+              <expression>nodata(/CorpAI Monitoring/web.page.get[corpai-backend,/api/health,8080],5m)=1</expression>
+              <name>CorpAI Backend indisponível por mais de 5 minutos</name>
+              <priority>HIGH</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <!-- ═══ Status dos Containers Docker ═══ -->
+        <item>
+          <uuid>corpai-docker-ollama</uuid>
+          <name>Docker — Container corpai-ollama (status)</name>
+          <key>docker.container.state[corpai-ollama]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+          <triggers>
+            <trigger>
+              <uuid>corpai-docker-ollama-down</uuid>
+              <expression>find(/CorpAI Monitoring/docker.container.state[corpai-ollama],,"like","running")=0</expression>
+              <name>Container corpai-ollama não está running</name>
+              <priority>HIGH</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>corpai-docker-chromadb</uuid>
+          <name>Docker — Container corpai-chromadb (status)</name>
+          <key>docker.container.state[corpai-chromadb]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+          <triggers>
+            <trigger>
+              <uuid>corpai-docker-chromadb-down</uuid>
+              <expression>find(/CorpAI Monitoring/docker.container.state[corpai-chromadb],,"like","running")=0</expression>
+              <name>Container corpai-chromadb não está running</name>
+              <priority>HIGH</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>corpai-docker-postgres</uuid>
+          <name>Docker — Container corpai-postgres (status)</name>
+          <key>docker.container.state[corpai-postgres]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+          <triggers>
+            <trigger>
+              <uuid>corpai-docker-postgres-down</uuid>
+              <expression>find(/CorpAI Monitoring/docker.container.state[corpai-postgres],,"like","running")=0</expression>
+              <name>Container corpai-postgres não está running</name>
+              <priority>DISASTER</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>corpai-docker-redis</uuid>
+          <name>Docker — Container corpai-redis (status)</name>
+          <key>docker.container.state[corpai-redis]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+          <triggers>
+            <trigger>
+              <uuid>corpai-docker-redis-down</uuid>
+              <expression>find(/CorpAI Monitoring/docker.container.state[corpai-redis],,"like","running")=0</expression>
+              <name>Container corpai-redis não está running</name>
+              <priority>HIGH</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>corpai-docker-backend</uuid>
+          <name>Docker — Container corpai-backend (status)</name>
+          <key>docker.container.state[corpai-backend]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+          <triggers>
+            <trigger>
+              <uuid>corpai-docker-backend-down</uuid>
+              <expression>find(/CorpAI Monitoring/docker.container.state[corpai-backend],,"like","running")=0</expression>
+              <name>Container corpai-backend não está running</name>
+              <priority>HIGH</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>corpai-docker-frontend</uuid>
+          <name>Docker — Container corpai-frontend (status)</name>
+          <key>docker.container.state[corpai-frontend]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+          <triggers>
+            <trigger>
+              <uuid>corpai-docker-frontend-down</uuid>
+              <expression>find(/CorpAI Monitoring/docker.container.state[corpai-frontend],,"like","running")=0</expression>
+              <name>Container corpai-frontend não está running</name>
+              <priority>WARNING</priority>
+            </trigger>
+          </triggers>
+        </item>
+
+        <item>
+          <uuid>corpai-docker-dify-api</uuid>
+          <name>Docker — Container corpai-dify-api (status)</name>
+          <key>docker.container.state[corpai-dify-api]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+        </item>
+
+        <item>
+          <uuid>corpai-docker-nginx</uuid>
+          <name>Docker — Container corpai-nginx (status)</name>
+          <key>docker.container.state[corpai-nginx]</key>
+          <delay>60s</delay>
+          <value_type>TEXT</value_type>
+        </item>
+
+      </items>
+    </template>
+  </templates>
+</zabbix_export>
