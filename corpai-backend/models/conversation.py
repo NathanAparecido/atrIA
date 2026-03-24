@@ -8,11 +8,8 @@ from datetime import datetime
 
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import DeclarativeBase, relationship
-
-
-class Base(DeclarativeBase):
-    pass
+from sqlalchemy.orm import relationship
+from models import Base
 
 
 class Conversation(Base):

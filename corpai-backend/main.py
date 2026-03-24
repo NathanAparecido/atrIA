@@ -12,8 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pythonjsonlogger import jsonlogger
 
 from config import settings
-from models.user import Base as UserBase
-from models.conversation import Base as ConversationBase
+from models import Base
+from models.user import User           # noqa: F401 — registra na metadata
+from models.conversation import Conversation, Message  # noqa: F401
 from routers import auth, users, documents, chat, health
 
 # ─── Configuração de Logs em JSON ───────────────────────────
@@ -85,8 +86,7 @@ async def lifespan(app: FastAPI):
     """Eventos de startup e shutdown da aplicação."""
     # Startup: criar tabelas e admin
     async with engine.begin() as conn:
-        await conn.run_sync(UserBase.metadata.create_all)
-        await conn.run_sync(ConversationBase.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all)
 
     await criar_admin_inicial()
     logging.info("CorpAI Backend iniciado com sucesso.")
