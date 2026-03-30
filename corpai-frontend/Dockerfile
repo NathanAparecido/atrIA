@@ -11,15 +11,19 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Configuração do Nginx para SPA (rotas do React)
+# Usa resolver do Docker (127.0.0.11) para resolver DNS em runtime,
+# evitando crash do nginx quando o backend estiver temporariamente fora.
 RUN echo 'server { \
     listen 3001; \
     root /usr/share/nginx/html; \
     index index.html; \
+    resolver 127.0.0.11 valid=10s ipv6=off; \
+    set $backend http://corpai-backend:8080; \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
     location /api { \
-        proxy_pass http://corpai-backend:8080; \
+        proxy_pass $backend; \
         proxy_set_header Host $host; \
         proxy_set_header X-Real-IP $remote_addr; \
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
