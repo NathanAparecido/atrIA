@@ -1,39 +1,31 @@
 /**
- * ParticleCanvas — Estacas Verticais com Sombras Projetadas
+ * ParticleCanvas — Estacas com Sombras em Pílula + Arco-Íris
  *
- * Modelo físico: estacas invisíveis verticais fincadas na tela.
- * O cursor = sol olhando de cima.
- * O que vemos são as SOMBRAS coloridas projetadas:
- *   - Perto do cursor (sol em cima): sombra curta (quase um ponto)
- *   - Longe do cursor: sombra longa, apontando para fora
- * Estacas se repelem/atraem pelo cursor.
+ * - Estacas esparsas (grid 45px) — poucas visíveis como na referência
+ * - Sombra em formato pílula (lineCap round + largura grossa)
+ * - Arco-íris: perto do cursor = vermelho, longe = violeta
+ * - Breathing: raio oscila constantemente → atrai/repele dinamicamente
+ * - Visibilidade varia com o breathing (às vezes mais, às vezes menos)
  */
 
 import { useRef, useEffect } from 'react';
 
 // ─── Configuração ──────────────────────────────────────────
-const GRID_SPACING = 22;
-const SUN_HEIGHT = 200;          // Altura virtual do "sol" (cursor)
-const STAKE_MIN_H = 4;          // Altura mínima da estaca
-const STAKE_MAX_H = 12;         // Altura máxima
-const MAX_SHADOW_LEN = 18;      // Sombra máxima (px)
-const REPEL_RADIUS = 140;       // Raio de repulsão
-const REPEL_FORCE = 4;
-const SPRING_K = 0.04;
+const GRID_SPACING = 45;         // Esparso como na referência
+const SUN_HEIGHT = 180;
+const STAKE_MIN_H = 3;
+const STAKE_MAX_H = 8;
+const MAX_SHADOW_LEN = 14;
+const REPEL_RADIUS = 160;
+const REPEL_FORCE = 3.5;
+const SPRING_K = 0.035;
 const FRICTION = 0.90;
-const SHADOW_WIDTH = 1.8;
+const PILL_WIDTH = 2.8;          // Largura da pílula
 const BG_COLOR = '#121212';
-
-const COLORS = [
-  '#ef4444', '#f97316', '#eab308', '#22c55e',
-  '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4',
-  '#6366f1', '#f43f5e', '#a855f7', '#14b8a6',
-];
 
 class Stake {
   constructor(x, y) {
-    // Jitter na posição da âncora para quebrar a grade
-    const jitter = GRID_SPACING * 0.3;
+    const jitter = GRID_SPACING * 0.4;
     this.baseX = x + (Math.random() - 0.5) * jitter;
     this.baseY = y + (Math.random() - 0.5) * jitter;
     this.x = this.baseX;
@@ -41,26 +33,28 @@ class Stake {
     this.vx = 0;
     this.vy = 0;
 
-    // Altura da estaca (determina comprimento máximo da sombra)
     this.height = STAKE_MIN_H + Math.random() * (STAKE_MAX_H - STAKE_MIN_H);
 
-    // Cor da sombra
-    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    // Fase individual para breathing (desincronizado entre partículas)
+    this.breathPhase = Math.random() * Math.PI * 2;
+    this.breathSpeed = 0.03 + Math.random() * 0.02;
 
-    // Opacidade base
-    this.alpha = 0.6 + Math.random() * 0.3;
+    // Opacidade base muito baixa (maioria quase invisível)
+    this.baseAlpha = 0.05 + Math.random() * 0.15;
   }
 
-  update(mx, my, mouseActive) {
+  update(mx, my, mouseActive, time) {
     if (mouseActive) {
       const dx = mx - this.x;
       const dy = my - this.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      // Repulsão: empurrar estacas para fora do cursor
-      if (dist < REPEL_RADIUS && dist > 0.5) {
-        const force = ((REPEL_RADIUS - dist) / REPEL_RADIUS);
-        const forceQ = force * force; // Quadrática para borda definida
+      // Breathing: raio oscila ±20% criando atração/repulsão constante
+      const breathingRadius = REPEL_RADIUS * (1 + Math.sin(time * this.breathSpeed + this.breathPhase) * 0.2);
+
+      if (dist < breathingRadius && dist > 0.5) {
+        const force = ((breathingRadius - dist) / breathingRadius);
+        const forceQ = force * force;
         this.vx -= (dx / dist) * forceQ * REPEL_FORCE;
         this.vy -= (dy / dist) * forceQ * REPEL_FORCE;
       }
@@ -77,51 +71,49 @@ class Stake {
     this.y += this.vy;
   }
 
-  draw(ctx, mx, my) {
-    // Vetor da estaca para longe do cursor (direção da sombra)
+  draw(ctx, mx, my, time) {
     const dx = this.x - mx;
     const dy = this.y - my;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Comprimento da sombra = altura_estaca × (distância / altura_sol)
-    // Perto do cursor (sol em cima): sombra ≈ 0
-    // Longe: sombra cresce
+    // Comprimento da sombra (projeção)
     let shadowLen = this.height * (dist / SUN_HEIGHT);
     shadowLen = Math.min(shadowLen, MAX_SHADOW_LEN);
 
-    // Direção normalizada (aponta para fora do cursor)
-    let nx, ny;
+    // Breathing na opacidade: oscila entre mais e menos visível
+    const breathAlpha = Math.sin(time * this.breathSpeed + this.breathPhase) * 0.3;
+    const alpha = Math.max(0.02, this.baseAlpha + breathAlpha);
+
+    // Pular se quase invisível (performance)
+    if (alpha < 0.03 && shadowLen < 1) return;
+
+    // Direção (para fora do cursor)
+    let nx = 0, ny = 0;
     if (dist > 0.5) {
       nx = dx / dist;
       ny = dy / dist;
     } else {
-      nx = 0;
-      ny = 0;
       shadowLen = 0;
     }
 
-    // Ponto da sombra: começa na base da estaca, se estende para fora
     const endX = this.x + nx * shadowLen;
     const endY = this.y + ny * shadowLen;
 
-    // Desenhar a sombra (traço colorido)
+    // ── Arco-íris baseado na distância ──
+    // Perto do cursor = vermelho (hue 0), longe = violeta (hue 270)
+    const t = Math.min(1, dist / 500);
+    const hue = t * 270;
+    const saturation = 85;
+    const lightness = 55 + (1 - t) * 20; // Perto = mais brilhante
+
+    // ── Desenhar sombra em formato pílula ──
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
     ctx.lineTo(endX, endY);
-    ctx.strokeStyle = this.color;
-    ctx.globalAlpha = this.alpha;
-    ctx.lineWidth = SHADOW_WIDTH;
-    ctx.lineCap = 'round';
+    ctx.strokeStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
+    ctx.lineWidth = PILL_WIDTH;
+    ctx.lineCap = 'round'; // Pontas arredondadas = formato pílula
     ctx.stroke();
-
-    // Desenhar a "cabeça" da estaca (ponto pequeno mais brilhante)
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, 1, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = this.alpha * 0.5;
-    ctx.fill();
-
-    ctx.globalAlpha = 1;
   }
 }
 
@@ -137,6 +129,7 @@ export default function ParticleCanvas() {
     let stakes = [];
     let W, H;
     let mx = -9999, my = -9999, mouseActive = false;
+    let time = 0;
     let raf;
 
     function initGrid() {
@@ -168,12 +161,14 @@ export default function ParticleCanvas() {
     function onTouchEnd() { mouseActive = false; }
 
     function animate() {
+      time++;
+
       ctx.fillStyle = BG_COLOR;
       ctx.fillRect(0, 0, W, H);
 
       for (let i = 0; i < stakes.length; i++) {
-        stakes[i].update(mx, my, mouseActive);
-        stakes[i].draw(ctx, mx, my);
+        stakes[i].update(mx, my, mouseActive, time);
+        stakes[i].draw(ctx, mx, my, time);
       }
 
       raf = requestAnimationFrame(animate);
