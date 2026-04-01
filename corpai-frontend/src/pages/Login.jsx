@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { WarpBackground } from '../components/magicui/WarpBackground';
 import { Backlight } from '../components/magicui/Backlight';
 import { TextAnimate } from '../components/magicui/TextAnimate';
+import { Card, CardContent, CardTitle, CardDescription } from '../components/ui/card';
 import ThemeToggle from '../components/ThemeToggle';
 
 // ─── BorderBeam Componente ──────────────────────────────── 
@@ -66,123 +67,92 @@ export default function Login() {
         <ThemeToggle />
       </div>
 
-      <div className="flex flex-col items-center z-10">
-        <div className="mb-6 font-['Orbitron'] text-5xl font-bold flex">
-          <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[#0f172a] dark:text-[#f8fafc]">
+      <div className="flex flex-col items-center z-10 w-full max-w-md px-4">
+        <div className="mb-8 font-['Orbitron'] text-6xl font-black flex tracking-tighter">
+          <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-white">
             atr
           </TextAnimate>
-          <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#8b5cf6] drop-shadow-[0_0_20px_rgba(139,92,246,0.9)] animate-pulse">
+          <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#8b5cf6] drop-shadow-[0_0_25px_rgba(139,92,246,0.8)]">
             IA
           </TextAnimate>
         </div>
 
-      <Backlight className="w-full">
-      {/* Shadcn UI Card Equivalent with BorderBeam */}
-      <div 
-        className="relative w-[380px] rounded-xl shadow-2xl backdrop-blur-xl z-10 transition-theme"
-        style={{ 
-          backgroundColor: 'color-mix(in srgb, var(--color-surface) 60%, transparent)',
-          border: '1px solid color-mix(in srgb, var(--color-border) 50%, transparent)'
-        }}
-      >
-        <BorderBeam duration={8} />
+        <Backlight className="w-full">
+          <Card className="relative w-full border-white/20 bg-black/40 backdrop-blur-2xl">
+            <BorderBeam duration={6} />
+            
+            <CardContent className="flex flex-col gap-6 p-8">
+              <div className="flex flex-col space-y-2">
+                <CardTitle className="text-3xl tracking-tight">login</CardTitle>
+                <CardDescription>
+                  enter your credentials to access your account.
+                </CardDescription>
+              </div>
 
-        <div className="relative z-10 p-6 flex flex-col gap-6">
-          
-          <div className="flex flex-col space-y-1.5">
-            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--color-text)' }}>
-              Login
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              Enter your credentials to access your account.
-            </p>
-          </div>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid w-full items-center gap-5">
+                  {erro && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-xs text-red-400 animate-fade-in font-bold">
+                      {erro}
+                    </div>
+                  )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="grid w-full items-center gap-4">
-              
-              {erro && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400 animate-fade-in">
-                  {erro}
+                  <div className="flex flex-col space-y-2">
+                    <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-white/50">
+                      email
+                    </label>
+                    <input
+                      id="email"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="name@company.com"
+                      required
+                      autoFocus
+                      className="flex h-12 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/50 focus:border-[#8b5cf6]/50"
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-white/50">
+                      password
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="flex h-12 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/50 focus:border-[#8b5cf6]/50"
+                    />
+                  </div>
                 </div>
-              )}
 
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="email" className="text-sm font-medium leading-none" style={{ color: 'var(--color-text)' }}>
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="text" // Mantém como text pois a auth original aceitava username
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                  autoFocus
-                  className="flex h-10 w-full rounded-md border px-3 py-2 text-sm transition-theme focus:outline-none focus:ring-2 focus:ring-opacity-50"
-                  style={{
-                    backgroundColor: 'var(--color-bg)',
-                    borderColor: 'var(--color-border)',
-                    color: 'var(--color-text)',
-                    '--tw-ring-color': 'var(--color-primary)'
-                  }}
-                />
-              </div>
-
-              <div className="flex flex-col space-y-2">
-                <label htmlFor="password" className="text-sm font-medium leading-none" style={{ color: 'var(--color-text)' }}>
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  className="flex h-10 w-full rounded-md border px-3 py-2 text-sm transition-theme focus:outline-none focus:ring-2 focus:ring-opacity-50"
-                  style={{
-                    backgroundColor: 'var(--color-bg)',
-                    borderColor: 'var(--color-border)',
-                    color: 'var(--color-text)',
-                    '--tw-ring-color': 'var(--color-primary)'
-                  }}
-                />
-              </div>
-
-            </div>
-
-            <div className="flex justify-between items-center mt-6">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border hover:bg-opacity-10 h-10 px-4 py-2"
-                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-              >
-                Register
-              </button>
-              
-              <button
-                type="submit"
-                disabled={loading}
-                className={`inline-flex items-center justify-center rounded-md text-sm font-medium text-white transition-colors h-10 px-4 py-2 shadow-sm ${
-                  loading ? 'opacity-70 cursor-wait' : 'hover:opacity-90'
-                }`}
-                style={{ backgroundColor: 'var(--color-primary)' }}
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Autenticando...
-                  </>
-                ) : (
-                  'Login'
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-      </Backlight>
+                <div className="flex flex-col gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-12 flex items-center justify-center rounded-lg bg-[#8b5cf6] text-sm font-black text-white transition-all hover:bg-[#7c3aed] hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      'sign in'
+                    )}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    className="w-full h-12 text-xs font-bold text-white/40 hover:text-white transition-colors"
+                  >
+                    don't have an account? register here
+                  </button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </Backlight>
       </div>
     </WarpBackground>
   );

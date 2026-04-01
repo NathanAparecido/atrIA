@@ -7,22 +7,22 @@ export function WarpBackground({ children, className = "" }) {
       {/* Perspetive Grid Warp Effect */}
       <div 
         className="absolute inset-0 pointer-events-none select-none z-0"
-        style={{ perspective: "1000px" }}
+        style={{ perspective: "1500px" }}
       >
         <motion.div
-           className="absolute w-[200%] h-[200%] left-[-50%] top-[-50%] border-t border-l border-[var(--color-border)] opacity-20 dark:opacity-30"
+           className="absolute w-[800%] h-[400%] left-[-350%] -top-[100%] border-t border-l border-[var(--color-border)] opacity-30 dark:opacity-40"
            style={{
              backgroundImage: "linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)",
-             backgroundSize: "60px 60px",
-             transformOrigin: "center 80%",
-             rotateX: "75deg",
+             backgroundSize: "80px 80px",
+             transformOrigin: "center 90%",
+             rotateX: "82deg",
            }}
            animate={{
-              y: ["0px", "60px"]
+              y: ["0px", "80px"]
            }}
            transition={{
               repeat: Infinity,
-              duration: 2,
+              duration: 1.5,
               ease: "linear"
            }}
         />
