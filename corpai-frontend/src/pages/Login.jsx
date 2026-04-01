@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { WarpBackground } from '../components/magicui/WarpBackground';
 import { Backlight } from '../components/magicui/Backlight';
 import { TextAnimate } from '../components/magicui/TextAnimate';
+import { Particles } from '../components/magicui/Particles';
 import { Card, CardContent, CardTitle, CardDescription } from '../components/ui/card';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -60,7 +61,14 @@ export default function Login() {
   }
 
   return (
-    <WarpBackground className="transition-theme flex items-center justify-center p-4">
+    <WarpBackground className="transition-theme flex items-center justify-center p-4 relative">
+      <Particles
+        className="absolute inset-0 z-0 pointer-events-none"
+        quantity={150}
+        ease={80}
+        color="#8b5cf6"
+        refresh
+      />
 
       {/* Theme Toggle no Topo */}
       <div className="absolute top-4 right-4 z-20">
