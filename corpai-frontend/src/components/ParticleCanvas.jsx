@@ -7,8 +7,16 @@ import { useRef, useEffect, useCallback } from 'react';
 
 // ─── Configuração ──────────────────────────────────────────
 const BG_COLOR = '#121212';
-const PARTICLE_RGB = '255,255,255';
-const GRID_STEP = 25;
+const PALETTE = [
+  '100,180,255',   // Azul claro
+  '80,220,240',    // Ciano
+  '255,100,180',   // Rosa
+  '255,160,60',    // Laranja
+  '120,255,160',   // Verde menta
+  '180,130,255',   // Lilás
+  '255,255,255',   // Branco
+];
+const GRID_STEP = 20;
 const MOUSE_RADIUS = 130;
 const MOUSE_SENS = 0.00005;
 const SPRING_K = 0.02;
@@ -16,7 +24,7 @@ const FRICTION = 0.88;
 const DEPTH_FACTOR = 0.004;
 const BASE_SIZE = 1.8;
 const BASE_ALPHA = 0.7;
-const DRIFT_STRENGTH = 0.004;
+const DRIFT_STRENGTH = 0.01;
 const HASH_CELL = 170; // ≥ outerRadius (1.3 × 130 = 169px)
 
 // ─── Spatial Hash ──────────────────────────────────────────
@@ -68,17 +76,25 @@ class SpatialHash {
 // ─── Partícula ─────────────────────────────────────────────
 class Particle {
   constructor(x, y) {
-    this.anchorX = x;
-    this.anchorY = y;
+    // Jitter: deslocar âncora aleatoriamente para quebrar a malha visível
+    const jitter = GRID_STEP * 0.35;
+    this.anchorX = x + (Math.random() - 0.5) * jitter;
+    this.anchorY = y + (Math.random() - 0.5) * jitter;
     this.anchorZ = 0;
 
-    this.x = x;
-    this.y = y;
+    this.x = this.anchorX;
+    this.y = this.anchorY;
     this.z = 0;
 
     this.vx = 0;
     this.vy = 0;
     this.vz = 0;
+
+    // Tamanho aleatório por partícula
+    this.baseSize = 1.0 + Math.random() * 1.8;
+
+    // Cor aleatória da paleta
+    this.color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
 
     // Drift aleatório e fraco por partícula
     this.driftPhaseX = Math.random() * Math.PI * 2;
@@ -144,12 +160,12 @@ class Particle {
   draw(ctx) {
     // Projeção perspectiva baseada em Z
     const perspective = 1 / (1 + Math.abs(this.z) * DEPTH_FACTOR);
-    const size = BASE_SIZE * perspective;
+    const size = this.baseSize * perspective;
     const alpha = Math.max(0.08, BASE_ALPHA * perspective);
 
     ctx.beginPath();
     ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${PARTICLE_RGB},${alpha})`;
+    ctx.fillStyle = `rgba(${this.color},${alpha})`;
     ctx.fill();
   }
 }
