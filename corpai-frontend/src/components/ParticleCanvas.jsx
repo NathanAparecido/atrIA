@@ -1,93 +1,101 @@
 /**
- * ParticleCanvas — Efeito "Swarm" (Enxame) Antigravity
- * 1000+ partículas com cores variadas que orbitam o cursor em nuvem.
- * Alta performance via Canvas.
+ * ParticleCanvas — Clone Técnico Google Antigravity
+ * Simulação de Esfera de Volume e Grade 3D Projetada.
  */
 
 import { useRef, useEffect, useCallback } from 'react';
 
-// ─── Configuração ──────────────────────────────────────
+// ─── Configuração Técnica Exata ──────────────────────────
 const CONFIG = {
-  particleCount: 1000,
-  particleMinSize: 0.8,
-  particleMaxSize: 2.2,
-  friction: 0.94,
-  ease: 0.1,
-  mouseRadius: 350,
-  palette: [
-    { r: 239, g: 68, b: 68 },   // Vermelho (red-500)
-    { r: 59, g: 130, b: 246 },  // Azul (blue-500)
-    { r: 168, g: 85, b: 247 },  // Roxo (purple-500)
-    { r: 236, g: 72, b: 153 },  // Rosa (fuchsia-500)
-  ]
+  gridDensity: 25,           // Espaçamento da grade (px)
+  mouseRadius: 130,          // Raio da esfera de volume (R_mouse)
+  mouseSensitivity: 0.006,   // Força de empuxo da esfera
+  springConstant: 0.04,      // Constante elástica (Lei de Hooke)
+  friction: 0.88,            // Fricção do ambiente
+  depthFactor: 0.005,        // Fator de escala da profundidade Z
+  baseSize: 1.8,             // Tamanho base da partícula
+  particleColor: '255, 255, 255', // Branco Puro (RGB)
 };
 
 class Particle {
-  constructor(canvasWidth, canvasHeight) {
-    this.x = Math.random() * canvasWidth;
-    this.y = Math.random() * canvasHeight;
-    this.baseSize = CONFIG.particleMinSize + Math.random() * (CONFIG.particleMaxSize - CONFIG.particleMinSize);
-    this.size = this.baseSize;
-    
-    // Cada partícula tem um "offset" único para orbitar o mouse de forma dispersa
-    const angle = Math.random() * Math.PI * 2;
-    const distance = Math.random() * CONFIG.mouseRadius;
-    this.offsetX = Math.cos(angle) * distance;
-    this.offsetY = Math.sin(angle) * distance;
-    
-    // Velocidade e inércia
+  constructor(x, y) {
+    // Posição de Equilíbrio (Âncora na Grade)
+    this.anchorX = x;
+    this.anchorY = y;
+    this.anchorZ = 0;
+
+    // Posição Atual
+    this.x = x;
+    this.y = y;
+    this.z = 0;
+
+    // Velocidade
     this.vx = 0;
     this.vy = 0;
-    
-    // Escolher cor da paleta
-    this.color = CONFIG.palette[Math.floor(Math.random() * CONFIG.palette.length)];
-    this.opacity = 0.2 + Math.random() * 0.6;
-    
-    // Movimento independente (deriva)
-    this.driftX = (Math.random() - 0.5) * 0.5;
-    this.driftY = (Math.random() - 0.5) * 0.5;
+    this.vz = 0;
+
+    // Flutuação Orgânica (Drift)
+    this.driftX = (Math.random() - 0.5) * 0.2;
+    this.driftY = (Math.random() - 0.5) * 0.2;
+    this.driftZ = (Math.random() - 0.5) * 0.2;
   }
 
-  update(mouseX, mouseY, mouseActive, canvasWidth, canvasHeight) {
+  update(mx, my, mouseActive) {
     if (mouseActive) {
-      // Alvo é o mouse + o offset único da partícula (para não amontoar)
-      const targetX = mouseX + this.offsetX;
-      const targetY = mouseY + this.offsetY;
-      
-      const dx = targetX - this.x;
-      const dy = targetY - this.y;
-      
-      this.vx += dx * 0.05;
-      this.vy += dy * 0.05;
-      
-      // Mais brilho perto do movimento
-      this.opacity = Math.min(0.9, this.opacity + 0.02);
-    } else {
-      // Deriva orgânica quando o mouse está longe
-      this.vx += this.driftX;
-      this.vy += this.driftY;
-      this.opacity = Math.max(0.3, this.opacity - 0.01);
+      // 1. Cálculo da Distância 3D Simulada
+      const dx = this.x - mx;
+      const dy = this.y - my;
+      const dz = this.z - 0; // Mouse está em Z=0
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+      // 2. Física da Esfera de Volume
+      if (dist < CONFIG.mouseRadius) {
+        // Força F = (D^2 - R^2) * sensibilidade
+        // Como D < R, F é negativo (repulsão)
+        const force = (dist * dist - CONFIG.mouseRadius * CONFIG.mouseRadius) * CONFIG.mouseSensitivity;
+        
+        // Vetor de Fuga Normalizado
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const nz = dz / dist;
+
+        this.vx += nx * force;
+        this.vy += ny * force;
+        this.vz += nz * force;
+      }
     }
 
-    // Física
+    // 3. Mola de Restauração (Lei de Hooke: F = -k * x)
+    this.vx += (this.anchorX - this.x) * CONFIG.springConstant;
+    this.vy += (this.anchorY - this.y) * CONFIG.springConstant;
+    this.vz += (this.anchorZ - this.z) * CONFIG.springConstant;
+
+    // 4. Drift (Flutuação)
+    this.vx += this.driftX;
+    this.vy += this.driftY;
+    this.vz += this.driftZ;
+
+    // 5. Integração e Fricção
     this.vx *= CONFIG.friction;
     this.vy *= CONFIG.friction;
+    this.vz *= CONFIG.friction;
+
     this.x += this.vx;
     this.y += this.vy;
-
-    // Wrap-around ultra-suave
-    const padding = 50;
-    if (this.x < -padding) this.x = canvasWidth + padding;
-    if (this.x > canvasWidth + padding) this.x = -padding;
-    if (this.y < -padding) this.y = canvasHeight + padding;
-    if (this.y > canvasHeight + padding) this.y = -padding;
+    this.z += this.vz;
   }
 
   draw(ctx) {
-    const { r, g, b } = this.color;
+    // 6. Projeção 2D baseada na Profundidade (Perspective)
+    const perspective = 1 / (1 + Math.abs(this.z) * CONFIG.depthFactor);
+    const size = CONFIG.baseSize * perspective;
+    
+    // Alpha varia com Z (mais longe/profundo = mais transparente)
+    const alpha = Math.max(0.1, 0.8 * perspective);
+
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${this.opacity})`;
+    ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${CONFIG.particleColor}, ${alpha})`;
     ctx.fill();
   }
 }
@@ -98,21 +106,23 @@ export default function ParticleCanvas() {
   const mouseRef = useRef({ x: 0, y: 0, active: false });
   const animationRef = useRef(null);
 
-  const initParticles = useCallback((width, height) => {
-    particlesRef.current = [];
-    for (let i = 0; i < CONFIG.particleCount; i++) {
-      particlesRef.current.push(new Particle(width, height));
+  const initGrid = useCallback((width, height) => {
+    const particles = [];
+    const step = CONFIG.gridDensity;
+    
+    // Criar grade estruturada
+    for (let x = step / 2; x < width; x += step) {
+      for (let y = step / 2; y < height; y += step) {
+        particles.push(new Particle(x, y));
+      }
     }
+    particlesRef.current = particles;
   }, []);
 
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const ctx = canvas.getContext('2d', { alpha: true });
+    const ctx = canvas.getContext('2d', { alpha: false });
 
     function resize() {
       const dpr = window.devicePixelRatio || 1;
@@ -121,49 +131,43 @@ export default function ParticleCanvas() {
       canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = `${window.innerHeight}px`;
       ctx.scale(dpr, dpr);
-
-      initParticles(window.innerWidth, window.innerHeight);
+      initGrid(window.innerWidth, window.innerHeight);
     }
 
     resize();
     window.addEventListener('resize', resize);
 
-    function handleMouseMove(e) {
+    const handleMouseMove = (e) => {
       mouseRef.current.x = e.clientX;
       mouseRef.current.y = e.clientY;
       mouseRef.current.active = true;
-    }
+    };
 
-    function handleMouseLeave() {
+    const handleMouseLeave = () => {
       mouseRef.current.active = false;
-    }
-
-    function handleTouchMove(e) {
-      if (e.touches.length > 0) {
-        mouseRef.current.x = e.touches[0].clientX;
-        mouseRef.current.y = e.touches[0].clientY;
-        mouseRef.current.active = true;
-      }
-    }
+    };
 
     canvas.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
+    canvas.addEventListener('mouseleave', handleMouseLeave);
 
     function animate() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      // Fundo Deep Dark
+      ctx.fillStyle = '#121212';
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
-      // Limpar rastro sutil (motion blur opcional)
-      ctx.clearRect(0, 0, w, h);
+      // Additive Blending para brilho orgânico nas colisões
+      ctx.globalCompositeOperation = 'lighter';
 
       const { x: mx, y: my, active } = mouseRef.current;
       const particles = particlesRef.current;
 
       for (let i = 0; i < particles.length; i++) {
-        particles[i].update(mx, my, active, w, h);
+        particles[i].update(mx, my, active);
         particles[i].draw(ctx);
       }
+
+      // Reset blending para o próximo frame
+      ctx.globalCompositeOperation = 'source-over';
 
       animationRef.current = requestAnimationFrame(animate);
     }
@@ -173,24 +177,19 @@ export default function ParticleCanvas() {
     return () => {
       window.removeEventListener('resize', resize);
       canvas.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
-      canvas.removeEventListener('touchmove', handleTouchMove);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      canvas.removeEventListener('mouseleave', handleMouseLeave);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [initParticles]);
+  }, [initGrid]);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0"
-      style={{
-        zIndex: 0,
-        background: 'transparent',
-      }}
+      style={{ zIndex: 0, cursor: 'default' }}
       aria-hidden="true"
     />
   );
 }
+
 
