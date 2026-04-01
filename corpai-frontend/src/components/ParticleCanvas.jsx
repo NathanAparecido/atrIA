@@ -1,124 +1,116 @@
 /**
- * ParticleCanvas — Grade Invisível + Sol Radial + Breathing
+ * ParticleCanvas — Confete de Estacas Coloridas + Iluminação por Cursor
  *
- * - Grade 25px (invisível no repouso)
- * - Cursor = "Sol": perto é brilhante, longe é sombra
- * - Breathing: raio de repulsão oscila criando vibração viva
- * - Distorção elíptica radial (partículas esticam em direção ao mouse)
- * - Arco-íris por distância + luminosidade pelo Z
+ * - Pequenos traços/linhas (estacas) espalhados pela tela
+ * - Cores variadas (confete colorido)
+ * - Invisíveis/sutis normalmente
+ * - Cursor age como "lanterna": ilumina e revela os traços próximos
+ * - Micro-movimentos orgânicos
  */
 
 import { useRef, useEffect } from 'react';
 
 // ─── Configuração ──────────────────────────────────────────
-const GRID_SPACING = 25;
-const MOUSE_RADIUS = 150;
-const REVEAL_RADIUS = 300;
-const REPULSION_FORCE = 5;
-const SPRING_K = 0.05;
-const FRICTION = 0.92;
-const Z_DEPTH = 50;
-const BASE_SIZE = 1.3;
+const STICK_COUNT = 600;
+const REVEAL_RADIUS = 350;       // Raio da "lanterna"
+const STICK_MIN_LEN = 3;
+const STICK_MAX_LEN = 10;
+const STICK_WIDTH = 1.5;
+const DRIFT_SPEED = 0.008;
 const BG_COLOR = '#121212';
 
-class Particle {
-  constructor(x, y) {
-    this.baseX = x;
-    this.baseY = y;
-    this.x = x;
-    this.y = y;
-    this.z = 0;
-    this.vx = 0;
-    this.vy = 0;
-    this.alpha = 0;
-    this.density = 10 + Math.random() * 20;
+// Paleta de cores do confete (como na imagem do Antigravity)
+const COLORS = [
+  '#ef4444', // vermelho
+  '#f97316', // laranja
+  '#eab308', // amarelo
+  '#22c55e', // verde
+  '#3b82f6', // azul
+  '#8b5cf6', // roxo
+  '#ec4899', // rosa
+  '#06b6d4', // ciano
+  '#6366f1', // índigo
+  '#f43f5e', // rosa-vermelho
+];
+
+class Stick {
+  constructor(canvasW, canvasH) {
+    // Posição aleatória pela tela toda
+    this.x = Math.random() * canvasW;
+    this.y = Math.random() * canvasH;
+
+    // Ângulo do traço (rotação)
+    this.angle = Math.random() * Math.PI * 2;
+
+    // Comprimento da estaca
+    this.length = STICK_MIN_LEN + Math.random() * (STICK_MAX_LEN - STICK_MIN_LEN);
+
+    // Cor aleatória
+    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+    // Opacidade base (quase invisível)
+    this.baseAlpha = 0.04 + Math.random() * 0.06; // 4-10% — muito sutil
+    this.alpha = this.baseAlpha;
+
+    // Micro-movimento (drift orgânico)
+    this.driftPhase = Math.random() * Math.PI * 2;
+    this.driftAmp = 0.3 + Math.random() * 0.5;
+    this.driftSpeed = DRIFT_SPEED + Math.random() * 0.005;
+
+    // Rotação lenta
+    this.rotSpeed = (Math.random() - 0.5) * 0.003;
   }
 
   update(mx, my, mouseActive, time) {
+    // Micro-movimento orgânico
+    this.x += Math.sin(time * this.driftSpeed + this.driftPhase) * this.driftAmp * 0.1;
+    this.y += Math.cos(time * this.driftSpeed + this.driftPhase + 1.5) * this.driftAmp * 0.1;
+
+    // Rotação lenta constante
+    this.angle += this.rotSpeed;
+
     if (mouseActive) {
-      const dx = mx - this.x;
-      const dy = my - this.y;
+      const dx = this.x - mx;
+      const dy = this.y - my;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      // ── 1. Revelação por proximidade ──
       if (dist < REVEAL_RADIUS) {
-        const revealStrength = 1 - (dist / REVEAL_RADIUS);
-        this.alpha += (revealStrength - this.alpha) * 0.12;
+        // Iluminação: quanto mais perto do cursor, mais visível
+        const proximity = 1 - (dist / REVEAL_RADIUS);
+        // Quadrática para luz mais concentrada no centro
+        const intensity = proximity * proximity;
+        const targetAlpha = this.baseAlpha + intensity * 0.9;
+        this.alpha += (targetAlpha - this.alpha) * 0.15;
       } else {
-        this.alpha *= 0.94;
-      }
-
-      // ── 2. Repulsão com Breathing (raio oscilante) ──
-      const breathingRadius = MOUSE_RADIUS * (1 + Math.sin(time * 0.05 + this.density) * 0.08);
-
-      if (dist < breathingRadius && dist > 0.5) {
-        const forceRaw = (breathingRadius - dist) / breathingRadius;
-        // Força quadrática para borda mais definida na esfera
-        const forceSharp = forceRaw * forceRaw * 1.5;
-
-        const dirX = dx / dist;
-        const dirY = dy / dist;
-
-        this.vx -= dirX * forceSharp * REPULSION_FORCE;
-        this.vy -= dirY * forceSharp * REPULSION_FORCE;
-
-        // Z: partículas empurradas "saltam" para frente
-        this.z += (forceSharp * Z_DEPTH - this.z) * 0.2;
-      } else {
-        this.z *= 0.9;
+        // Fora da lanterna: voltar ao quase invisível
+        this.alpha += (this.baseAlpha - this.alpha) * 0.05;
       }
     } else {
-      this.alpha *= 0.95;
-      this.z *= 0.9;
+      this.alpha += (this.baseAlpha - this.alpha) * 0.05;
     }
-
-    // ── 3. Mola de restauração ──
-    this.vx += (this.baseX - this.x) * SPRING_K;
-    this.vy += (this.baseY - this.y) * SPRING_K;
-
-    // ── 4. Atrito + integração ──
-    this.vx *= FRICTION;
-    this.vy *= FRICTION;
-    this.x += this.vx;
-    this.y += this.vy;
   }
 
-  draw(ctx, mx, my) {
+  draw(ctx) {
     if (this.alpha < 0.01) return;
 
-    const dx = this.x - mx;
-    const dy = this.y - my;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+    const cos = Math.cos(this.angle);
+    const sin = Math.sin(this.angle);
+    const halfLen = this.length / 2;
 
-    // ── Escala 3D ──
-    const zNorm = this.z / Z_DEPTH;
-    const scale = 1 + zNorm * 1.5;
-    const size = BASE_SIZE * scale;
-
-    // ── Arco-íris: hue por distância ──
-    const t = Math.min(1, dist / REVEAL_RADIUS);
-    const hue = t * 270; // perto=vermelho, longe=violeta
-
-    // ── Sol/Sombra: perto do cursor = brilhante, longe = escuro ──
-    // Perto (t≈0): lightness alta (80-90%), saturação viva
-    // Longe (t≈1): lightness baixa (25-30%), sombra
-    const lightness = 85 - t * 58;  // 85% → 27%
-    const saturation = 95 - t * 20; // 95% → 75%
-
-    // Boost extra pelo Z (partículas empurradas brilham ainda mais)
-    const finalLightness = Math.min(95, lightness + zNorm * 15);
-
-    // ── Distorção elíptica radial ──
-    const angleRad = Math.atan2(dy, dx);
-    // Alongar na direção radial (eixo que aponta para o mouse)
-    const stretch = 1 + zNorm * 0.8;
-    const radiusA = size * stretch; // eixo radial (alongado)
-    const radiusB = size;           // eixo perpendicular (normal)
+    const x1 = this.x - cos * halfLen;
+    const y1 = this.y - sin * halfLen;
+    const x2 = this.x + cos * halfLen;
+    const y2 = this.y + sin * halfLen;
 
     ctx.beginPath();
-    ctx.ellipse(this.x, this.y, radiusA, radiusB, angleRad, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${finalLightness}%, ${this.alpha})`;
-    ctx.fill();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = this.color;
+    ctx.globalAlpha = this.alpha;
+    ctx.lineWidth = STICK_WIDTH;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 }
 
@@ -131,18 +123,16 @@ export default function ParticleCanvas() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: false });
 
-    let particles = [];
+    let sticks = [];
     let W, H;
     let mx = -9999, my = -9999, mouseActive = false;
     let time = 0;
     let raf;
 
-    function initGrid() {
-      particles = [];
-      for (let y = GRID_SPACING / 2; y < H; y += GRID_SPACING) {
-        for (let x = GRID_SPACING / 2; x < W; x += GRID_SPACING) {
-          particles.push(new Particle(x, y));
-        }
+    function init() {
+      sticks = [];
+      for (let i = 0; i < STICK_COUNT; i++) {
+        sticks.push(new Stick(W, H));
       }
     }
 
@@ -155,7 +145,7 @@ export default function ParticleCanvas() {
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      initGrid();
+      init();
     }
 
     function onMouseMove(e) { mx = e.clientX; my = e.clientY; mouseActive = true; }
@@ -171,14 +161,11 @@ export default function ParticleCanvas() {
       ctx.fillStyle = BG_COLOR;
       ctx.fillRect(0, 0, W, H);
 
-      ctx.globalCompositeOperation = 'lighter';
-
-      for (let i = 0; i < particles.length; i++) {
-        particles[i].update(mx, my, mouseActive, time);
-        particles[i].draw(ctx, mx, my);
+      for (let i = 0; i < sticks.length; i++) {
+        sticks[i].update(mx, my, mouseActive, time);
+        sticks[i].draw(ctx);
       }
 
-      ctx.globalCompositeOperation = 'source-over';
       raf = requestAnimationFrame(animate);
     }
 
