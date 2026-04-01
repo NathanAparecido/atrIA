@@ -1,115 +1,126 @@
 /**
- * ParticleCanvas — Confete de Estacas Coloridas + Iluminação por Cursor
+ * ParticleCanvas — Estacas Verticais com Sombras Projetadas
  *
- * - Pequenos traços/linhas (estacas) espalhados pela tela
- * - Cores variadas (confete colorido)
- * - Invisíveis/sutis normalmente
- * - Cursor age como "lanterna": ilumina e revela os traços próximos
- * - Micro-movimentos orgânicos
+ * Modelo físico: estacas invisíveis verticais fincadas na tela.
+ * O cursor = sol olhando de cima.
+ * O que vemos são as SOMBRAS coloridas projetadas:
+ *   - Perto do cursor (sol em cima): sombra curta (quase um ponto)
+ *   - Longe do cursor: sombra longa, apontando para fora
+ * Estacas se repelem/atraem pelo cursor.
  */
 
 import { useRef, useEffect } from 'react';
 
 // ─── Configuração ──────────────────────────────────────────
-const STICK_COUNT = 600;
-const REVEAL_RADIUS = 350;       // Raio da "lanterna"
-const STICK_MIN_LEN = 3;
-const STICK_MAX_LEN = 10;
-const STICK_WIDTH = 1.5;
-const DRIFT_SPEED = 0.008;
+const GRID_SPACING = 22;
+const SUN_HEIGHT = 200;          // Altura virtual do "sol" (cursor)
+const STAKE_MIN_H = 4;          // Altura mínima da estaca
+const STAKE_MAX_H = 12;         // Altura máxima
+const MAX_SHADOW_LEN = 18;      // Sombra máxima (px)
+const REPEL_RADIUS = 140;       // Raio de repulsão
+const REPEL_FORCE = 4;
+const SPRING_K = 0.04;
+const FRICTION = 0.90;
+const SHADOW_WIDTH = 1.8;
 const BG_COLOR = '#121212';
 
-// Paleta de cores do confete (como na imagem do Antigravity)
 const COLORS = [
-  '#ef4444', // vermelho
-  '#f97316', // laranja
-  '#eab308', // amarelo
-  '#22c55e', // verde
-  '#3b82f6', // azul
-  '#8b5cf6', // roxo
-  '#ec4899', // rosa
-  '#06b6d4', // ciano
-  '#6366f1', // índigo
-  '#f43f5e', // rosa-vermelho
+  '#ef4444', '#f97316', '#eab308', '#22c55e',
+  '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4',
+  '#6366f1', '#f43f5e', '#a855f7', '#14b8a6',
 ];
 
-class Stick {
-  constructor(canvasW, canvasH) {
-    // Posição aleatória pela tela toda
-    this.x = Math.random() * canvasW;
-    this.y = Math.random() * canvasH;
+class Stake {
+  constructor(x, y) {
+    // Jitter na posição da âncora para quebrar a grade
+    const jitter = GRID_SPACING * 0.3;
+    this.baseX = x + (Math.random() - 0.5) * jitter;
+    this.baseY = y + (Math.random() - 0.5) * jitter;
+    this.x = this.baseX;
+    this.y = this.baseY;
+    this.vx = 0;
+    this.vy = 0;
 
-    // Ângulo do traço (rotação)
-    this.angle = Math.random() * Math.PI * 2;
+    // Altura da estaca (determina comprimento máximo da sombra)
+    this.height = STAKE_MIN_H + Math.random() * (STAKE_MAX_H - STAKE_MIN_H);
 
-    // Comprimento da estaca
-    this.length = STICK_MIN_LEN + Math.random() * (STICK_MAX_LEN - STICK_MIN_LEN);
-
-    // Cor aleatória
+    // Cor da sombra
     this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
 
-    // Opacidade base (quase invisível)
-    this.baseAlpha = 0.04 + Math.random() * 0.06; // 4-10% — muito sutil
-    this.alpha = this.baseAlpha;
-
-    // Micro-movimento (drift orgânico)
-    this.driftPhase = Math.random() * Math.PI * 2;
-    this.driftAmp = 0.3 + Math.random() * 0.5;
-    this.driftSpeed = DRIFT_SPEED + Math.random() * 0.005;
-
-    // Rotação lenta
-    this.rotSpeed = (Math.random() - 0.5) * 0.003;
+    // Opacidade base
+    this.alpha = 0.6 + Math.random() * 0.3;
   }
 
-  update(mx, my, mouseActive, time) {
-    // Micro-movimento orgânico
-    this.x += Math.sin(time * this.driftSpeed + this.driftPhase) * this.driftAmp * 0.1;
-    this.y += Math.cos(time * this.driftSpeed + this.driftPhase + 1.5) * this.driftAmp * 0.1;
-
-    // Rotação lenta constante
-    this.angle += this.rotSpeed;
-
+  update(mx, my, mouseActive) {
     if (mouseActive) {
-      const dx = this.x - mx;
-      const dy = this.y - my;
+      const dx = mx - this.x;
+      const dy = my - this.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < REVEAL_RADIUS) {
-        // Iluminação: quanto mais perto do cursor, mais visível
-        const proximity = 1 - (dist / REVEAL_RADIUS);
-        // Quadrática para luz mais concentrada no centro
-        const intensity = proximity * proximity;
-        const targetAlpha = this.baseAlpha + intensity * 0.9;
-        this.alpha += (targetAlpha - this.alpha) * 0.15;
-      } else {
-        // Fora da lanterna: voltar ao quase invisível
-        this.alpha += (this.baseAlpha - this.alpha) * 0.05;
+      // Repulsão: empurrar estacas para fora do cursor
+      if (dist < REPEL_RADIUS && dist > 0.5) {
+        const force = ((REPEL_RADIUS - dist) / REPEL_RADIUS);
+        const forceQ = force * force; // Quadrática para borda definida
+        this.vx -= (dx / dist) * forceQ * REPEL_FORCE;
+        this.vy -= (dy / dist) * forceQ * REPEL_FORCE;
       }
-    } else {
-      this.alpha += (this.baseAlpha - this.alpha) * 0.05;
     }
+
+    // Mola de restauração
+    this.vx += (this.baseX - this.x) * SPRING_K;
+    this.vy += (this.baseY - this.y) * SPRING_K;
+
+    // Atrito + integração
+    this.vx *= FRICTION;
+    this.vy *= FRICTION;
+    this.x += this.vx;
+    this.y += this.vy;
   }
 
-  draw(ctx) {
-    if (this.alpha < 0.01) return;
+  draw(ctx, mx, my) {
+    // Vetor da estaca para longe do cursor (direção da sombra)
+    const dx = this.x - mx;
+    const dy = this.y - my;
+    const dist = Math.sqrt(dx * dx + dy * dy);
 
-    const cos = Math.cos(this.angle);
-    const sin = Math.sin(this.angle);
-    const halfLen = this.length / 2;
+    // Comprimento da sombra = altura_estaca × (distância / altura_sol)
+    // Perto do cursor (sol em cima): sombra ≈ 0
+    // Longe: sombra cresce
+    let shadowLen = this.height * (dist / SUN_HEIGHT);
+    shadowLen = Math.min(shadowLen, MAX_SHADOW_LEN);
 
-    const x1 = this.x - cos * halfLen;
-    const y1 = this.y - sin * halfLen;
-    const x2 = this.x + cos * halfLen;
-    const y2 = this.y + sin * halfLen;
+    // Direção normalizada (aponta para fora do cursor)
+    let nx, ny;
+    if (dist > 0.5) {
+      nx = dx / dist;
+      ny = dy / dist;
+    } else {
+      nx = 0;
+      ny = 0;
+      shadowLen = 0;
+    }
 
+    // Ponto da sombra: começa na base da estaca, se estende para fora
+    const endX = this.x + nx * shadowLen;
+    const endY = this.y + ny * shadowLen;
+
+    // Desenhar a sombra (traço colorido)
     ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(endX, endY);
     ctx.strokeStyle = this.color;
     ctx.globalAlpha = this.alpha;
-    ctx.lineWidth = STICK_WIDTH;
+    ctx.lineWidth = SHADOW_WIDTH;
     ctx.lineCap = 'round';
     ctx.stroke();
+
+    // Desenhar a "cabeça" da estaca (ponto pequeno mais brilhante)
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 1, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = this.alpha * 0.5;
+    ctx.fill();
+
     ctx.globalAlpha = 1;
   }
 }
@@ -123,16 +134,17 @@ export default function ParticleCanvas() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: false });
 
-    let sticks = [];
+    let stakes = [];
     let W, H;
     let mx = -9999, my = -9999, mouseActive = false;
-    let time = 0;
     let raf;
 
-    function init() {
-      sticks = [];
-      for (let i = 0; i < STICK_COUNT; i++) {
-        sticks.push(new Stick(W, H));
+    function initGrid() {
+      stakes = [];
+      for (let y = GRID_SPACING / 2; y < H; y += GRID_SPACING) {
+        for (let x = GRID_SPACING / 2; x < W; x += GRID_SPACING) {
+          stakes.push(new Stake(x, y));
+        }
       }
     }
 
@@ -145,7 +157,7 @@ export default function ParticleCanvas() {
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      init();
+      initGrid();
     }
 
     function onMouseMove(e) { mx = e.clientX; my = e.clientY; mouseActive = true; }
@@ -156,14 +168,12 @@ export default function ParticleCanvas() {
     function onTouchEnd() { mouseActive = false; }
 
     function animate() {
-      time++;
-
       ctx.fillStyle = BG_COLOR;
       ctx.fillRect(0, 0, W, H);
 
-      for (let i = 0; i < sticks.length; i++) {
-        sticks[i].update(mx, my, mouseActive, time);
-        sticks[i].draw(ctx);
+      for (let i = 0; i < stakes.length; i++) {
+        stakes[i].update(mx, my, mouseActive);
+        stakes[i].draw(ctx, mx, my);
       }
 
       raf = requestAnimationFrame(animate);
