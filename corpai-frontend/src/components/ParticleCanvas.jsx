@@ -1,25 +1,25 @@
 /**
- * ParticleCanvas — Efeito de partículas interativas
- * Partículas seguem o cursor com física de atração gravitacional.
- * Usa HTML5 Canvas para alta performance.
+ * ParticleCanvas — Efeito "Swarm" (Enxame) Antigravity
+ * 1000+ partículas com cores variadas que orbitam o cursor em nuvem.
+ * Alta performance via Canvas.
  */
 
 import { useRef, useEffect, useCallback } from 'react';
 
 // ─── Configuração ──────────────────────────────────────
 const CONFIG = {
-  particleCount: 180,
-  particleMinSize: 1.2,
-  particleMaxSize: 3.5,
-  attractionForce: 0.08,
-  friction: 0.92,
-  driftSpeed: 0.4,
-  connectionDistance: 120,
-  connectionOpacity: 0.15,
-  mouseRadius: 250,
-  particleColor: { r: 92, g: 124, b: 250 },   // corpai-500
-  particleGlow: { r: 76, g: 110, b: 245 },     // corpai-600
-  lineColor: { r: 92, g: 124, b: 250 },        // corpai-500
+  particleCount: 1000,
+  particleMinSize: 0.8,
+  particleMaxSize: 2.2,
+  friction: 0.94,
+  ease: 0.1,
+  mouseRadius: 350,
+  palette: [
+    { r: 239, g: 68, b: 68 },   // Vermelho (red-500)
+    { r: 59, g: 130, b: 246 },  // Azul (blue-500)
+    { r: 168, g: 85, b: 247 },  // Roxo (purple-500)
+    { r: 236, g: 72, b: 153 },  // Rosa (fuchsia-500)
+  ]
 };
 
 class Particle {
@@ -28,98 +28,67 @@ class Particle {
     this.y = Math.random() * canvasHeight;
     this.baseSize = CONFIG.particleMinSize + Math.random() * (CONFIG.particleMaxSize - CONFIG.particleMinSize);
     this.size = this.baseSize;
-    this.vx = (Math.random() - 0.5) * CONFIG.driftSpeed;
-    this.vy = (Math.random() - 0.5) * CONFIG.driftSpeed;
-    this.opacity = 0.3 + Math.random() * 0.5;
-    this.pulsePhase = Math.random() * Math.PI * 2;
-    this.pulseSpeed = 0.01 + Math.random() * 0.02;
+    
+    // Cada partícula tem um "offset" único para orbitar o mouse de forma dispersa
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * CONFIG.mouseRadius;
+    this.offsetX = Math.cos(angle) * distance;
+    this.offsetY = Math.sin(angle) * distance;
+    
+    // Velocidade e inércia
+    this.vx = 0;
+    this.vy = 0;
+    
+    // Escolher cor da paleta
+    this.color = CONFIG.palette[Math.floor(Math.random() * CONFIG.palette.length)];
+    this.opacity = 0.2 + Math.random() * 0.6;
+    
+    // Movimento independente (deriva)
+    this.driftX = (Math.random() - 0.5) * 0.5;
+    this.driftY = (Math.random() - 0.5) * 0.5;
   }
 
   update(mouseX, mouseY, mouseActive, canvasWidth, canvasHeight) {
-    // Pulsação orgânica
-    this.pulsePhase += this.pulseSpeed;
-    this.size = this.baseSize + Math.sin(this.pulsePhase) * 0.5;
-
     if (mouseActive) {
-      const dx = mouseX - this.x;
-      const dy = mouseY - this.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < CONFIG.mouseRadius) {
-        // Força de atração gravitacional (mais forte perto)
-        const force = CONFIG.attractionForce * (1 - dist / CONFIG.mouseRadius);
-        const angle = Math.atan2(dy, dx);
-
-        this.vx += Math.cos(angle) * force;
-        this.vy += Math.sin(angle) * force;
-
-        // Partículas perto do cursor brilham mais
-        this.opacity = Math.min(1, 0.5 + (1 - dist / CONFIG.mouseRadius) * 0.5);
-        this.size = this.baseSize + (1 - dist / CONFIG.mouseRadius) * 2;
-      } else {
-        this.opacity += (0.3 + Math.sin(this.pulsePhase) * 0.15 - this.opacity) * 0.05;
-      }
+      // Alvo é o mouse + o offset único da partícula (para não amontoar)
+      const targetX = mouseX + this.offsetX;
+      const targetY = mouseY + this.offsetY;
+      
+      const dx = targetX - this.x;
+      const dy = targetY - this.y;
+      
+      this.vx += dx * 0.05;
+      this.vy += dy * 0.05;
+      
+      // Mais brilho perto do movimento
+      this.opacity = Math.min(0.9, this.opacity + 0.02);
     } else {
-      this.opacity += (0.3 + Math.sin(this.pulsePhase) * 0.15 - this.opacity) * 0.05;
+      // Deriva orgânica quando o mouse está longe
+      this.vx += this.driftX;
+      this.vy += this.driftY;
+      this.opacity = Math.max(0.3, this.opacity - 0.01);
     }
 
-    // Fricção para desaceleração suave
+    // Física
     this.vx *= CONFIG.friction;
     this.vy *= CONFIG.friction;
-
-    // Deriva orgânica constante (para nunca ficarem paradas)
-    this.vx += (Math.random() - 0.5) * 0.03;
-    this.vy += (Math.random() - 0.5) * 0.03;
-
-    // Mover
     this.x += this.vx;
     this.y += this.vy;
 
-    // Wrap-around (teleportar para o outro lado)
-    if (this.x < -10) this.x = canvasWidth + 10;
-    if (this.x > canvasWidth + 10) this.x = -10;
-    if (this.y < -10) this.y = canvasHeight + 10;
-    if (this.y > canvasHeight + 10) this.y = -10;
+    // Wrap-around ultra-suave
+    const padding = 50;
+    if (this.x < -padding) this.x = canvasWidth + padding;
+    if (this.x > canvasWidth + padding) this.x = -padding;
+    if (this.y < -padding) this.y = canvasHeight + padding;
+    if (this.y > canvasHeight + padding) this.y = -padding;
   }
 
   draw(ctx) {
-    const { r, g, b } = CONFIG.particleColor;
+    const { r, g, b } = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${this.opacity})`;
     ctx.fill();
-
-    // Glow sutil
-    if (this.opacity > 0.5) {
-      const { r: gr, g: gg, b: gb } = CONFIG.particleGlow;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size * 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${gr}, ${gg}, ${gb}, ${this.opacity * 0.1})`;
-      ctx.fill();
-    }
-  }
-}
-
-function drawConnections(ctx, particles) {
-  const { r, g, b } = CONFIG.lineColor;
-  const maxDist = CONFIG.connectionDistance;
-
-  for (let i = 0; i < particles.length; i++) {
-    for (let j = i + 1; j < particles.length; j++) {
-      const dx = particles[i].x - particles[j].x;
-      const dy = particles[i].y - particles[j].y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < maxDist) {
-        const opacity = CONFIG.connectionOpacity * (1 - dist / maxDist);
-        ctx.beginPath();
-        ctx.moveTo(particles[i].x, particles[i].y);
-        ctx.lineTo(particles[j].x, particles[j].y);
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      }
-    }
   }
 }
 
@@ -137,14 +106,13 @@ export default function ParticleCanvas() {
   }, []);
 
   useEffect(() => {
-    // Respeitar prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReducedMotion) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
 
     function resize() {
       const dpr = window.devicePixelRatio || 1;
@@ -154,9 +122,7 @@ export default function ParticleCanvas() {
       canvas.style.height = `${window.innerHeight}px`;
       ctx.scale(dpr, dpr);
 
-      if (particlesRef.current.length === 0) {
-        initParticles(window.innerWidth, window.innerHeight);
-      }
+      initParticles(window.innerWidth, window.innerHeight);
     }
 
     resize();
@@ -180,32 +146,22 @@ export default function ParticleCanvas() {
       }
     }
 
-    function handleTouchEnd() {
-      mouseRef.current.active = false;
-    }
-
     canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseleave', handleMouseLeave);
     canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
-    canvas.addEventListener('touchend', handleTouchEnd);
 
     function animate() {
       const w = window.innerWidth;
       const h = window.innerHeight;
 
+      // Limpar rastro sutil (motion blur opcional)
       ctx.clearRect(0, 0, w, h);
 
       const { x: mx, y: my, active } = mouseRef.current;
-
-      // Update e draw
       const particles = particlesRef.current;
+
       for (let i = 0; i < particles.length; i++) {
         particles[i].update(mx, my, active, w, h);
-      }
-
-      drawConnections(ctx, particles);
-
-      for (let i = 0; i < particles.length; i++) {
         particles[i].draw(ctx);
       }
 
@@ -217,9 +173,8 @@ export default function ParticleCanvas() {
     return () => {
       window.removeEventListener('resize', resize);
       canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mouseleave', handleMouseLeave);
       canvas.removeEventListener('touchmove', handleTouchMove);
-      canvas.removeEventListener('touchend', handleTouchEnd);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -229,16 +184,13 @@ export default function ParticleCanvas() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-auto"
+      className="fixed inset-0"
       style={{
         zIndex: 0,
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
+        background: 'transparent',
       }}
       aria-hidden="true"
     />
   );
 }
+
