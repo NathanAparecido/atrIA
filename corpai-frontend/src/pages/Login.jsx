@@ -1,13 +1,37 @@
 /**
  * CorpAI — Página de Login
- * Campo de usuário + senha com efeito de partículas interativas.
- * As partículas seguem o cursor criando um efeito gravitacional.
+ * Campo de usuário + senha com UI "shadcn" estendida com BorderBeam.
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ParticleCanvas from '../components/ParticleCanvas';
+import ThemeToggle from '../components/ThemeToggle';
+
+// ─── BorderBeam Componente ──────────────────────────────── 
+function BorderBeam({ duration = 8 }) {
+  return (
+    <div 
+      className="absolute inset-0 pointer-events-none rounded-xl"
+      style={{
+        padding: '1.5px', // Espessura da borda brilhante
+        WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+        WebkitMaskComposite: 'xor',
+        maskComposite: 'exclude',
+        zIndex: 20
+      }}
+    >
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] animate-[spin_8s_linear_infinite]"
+        style={{
+          background: 'conic-gradient(from 0deg, transparent 75%, var(--color-primary) 100%)',
+          animationDuration: `${duration}s`
+        }}
+      />
+    </div>
+  );
+}
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -33,105 +57,122 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'var(--color-bg)' }}>
-      
-      {/* Background com partículas interativas */}
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 transition-theme relative overflow-hidden"
+      style={{ background: 'var(--color-bg)' }}
+    >
+      {/* Background Particles */}
       <ParticleCanvas />
 
-      <div className="relative w-full max-w-md" style={{ zIndex: 10 }}>
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-corpai-500 to-corpai-700 flex items-center justify-center mb-4 shadow-lg shadow-corpai-500/20">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Corp<span className="text-corpai-400">AI</span>
-          </h1>
-          <p className="text-sm mt-2" style={{ color: 'var(--color-text-muted)' }}>
-            Assistente de IA corporativo interno
-          </p>
-        </div>
+      {/* Theme Toggle no Topo */}
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
 
-        {/* Formulário — fundo semi-transparente para ver partículas */}
-        <form onSubmit={handleSubmit} className="rounded-2xl p-6 space-y-5 shadow-xl backdrop-blur-xl"
-          style={{
-            background: 'rgba(15, 23, 42, 0.75)',
-            border: '1px solid rgba(30, 41, 59, 0.6)',
-          }}>
+      {/* Shadcn UI Card Equivalent with BorderBeam */}
+      <div 
+        className="relative w-[380px] rounded-xl shadow-2xl backdrop-blur-xl z-10 transition-theme"
+        style={{ 
+          backgroundColor: 'color-mix(in srgb, var(--color-surface) 60%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--color-border) 50%, transparent)'
+        }}
+      >
+        <BorderBeam duration={8} />
+
+        <div className="relative z-10 p-6 flex flex-col gap-6">
           
-          {erro && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-sm text-red-400 animate-fade-in">
-              {erro}
+          <div className="flex flex-col space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--color-text)' }}>
+              Login
+            </h1>
+            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+              Enter your credentials to access your account.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="grid w-full items-center gap-4">
+              
+              {erro && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400 animate-fade-in">
+                  {erro}
+                </div>
+              )}
+
+              <div className="flex flex-col space-y-2">
+                <label htmlFor="email" className="text-sm font-medium leading-none" style={{ color: 'var(--color-text)' }}>
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="text" // Mantém como text pois a auth original aceitava username
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  autoFocus
+                  className="flex h-10 w-full rounded-md border px-3 py-2 text-sm transition-theme focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                  style={{
+                    backgroundColor: 'var(--color-bg)',
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text)',
+                    '--tw-ring-color': 'var(--color-primary)'
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col space-y-2">
+                <label htmlFor="password" className="text-sm font-medium leading-none" style={{ color: 'var(--color-text)' }}>
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  className="flex h-10 w-full rounded-md border px-3 py-2 text-sm transition-theme focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                  style={{
+                    backgroundColor: 'var(--color-bg)',
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text)',
+                    '--tw-ring-color': 'var(--color-primary)'
+                  }}
+                />
+              </div>
+
             </div>
-          )}
 
-          <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>
-              Usuário
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Digite seu usuário"
-              required
-              autoFocus
-              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-corpai-500/50 transition-all"
-              style={{
-                background: 'rgba(2, 6, 23, 0.6)',
-                border: '1px solid rgba(30, 41, 59, 0.5)',
-                color: 'var(--color-text)',
-              }}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium" style={{ color: 'var(--color-text-muted)' }}>
-              Senha
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Digite sua senha"
-              required
-              className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-corpai-500/50 transition-all"
-              style={{
-                background: 'rgba(2, 6, 23, 0.6)',
-                border: '1px solid rgba(30, 41, 59, 0.5)',
-                color: 'var(--color-text)',
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 rounded-xl text-sm font-semibold transition-all ${
-              loading
-                ? 'bg-corpai-700 cursor-wait opacity-70'
-                : 'bg-corpai-600 hover:bg-corpai-700 active:scale-[0.98]'
-            } text-white shadow-lg shadow-corpai-600/20`}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Entrando...
-              </span>
-            ) : (
-              'Entrar'
-            )}
-          </button>
-        </form>
-
-        <p className="text-center text-xs mt-6" style={{ color: 'var(--color-text-muted)' }}>
-          Apenas administradores podem criar novas contas.
-        </p>
+            <div className="flex justify-between items-center mt-6">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border hover:bg-opacity-10 h-10 px-4 py-2"
+                style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+              >
+                Register
+              </button>
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className={`inline-flex items-center justify-center rounded-md text-sm font-medium text-white transition-colors h-10 px-4 py-2 shadow-sm ${
+                  loading ? 'opacity-70 cursor-wait' : 'hover:opacity-90'
+                }`}
+                style={{ backgroundColor: 'var(--color-primary)' }}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Autenticando...
+                  </>
+                ) : (
+                  'Login'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
