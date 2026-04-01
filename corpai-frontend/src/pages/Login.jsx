@@ -6,7 +6,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import ParticleCanvas from '../components/ParticleCanvas';
+import { WarpBackground } from '../components/magicui/WarpBackground';
+import { Backlight } from '../components/magicui/Backlight';
+import { TextAnimate } from '../components/magicui/TextAnimate';
 import ThemeToggle from '../components/ThemeToggle';
 
 // ─── BorderBeam Componente ──────────────────────────────── 
@@ -57,18 +59,24 @@ export default function Login() {
   }
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4 transition-theme relative overflow-hidden"
-      style={{ background: 'var(--color-bg)' }}
-    >
-      {/* Background Particles */}
-      <ParticleCanvas />
+    <WarpBackground className="transition-theme flex items-center justify-center p-4">
 
       {/* Theme Toggle no Topo */}
       <div className="absolute top-4 right-4 z-20">
         <ThemeToggle />
       </div>
 
+      <div className="flex flex-col items-center z-10">
+        <div className="mb-6 font-['Orbitron'] text-5xl font-bold flex">
+          <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[#0f172a] dark:text-[#f8fafc]">
+            atr
+          </TextAnimate>
+          <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#8b5cf6] drop-shadow-[0_0_20px_rgba(139,92,246,0.9)] animate-pulse">
+            IA
+          </TextAnimate>
+        </div>
+
+      <Backlight className="w-full">
       {/* Shadcn UI Card Equivalent with BorderBeam */}
       <div 
         className="relative w-[380px] rounded-xl shadow-2xl backdrop-blur-xl z-10 transition-theme"
@@ -174,6 +182,8 @@ export default function Login() {
           </form>
         </div>
       </div>
-    </div>
+      </Backlight>
+      </div>
+    </WarpBackground>
   );
 }
