@@ -1,184 +1,260 @@
 /**
  * ParticleCanvas — Clone Técnico Google Antigravity
- * Simulação de Esfera de Volume e Grade 3D Projetada.
+ * Esfera de Volume 3D, Grade Estruturada, Spatial Hashing.
  */
 
 import { useRef, useEffect, useCallback } from 'react';
 
-// ─── Configuração Técnica Exata ──────────────────────────
-const CONFIG = {
-  gridDensity: 25,           // Espaçamento da grade (px)
-  mouseRadius: 130,          // Raio da esfera de volume (R_mouse)
-  mouseSensitivity: 0.006,   // Força de empuxo da esfera
-  springConstant: 0.04,      // Constante elástica (Lei de Hooke)
-  friction: 0.88,            // Fricção do ambiente
-  depthFactor: 0.005,        // Fator de escala da profundidade Z
-  baseSize: 1.8,             // Tamanho base da partícula
-  particleColor: '255, 255, 255', // Branco Puro (RGB)
-};
+// ─── Configuração ──────────────────────────────────────────
+const BG_COLOR = '#121212';
+const PARTICLE_RGB = '255,255,255';
+const GRID_STEP = 25;
+const MOUSE_RADIUS = 130;
+const MOUSE_SENS = 0.00005;
+const SPRING_K = 0.02;
+const FRICTION = 0.88;
+const DEPTH_FACTOR = 0.004;
+const BASE_SIZE = 1.8;
+const BASE_ALPHA = 0.7;
+const DRIFT_STRENGTH = 0.004;
+const HASH_CELL = 170; // ≥ outerRadius (1.3 × 130 = 169px)
 
+// ─── Spatial Hash ──────────────────────────────────────────
+class SpatialHash {
+  constructor(cellSize) {
+    this.cellSize = cellSize;
+    this.buckets = new Map();
+  }
+
+  clear() {
+    this.buckets.clear();
+  }
+
+  _key(cx, cy) {
+    return (cx * 73856093) ^ (cy * 19349663);
+  }
+
+  insert(particle, index) {
+    const cx = Math.floor(particle.x / this.cellSize);
+    const cy = Math.floor(particle.y / this.cellSize);
+    const key = this._key(cx, cy);
+    let bucket = this.buckets.get(key);
+    if (!bucket) {
+      bucket = [];
+      this.buckets.set(key, bucket);
+    }
+    bucket.push(index);
+  }
+
+  // Retorna índices de partículas nas 9 células ao redor de (px, py)
+  query(px, py) {
+    const cx = Math.floor(px / this.cellSize);
+    const cy = Math.floor(py / this.cellSize);
+    const result = [];
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const bucket = this.buckets.get(this._key(cx + dx, cy + dy));
+        if (bucket) {
+          for (let i = 0; i < bucket.length; i++) {
+            result.push(bucket[i]);
+          }
+        }
+      }
+    }
+    return result;
+  }
+}
+
+// ─── Partícula ─────────────────────────────────────────────
 class Particle {
   constructor(x, y) {
-    // Posição de Equilíbrio (Âncora na Grade)
     this.anchorX = x;
     this.anchorY = y;
     this.anchorZ = 0;
 
-    // Posição Atual
     this.x = x;
     this.y = y;
     this.z = 0;
 
-    // Velocidade
     this.vx = 0;
     this.vy = 0;
     this.vz = 0;
 
-    // Flutuação Orgânica (Drift)
-    this.driftX = (Math.random() - 0.5) * 0.2;
-    this.driftY = (Math.random() - 0.5) * 0.2;
-    this.driftZ = (Math.random() - 0.5) * 0.2;
+    // Drift aleatório e fraco por partícula
+    this.driftPhaseX = Math.random() * Math.PI * 2;
+    this.driftPhaseY = Math.random() * Math.PI * 2;
+    this.driftPhaseZ = Math.random() * Math.PI * 2;
+    this.driftSpeed = 0.005 + Math.random() * 0.01;
   }
 
-  update(mx, my, mouseActive) {
-    if (mouseActive) {
-      // 1. Cálculo da Distância 3D Simulada
-      const dx = this.x - mx;
-      const dy = this.y - my;
-      const dz = this.z - 0; // Mouse está em Z=0
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  applyMouseForce(mx, my) {
+    const dx = this.x - mx;
+    const dy = this.y - my;
+    const dz = this.z; // Mouse em Z=0
+    const distSq = dx * dx + dy * dy + dz * dz;
+    const rSq = MOUSE_RADIUS * MOUSE_RADIUS;
 
-      // 2. Física da Esfera de Volume
-      if (dist < CONFIG.mouseRadius) {
-        // Força F = (D^2 - R^2) * sensibilidade
-        // Como D < R, F é negativo (repulsão)
-        const force = (dist * dist - CONFIG.mouseRadius * CONFIG.mouseRadius) * CONFIG.mouseSensitivity;
-        
-        // Vetor de Fuga Normalizado
-        const nx = dx / dist;
-        const ny = dy / dist;
-        const nz = dz / dist;
+    // Aplica força dentro e ligeiramente fora do raio (1.3R)
+    const outerRadiusSq = rSq * 1.69; // (1.3R)^2
+    if (distSq > outerRadiusSq) return;
 
-        this.vx += nx * force;
-        this.vy += ny * force;
-        this.vz += nz * force;
-      }
-    }
+    const dist = Math.sqrt(distSq);
+    if (dist < 0.5) return; // Evitar divisão por ~0
 
-    // 3. Mola de Restauração (Lei de Hooke: F = -k * x)
-    this.vx += (this.anchorX - this.x) * CONFIG.springConstant;
-    this.vy += (this.anchorY - this.y) * CONFIG.springConstant;
-    this.vz += (this.anchorZ - this.z) * CONFIG.springConstant;
+    // Vetor normalizado (mouse → partícula = direção de fuga)
+    const invDist = 1 / dist;
+    const nx = dx * invDist;
+    const ny = dy * invDist;
+    const nz = dz * invDist;
 
-    // 4. Drift (Flutuação)
-    this.vx += this.driftX;
-    this.vy += this.driftY;
-    this.vz += this.driftZ;
+    // F = (D² - R²) * sensibilidade
+    // D < R → F negativo → repulsão (empurra para superfície)
+    // D ≈ R → F ≈ 0 (equilíbrio na superfície)
+    // D > R (perto) → F positivo → atração suave de volta
+    const force = (distSq - rSq) * MOUSE_SENS;
 
-    // 5. Integração e Fricção
-    this.vx *= CONFIG.friction;
-    this.vy *= CONFIG.friction;
-    this.vz *= CONFIG.friction;
+    // Aplicar: -force * normal → quando F<0, empurra na direção da normal (para fora)
+    this.vx -= nx * force;
+    this.vy -= ny * force;
+    this.vz -= nz * force;
+  }
 
+  update(time) {
+    // Mola de Restauração (Lei de Hooke)
+    this.vx += (this.anchorX - this.x) * SPRING_K;
+    this.vy += (this.anchorY - this.y) * SPRING_K;
+    this.vz += (this.anchorZ - this.z) * SPRING_K;
+
+    // Drift orgânico (sinusoidal, muito fraco)
+    this.vx += Math.sin(time * this.driftSpeed + this.driftPhaseX) * DRIFT_STRENGTH;
+    this.vy += Math.cos(time * this.driftSpeed + this.driftPhaseY) * DRIFT_STRENGTH;
+    this.vz += Math.sin(time * this.driftSpeed + this.driftPhaseZ) * DRIFT_STRENGTH * 0.5;
+
+    // Fricção
+    this.vx *= FRICTION;
+    this.vy *= FRICTION;
+    this.vz *= FRICTION;
+
+    // Integração
     this.x += this.vx;
     this.y += this.vy;
     this.z += this.vz;
   }
 
   draw(ctx) {
-    // 6. Projeção 2D baseada na Profundidade (Perspective)
-    const perspective = 1 / (1 + Math.abs(this.z) * CONFIG.depthFactor);
-    const size = CONFIG.baseSize * perspective;
-    
-    // Alpha varia com Z (mais longe/profundo = mais transparente)
-    const alpha = Math.max(0.1, 0.8 * perspective);
+    // Projeção perspectiva baseada em Z
+    const perspective = 1 / (1 + Math.abs(this.z) * DEPTH_FACTOR);
+    const size = BASE_SIZE * perspective;
+    const alpha = Math.max(0.08, BASE_ALPHA * perspective);
 
     ctx.beginPath();
     ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${CONFIG.particleColor}, ${alpha})`;
+    ctx.fillStyle = `rgba(${PARTICLE_RGB},${alpha})`;
     ctx.fill();
   }
 }
 
+// ─── Componente ────────────────────────────────────────────
 export default function ParticleCanvas() {
   const canvasRef = useRef(null);
-  const particlesRef = useRef([]);
-  const mouseRef = useRef({ x: 0, y: 0, active: false });
-  const animationRef = useRef(null);
+  const stateRef = useRef({
+    particles: [],
+    hash: new SpatialHash(HASH_CELL),
+    mouse: { x: -9999, y: -9999, active: false },
+    raf: null,
+    time: 0,
+  });
 
-  const initGrid = useCallback((width, height) => {
+  const initGrid = useCallback((w, h) => {
     const particles = [];
-    const step = CONFIG.gridDensity;
-    
-    // Criar grade estruturada
-    for (let x = step / 2; x < width; x += step) {
-      for (let y = step / 2; y < height; y += step) {
+    for (let x = GRID_STEP / 2; x < w; x += GRID_STEP) {
+      for (let y = GRID_STEP / 2; y < h; y += GRID_STEP) {
         particles.push(new Particle(x, y));
       }
     }
-    particlesRef.current = particles;
+    stateRef.current.particles = particles;
   }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: false });
+    const state = stateRef.current;
 
     function resize() {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-      ctx.scale(dpr, dpr);
-      initGrid(window.innerWidth, window.innerHeight);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initGrid(w, h);
     }
 
     resize();
     window.addEventListener('resize', resize);
 
-    const handleMouseMove = (e) => {
-      mouseRef.current.x = e.clientX;
-      mouseRef.current.y = e.clientY;
-      mouseRef.current.active = true;
-    };
+    function onMouseMove(e) {
+      state.mouse.x = e.clientX;
+      state.mouse.y = e.clientY;
+      state.mouse.active = true;
+    }
+    function onMouseLeave() {
+      state.mouse.active = false;
+    }
 
-    const handleMouseLeave = () => {
-      mouseRef.current.active = false;
-    };
-
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseleave', onMouseLeave);
 
     function animate() {
-      // Fundo Deep Dark
-      ctx.fillStyle = '#121212';
-      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const particles = state.particles;
+      const hash = state.hash;
+      const { x: mx, y: my, active } = state.mouse;
 
-      // Additive Blending para brilho orgânico nas colisões
+      state.time++;
+
+      // Limpar com fundo escuro
+      ctx.fillStyle = BG_COLOR;
+      ctx.fillRect(0, 0, w, h);
+
+      // Additive blending para sobreposição luminosa
       ctx.globalCompositeOperation = 'lighter';
 
-      const { x: mx, y: my, active } = mouseRef.current;
-      const particles = particlesRef.current;
+      // Spatial hashing: inserir todas as partículas
+      if (active) {
+        hash.clear();
+        for (let i = 0; i < particles.length; i++) {
+          hash.insert(particles[i], i);
+        }
 
+        // Aplicar força do mouse apenas nas partículas próximas
+        const nearby = hash.query(mx, my);
+        for (let i = 0; i < nearby.length; i++) {
+          particles[nearby[i]].applyMouseForce(mx, my);
+        }
+      }
+
+      // Atualizar e desenhar todas
       for (let i = 0; i < particles.length; i++) {
-        particles[i].update(mx, my, active);
+        particles[i].update(state.time);
         particles[i].draw(ctx);
       }
 
-      // Reset blending para o próximo frame
       ctx.globalCompositeOperation = 'source-over';
-
-      animationRef.current = requestAnimationFrame(animate);
+      state.raf = requestAnimationFrame(animate);
     }
 
     animate();
 
     return () => {
       window.removeEventListener('resize', resize);
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mouseleave', handleMouseLeave);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      canvas.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('mouseleave', onMouseLeave);
+      if (state.raf) cancelAnimationFrame(state.raf);
     };
   }, [initGrid]);
 
@@ -191,5 +267,3 @@ export default function ParticleCanvas() {
     />
   );
 }
-
-
