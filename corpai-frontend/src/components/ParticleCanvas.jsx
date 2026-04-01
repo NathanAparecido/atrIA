@@ -1,171 +1,86 @@
 /**
- * ParticleCanvas — Clone Técnico Google Antigravity
- * Esfera de Volume 3D, Grade Estruturada, Spatial Hashing.
+ * ParticleCanvas — Aura de Partículas com Gradiente Arco-Íris
+ * Partículas orbitam o cursor com micro-movimentos orgânicos.
+ * Cor baseada em distância: perto = vermelho, longe = violeta.
  */
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 
 // ─── Configuração ──────────────────────────────────────────
+const PARTICLE_COUNT = 500;
+const MAX_RADIUS = 220;      // Raio máximo da aura
+const MIN_RADIUS = 15;       // Raio mínimo (não ficam em cima do cursor)
+const EASE = 0.06;           // Suavidade do seguimento
+const BASE_ALPHA = 0.85;
 const BG_COLOR = '#121212';
-const PALETTE = [
-  '100,180,255',   // Azul claro
-  '80,220,240',    // Ciano
-  '255,100,180',   // Rosa
-  '255,160,60',    // Laranja
-  '120,255,160',   // Verde menta
-  '180,130,255',   // Lilás
-  '255,255,255',   // Branco
-];
-const GRID_STEP = 20;
-const MOUSE_RADIUS = 130;
-const MOUSE_SENS = 0.00005;
-const SPRING_K = 0.02;
-const FRICTION = 0.88;
-const DEPTH_FACTOR = 0.004;
-const BASE_SIZE = 1.8;
-const BASE_ALPHA = 0.7;
-const DRIFT_STRENGTH = 0.01;
-const HASH_CELL = 170; // ≥ outerRadius (1.3 × 130 = 169px)
 
-// ─── Spatial Hash ──────────────────────────────────────────
-class SpatialHash {
-  constructor(cellSize) {
-    this.cellSize = cellSize;
-    this.buckets = new Map();
-  }
-
-  clear() {
-    this.buckets.clear();
-  }
-
-  _key(cx, cy) {
-    return (cx * 73856093) ^ (cy * 19349663);
-  }
-
-  insert(particle, index) {
-    const cx = Math.floor(particle.x / this.cellSize);
-    const cy = Math.floor(particle.y / this.cellSize);
-    const key = this._key(cx, cy);
-    let bucket = this.buckets.get(key);
-    if (!bucket) {
-      bucket = [];
-      this.buckets.set(key, bucket);
-    }
-    bucket.push(index);
-  }
-
-  // Retorna índices de partículas nas 9 células ao redor de (px, py)
-  query(px, py) {
-    const cx = Math.floor(px / this.cellSize);
-    const cy = Math.floor(py / this.cellSize);
-    const result = [];
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
-        const bucket = this.buckets.get(this._key(cx + dx, cy + dy));
-        if (bucket) {
-          for (let i = 0; i < bucket.length; i++) {
-            result.push(bucket[i]);
-          }
-        }
-      }
-    }
-    return result;
-  }
-}
-
-// ─── Partícula ─────────────────────────────────────────────
 class Particle {
-  constructor(x, y) {
-    // Jitter: deslocar âncora aleatoriamente para quebrar a malha visível
-    const jitter = GRID_STEP * 0.35;
-    this.anchorX = x + (Math.random() - 0.5) * jitter;
-    this.anchorY = y + (Math.random() - 0.5) * jitter;
-    this.anchorZ = 0;
+  constructor() {
+    // Distância fixa do cursor (define o "anel" desta partícula)
+    this.targetDist = MIN_RADIUS + Math.random() * (MAX_RADIUS - MIN_RADIUS);
 
-    this.x = this.anchorX;
-    this.y = this.anchorY;
-    this.z = 0;
+    // Ângulo orbital (gira ao redor do cursor)
+    this.angle = Math.random() * Math.PI * 2;
+    this.rotationSpeed = (Math.random() - 0.5) * 0.015;
 
-    this.vx = 0;
-    this.vy = 0;
-    this.vz = 0;
+    // Posição atual (começa fora da tela, vai surgir ao mover o mouse)
+    this.x = -999;
+    this.y = -999;
 
-    // Tamanho aleatório por partícula
-    this.baseSize = 1.0 + Math.random() * 1.8;
+    // Tamanho aleatório
+    this.size = 1.0 + Math.random() * 2.5;
 
-    // Cor aleatória da paleta
-    this.color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+    // Micro-movimento (jitter orgânico)
+    this.jitterPhaseX = Math.random() * Math.PI * 2;
+    this.jitterPhaseY = Math.random() * Math.PI * 2;
+    this.jitterSpeed = 0.02 + Math.random() * 0.04;
+    this.jitterAmp = 2 + Math.random() * 4;
 
-    // Drift aleatório e fraco por partícula
-    this.driftPhaseX = Math.random() * Math.PI * 2;
-    this.driftPhaseY = Math.random() * Math.PI * 2;
-    this.driftPhaseZ = Math.random() * Math.PI * 2;
-    this.driftSpeed = 0.005 + Math.random() * 0.01;
+    // Opacidade individual
+    this.alpha = 0;
+
+    // Hue calculado pela distância (arco-íris)
+    // Perto (0) = vermelho (0°), Longe (1) = violeta (270°)
+    const t = (this.targetDist - MIN_RADIUS) / (MAX_RADIUS - MIN_RADIUS);
+    this.hue = t * 270;
+    // Saturação e luminosidade
+    this.sat = 85 + Math.random() * 15;  // 85-100%
+    this.lit = 55 + Math.random() * 15;  // 55-70%
   }
 
-  applyMouseForce(mx, my) {
-    const dx = this.x - mx;
-    const dy = this.y - my;
-    const dz = this.z; // Mouse em Z=0
-    const distSq = dx * dx + dy * dy + dz * dz;
-    const rSq = MOUSE_RADIUS * MOUSE_RADIUS;
+  update(mx, my, mouseActive, time) {
+    // Rotacionar ao redor do cursor
+    this.angle += this.rotationSpeed;
 
-    // Aplica força dentro e ligeiramente fora do raio (1.3R)
-    const outerRadiusSq = rSq * 1.69; // (1.3R)^2
-    if (distSq > outerRadiusSq) return;
+    // Posição alvo: ponto orbital ao redor do mouse
+    const jitterX = Math.sin(time * this.jitterSpeed + this.jitterPhaseX) * this.jitterAmp;
+    const jitterY = Math.cos(time * this.jitterSpeed + this.jitterPhaseY) * this.jitterAmp;
 
-    const dist = Math.sqrt(distSq);
-    if (dist < 0.5) return; // Evitar divisão por ~0
+    const targetX = mx + Math.cos(this.angle) * this.targetDist + jitterX;
+    const targetY = my + Math.sin(this.angle) * this.targetDist + jitterY;
 
-    // Vetor normalizado (mouse → partícula = direção de fuga)
-    const invDist = 1 / dist;
-    const nx = dx * invDist;
-    const ny = dy * invDist;
-    const nz = dz * invDist;
+    // Ease suave em direção ao alvo
+    this.x += (targetX - this.x) * EASE;
+    this.y += (targetY - this.y) * EASE;
 
-    // F = (D² - R²) * sensibilidade
-    // D < R → F negativo → repulsão (empurra para superfície)
-    // D ≈ R → F ≈ 0 (equilíbrio na superfície)
-    // D > R (perto) → F positivo → atração suave de volta
-    const force = (distSq - rSq) * MOUSE_SENS;
-
-    // Aplicar: -force * normal → quando F<0, empurra na direção da normal (para fora)
-    this.vx -= nx * force;
-    this.vy -= ny * force;
-    this.vz -= nz * force;
-  }
-
-  update(time) {
-    // Mola de Restauração (Lei de Hooke)
-    this.vx += (this.anchorX - this.x) * SPRING_K;
-    this.vy += (this.anchorY - this.y) * SPRING_K;
-    this.vz += (this.anchorZ - this.z) * SPRING_K;
-
-    // Drift orgânico (sinusoidal, muito fraco)
-    this.vx += Math.sin(time * this.driftSpeed + this.driftPhaseX) * DRIFT_STRENGTH;
-    this.vy += Math.cos(time * this.driftSpeed + this.driftPhaseY) * DRIFT_STRENGTH;
-    this.vz += Math.sin(time * this.driftSpeed + this.driftPhaseZ) * DRIFT_STRENGTH * 0.5;
-
-    // Fricção
-    this.vx *= FRICTION;
-    this.vy *= FRICTION;
-    this.vz *= FRICTION;
-
-    // Integração
-    this.x += this.vx;
-    this.y += this.vy;
-    this.z += this.vz;
+    // Fade in/out baseado no estado do mouse
+    if (mouseActive) {
+      this.alpha += (BASE_ALPHA - this.alpha) * 0.05;
+    } else {
+      this.alpha *= 0.96; // Fade out suave
+    }
   }
 
   draw(ctx) {
-    // Projeção perspectiva baseada em Z
-    const perspective = 1 / (1 + Math.abs(this.z) * DEPTH_FACTOR);
-    const size = this.baseSize * perspective;
-    const alpha = Math.max(0.08, BASE_ALPHA * perspective);
+    if (this.alpha < 0.01) return;
+
+    // Partículas mais distantes são mais transparentes
+    const distFactor = 1 - (this.targetDist - MIN_RADIUS) / (MAX_RADIUS - MIN_RADIUS);
+    const finalAlpha = this.alpha * (0.3 + distFactor * 0.7);
 
     ctx.beginPath();
-    ctx.arc(this.x, this.y, size, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${this.color},${alpha})`;
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${this.hue}, ${this.sat}%, ${this.lit}%, ${finalAlpha})`;
     ctx.fill();
   }
 }
@@ -173,106 +88,89 @@ class Particle {
 // ─── Componente ────────────────────────────────────────────
 export default function ParticleCanvas() {
   const canvasRef = useRef(null);
-  const stateRef = useRef({
-    particles: [],
-    hash: new SpatialHash(HASH_CELL),
-    mouse: { x: -9999, y: -9999, active: false },
-    raf: null,
-    time: 0,
-  });
-
-  const initGrid = useCallback((w, h) => {
-    const particles = [];
-    for (let x = GRID_STEP / 2; x < w; x += GRID_STEP) {
-      for (let y = GRID_STEP / 2; y < h; y += GRID_STEP) {
-        particles.push(new Particle(x, y));
-      }
-    }
-    stateRef.current.particles = particles;
-  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d', { alpha: false });
-    const state = stateRef.current;
+
+    // Criar partículas
+    const particles = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push(new Particle());
+    }
+
+    let W, H;
+    let mx = -999, my = -999, mouseActive = false;
+    let time = 0;
+    let raf;
 
     function resize() {
       const dpr = window.devicePixelRatio || 1;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      initGrid(w, h);
     }
-
-    resize();
-    window.addEventListener('resize', resize);
 
     function onMouseMove(e) {
-      state.mouse.x = e.clientX;
-      state.mouse.y = e.clientY;
-      state.mouse.active = true;
+      mx = e.clientX;
+      my = e.clientY;
+      mouseActive = true;
     }
     function onMouseLeave() {
-      state.mouse.active = false;
+      mouseActive = false;
+    }
+    function onTouchMove(e) {
+      if (e.touches.length) {
+        mx = e.touches[0].clientX;
+        my = e.touches[0].clientY;
+        mouseActive = true;
+      }
+    }
+    function onTouchEnd() {
+      mouseActive = false;
     }
 
-    canvas.addEventListener('mousemove', onMouseMove);
-    canvas.addEventListener('mouseleave', onMouseLeave);
-
     function animate() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const particles = state.particles;
-      const hash = state.hash;
-      const { x: mx, y: my, active } = state.mouse;
+      time++;
 
-      state.time++;
-
-      // Limpar com fundo escuro
+      // Fundo
       ctx.fillStyle = BG_COLOR;
-      ctx.fillRect(0, 0, w, h);
+      ctx.fillRect(0, 0, W, H);
 
-      // Additive blending para sobreposição luminosa
+      // Additive blending para brilho nas sobreposições
       ctx.globalCompositeOperation = 'lighter';
 
-      // Spatial hashing: inserir todas as partículas
-      if (active) {
-        hash.clear();
-        for (let i = 0; i < particles.length; i++) {
-          hash.insert(particles[i], i);
-        }
-
-        // Aplicar força do mouse apenas nas partículas próximas
-        const nearby = hash.query(mx, my);
-        for (let i = 0; i < nearby.length; i++) {
-          particles[nearby[i]].applyMouseForce(mx, my);
-        }
-      }
-
-      // Atualizar e desenhar todas
       for (let i = 0; i < particles.length; i++) {
-        particles[i].update(state.time);
+        particles[i].update(mx, my, mouseActive, time);
         particles[i].draw(ctx);
       }
 
       ctx.globalCompositeOperation = 'source-over';
-      state.raf = requestAnimationFrame(animate);
+      raf = requestAnimationFrame(animate);
     }
 
+    resize();
+    window.addEventListener('resize', resize);
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseleave', onMouseLeave);
+    canvas.addEventListener('touchmove', onTouchMove, { passive: true });
+    canvas.addEventListener('touchend', onTouchEnd);
     animate();
 
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
       canvas.removeEventListener('mousemove', onMouseMove);
       canvas.removeEventListener('mouseleave', onMouseLeave);
-      if (state.raf) cancelAnimationFrame(state.raf);
+      canvas.removeEventListener('touchmove', onTouchMove);
+      canvas.removeEventListener('touchend', onTouchEnd);
     };
-  }, [initGrid]);
+  }, []);
 
   return (
     <canvas
