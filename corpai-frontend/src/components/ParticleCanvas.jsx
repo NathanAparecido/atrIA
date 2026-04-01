@@ -34,28 +34,38 @@ class Stake {
     const dy = my - this.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // 1. Zona de Revelação: só as partículas num raio de 400px aparecem
-    const revealRadius = 400;
+    // 1. Zona de Revelação
+    const revealRadius = 450;
     if (mouseActive && dist < revealRadius) {
       const revealPower = 1 - (dist / revealRadius);
-      this.alpha += (revealPower - this.alpha) * 0.1; // Suaviza a entrada
+      this.alpha += (revealPower - this.alpha) * 0.1; 
     } else {
-      this.alpha *= 0.9; // Some suavemente nas bordas/quando mouse sai
+      this.alpha *= 0.9; 
     }
 
-    // 2. Esfera de Volume (Repulsão)
-    const pulse = Math.sin(time * this.breathSpeed + this.breathPhase) * 15;
+    // 2. Esfera de Volume (Movimentação Agressiva)
+    // Pulse aumentado para 45: faz as partículas da borda "respirarem" muito mais
+    const pulse = Math.sin(time * this.breathSpeed + this.breathPhase) * 45;
     const currentRadius = MOUSE_RADIUS + pulse;
 
     if (mouseActive && dist < currentRadius && dist > 0.1) {
       const force = (currentRadius - dist) / currentRadius;
-      const power = force * force;
+      
+      // Força lateral linear (impacta mais as distantes que a quadrática)
+      const lateralForce = force * 15;
+      
+      // Evita a formação do vácuo no centro (partículas não são expulsas do núcleo)
+      const centerProtection = Math.min(1, dist / 60);
+
       const dirX = dx / dist;
       const dirY = dy / dist;
 
-      this.vx -= dirX * power * 8;
-      this.vy -= dirY * power * 8;
-      this.z += (power * MAX_STRETCH - this.z) * 0.2;
+      this.vx -= dirX * lateralForce * centerProtection;
+      this.vy -= dirY * lateralForce * centerProtection;
+      
+      // Z continua projetando volume
+      const zPower = force * force;
+      this.z += (zPower * MAX_STRETCH - this.z) * 0.2;
     } else {
       this.z *= 0.85;
     }
@@ -70,32 +80,29 @@ class Stake {
   }
 
   draw(ctx, mx, my) {
-    if (this.alpha < 0.05) return; // Limpa as bordas da tela
+    if (this.alpha < 0.05) return; 
 
     const dx = this.x - mx;
     const dy = this.y - my;
-    const dist = Math.sqrt(dx * dx + dy * dy) || 1; // Evita divisão por zero
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1; 
 
-    // ── Projeção Radial ──
-    // Se dist for muito pequena (em cima do mouse), stretch será quase 0
     const stretchX = (dx / dist) * this.z;
     const stretchY = (dy / dist) * this.z;
 
     const endX = this.x + stretchX;
     const endY = this.y + stretchY;
 
-    // ── Tamanho Dinâmico ──
-    // Perto do cursor (Z alto), a espessura aumenta levemente
-    // Longe do cursor, fica como um ponto fino
     const thickness = PILL_WIDTH * (0.5 + (this.z / MAX_STRETCH) * 0.5);
 
-    // ── Cor e Brilho ──
     const t = Math.min(1, dist / 600);
     const hue = t * 280;
     const lightness = 45 + (this.z / MAX_STRETCH) * 25;
 
+    // Atenua a renderização no epicentro (mantém "quase invisíveis" embaixo do cursor)
+    const centerFade = Math.max(0.2, Math.min(1, dist / 60));
+    const finalAlpha = this.alpha * centerFade;
+
     ctx.beginPath();
-    // Se a distância for minúscula, desenha apenas um ponto
     if (this.z < 0.5) {
         ctx.arc(this.x, this.y, thickness / 2, 0, Math.PI * 2);
     } else {
@@ -103,7 +110,7 @@ class Stake {
         ctx.lineTo(endX, endY);
     }
     
-    ctx.strokeStyle = `hsla(${hue}, 90%, ${lightness}%, ${this.alpha})`;
+    ctx.strokeStyle = `hsla(${hue}, 90%, ${lightness}%, ${finalAlpha})`;
     ctx.lineWidth = thickness;
     ctx.lineCap = 'round';
     ctx.stroke();
