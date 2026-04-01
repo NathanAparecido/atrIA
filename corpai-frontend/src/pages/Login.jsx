@@ -69,7 +69,7 @@ export default function Login() {
 
       <div className="flex flex-col items-center z-10 w-full max-w-md px-4">
         <div className="mb-8 font-['Orbitron'] text-6xl font-black flex tracking-tighter">
-          <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-white">
+          <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[var(--color-text)]">
             atr
           </TextAnimate>
           <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#8b5cf6] drop-shadow-[0_0_25px_rgba(139,92,246,0.8)]">
@@ -78,7 +78,7 @@ export default function Login() {
         </div>
 
         <Backlight className="w-full">
-          <Card className="relative w-full border-white/20 bg-black/40 backdrop-blur-2xl">
+          <Card className="relative w-full border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-2xl shadow-purple-500/10">
             <BorderBeam duration={6} />
             
             <CardContent className="flex flex-col gap-6 p-8">
@@ -98,7 +98,7 @@ export default function Login() {
                   )}
 
                   <div className="flex flex-col space-y-2">
-                    <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-white/50">
+                    <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
                       email
                     </label>
                     <input
@@ -109,12 +109,12 @@ export default function Login() {
                       placeholder="name@company.com"
                       required
                       autoFocus
-                      className="flex h-12 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/50 focus:border-[#8b5cf6]/50"
+                      className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-4 py-2 text-sm text-[var(--color-text)] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
                     />
                   </div>
 
                   <div className="flex flex-col space-y-2">
-                    <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-white/50">
+                    <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
                       password
                     </label>
                     <input
@@ -124,7 +124,7 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="flex h-12 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/50 focus:border-[#8b5cf6]/50"
+                      className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-4 py-2 text-sm text-[var(--color-text)] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
                     />
                   </div>
                 </div>
@@ -133,7 +133,7 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 flex items-center justify-center rounded-lg bg-[#8b5cf6] text-sm font-black text-white transition-all hover:bg-[#7c3aed] hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] disabled:opacity-50"
+                    className="w-full h-12 flex items-center justify-center rounded-lg bg-[var(--color-primary)] text-sm font-black text-white transition-all hover:bg-[var(--color-primary-hover)] hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] disabled:opacity-50"
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -144,7 +144,7 @@ export default function Login() {
                   
                   <button
                     type="button"
-                    className="w-full h-12 text-xs font-bold text-white/40 hover:text-white transition-colors"
+                    className="w-full h-12 text-xs font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
                   >
                     don't have an account? register here
                   </button>

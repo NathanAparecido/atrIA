@@ -5,8 +5,8 @@
 
 /* ─── Variáveis CSS ─────────────────────────────────────── */
 :root {
-  --color-primary: #4c6ef5;
-  --color-primary-hover: #4263eb;
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #7c3aed;
   --color-bg: #020617;
   --color-surface: #0f172a;
   --color-surface-hover: #1e293b;
@@ -23,7 +23,7 @@
   --color-surface: #ffffff;
   --color-surface-hover: #f1f5f9;
   --color-border: #e2e8f0;
-  --color-text: #0f172a;
+  --color-text: #1e293b;
   --color-text-muted: #64748b;
 }
 
