@@ -1,11 +1,13 @@
 /**
  * CorpAI — Página de Login
- * Campo de usuário + senha. Sem cadastro público.
+ * Campo de usuário + senha com efeito de partículas interativas.
+ * As partículas seguem o cursor criando um efeito gravitacional.
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ParticleCanvas from '../components/ParticleCanvas';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -34,13 +36,10 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center p-4"
       style={{ background: 'var(--color-bg)' }}>
       
-      {/* Background com gradiente sutil */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-corpai-600/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-corpai-500/10 blur-3xl" />
-      </div>
+      {/* Background com partículas interativas */}
+      <ParticleCanvas />
 
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md" style={{ zIndex: 10 }}>
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-corpai-500 to-corpai-700 flex items-center justify-center mb-4 shadow-lg shadow-corpai-500/20">
@@ -56,11 +55,11 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Formulário */}
-        <form onSubmit={handleSubmit} className="rounded-2xl p-6 space-y-5 shadow-xl"
+        {/* Formulário — fundo semi-transparente para ver partículas */}
+        <form onSubmit={handleSubmit} className="rounded-2xl p-6 space-y-5 shadow-xl backdrop-blur-xl"
           style={{
-            background: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
+            background: 'rgba(15, 23, 42, 0.75)',
+            border: '1px solid rgba(30, 41, 59, 0.6)',
           }}>
           
           {erro && (
@@ -83,8 +82,8 @@ export default function Login() {
               autoFocus
               className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-corpai-500/50 transition-all"
               style={{
-                background: 'var(--color-bg)',
-                border: '1px solid var(--color-border)',
+                background: 'rgba(2, 6, 23, 0.6)',
+                border: '1px solid rgba(30, 41, 59, 0.5)',
                 color: 'var(--color-text)',
               }}
             />
@@ -103,8 +102,8 @@ export default function Login() {
               required
               className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-corpai-500/50 transition-all"
               style={{
-                background: 'var(--color-bg)',
-                border: '1px solid var(--color-border)',
+                background: 'rgba(2, 6, 23, 0.6)',
+                border: '1px solid rgba(30, 41, 59, 0.5)',
                 color: 'var(--color-text)',
               }}
             />
