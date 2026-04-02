@@ -77,7 +77,16 @@ async def criar_admin_inicial():
                 extra={"username": settings.ADMIN_USERNAME},
             )
         else:
-            logging.info("Usuário administrador já existe.")
+            # Sincroniza a senha do admin com o valor atual do .env
+            if not pwd_context.verify(settings.ADMIN_PASSWORD, admin.hashed_password):
+                admin.hashed_password = pwd_context.hash(settings.ADMIN_PASSWORD)
+                await session.commit()
+                logging.info(
+                    "Senha do administrador atualizada conforme variável de ambiente.",
+                    extra={"username": settings.ADMIN_USERNAME},
+                )
+            else:
+                logging.info("Usuário administrador já existe.")
 
 
 # ─── Lifecycle (startup/shutdown) ───────────────────────────
