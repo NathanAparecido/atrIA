@@ -117,7 +117,7 @@ export default function Login() {
                       placeholder="name@company.com"
                       required
                       autoFocus
-                      className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-4 py-2 text-sm text-[var(--color-text)] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
+                      className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
                     />
                   </div>
 
@@ -132,7 +132,7 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-4 py-2 text-sm text-[var(--color-text)] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
+                      className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
                     />
                   </div>
                 </div>
