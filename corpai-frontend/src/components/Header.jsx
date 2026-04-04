@@ -8,7 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
-  const { user, logout, canUpload, isAdmin } = useAuth();
+  const { user, logout, canUpload, isAdmin, isLiderSetor } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,7 +20,7 @@ export default function Header() {
   const navItems = [
     { path: '/', label: 'Chat', always: true },
     { path: '/documentos', label: 'Documentos', show: canUpload },
-    { path: '/admin', label: 'Admin', show: isAdmin },
+    { path: '/admin', label: 'Admin', show: isAdmin || isLiderSetor },
   ];
 
   const setorLabel = {

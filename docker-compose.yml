@@ -36,7 +36,7 @@ services:
   # CHROMADB — Banco Vetorial (namespaces por setor)
   # ═══════════════════════════════════════════════════════════
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.6.3
     container_name: corpai-chromadb
     restart: unless-stopped
     environment:
@@ -50,7 +50,7 @@ services:
     networks:
       - corpai-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/api/v2/heartbeat || curl -sf http://localhost:8000/api/v1/heartbeat"]
       interval: 30s
       timeout: 10s
       retries: 5

@@ -1,6 +1,6 @@
 """
 CorpAI — Router de Usuários.
-CRUD de usuários (apenas admin).
+CRUD de usuários (admin vê tudo; lider_setor gerencia apenas seu setor).
 """
 
 import logging
@@ -72,14 +72,19 @@ async def get_db():
 @router.get(
     "/",
     response_model=List[UserResponse],
-    summary="Listar todos os usuários",
+    summary="Listar usuários",
 )
 async def listar_usuarios(
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(require_role(["admin"])),
+    current_user: TokenData = Depends(require_role(["admin", "lider_setor"])),
 ):
-    """Lista todos os usuários cadastrados (somente admin)."""
-    result = await db.execute(select(User).order_by(User.criado_em.desc()))
+    """Lista usuários. Admin vê todos; líder de setor vê apenas seu setor."""
+    query = select(User).order_by(User.criado_em.desc())
+
+    if current_user.role == "lider_setor":
+        query = query.where(User.setor == current_user.setor)
+
+    result = await db.execute(query)
     users = result.scalars().all()
 
     return [
@@ -105,9 +110,22 @@ async def listar_usuarios(
 async def criar_usuario(
     data: UserCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(require_role(["admin"])),
+    current_user: TokenData = Depends(require_role(["admin", "lider_setor"])),
 ):
-    """Cria um novo usuário no sistema (somente admin)."""
+    """Cria um novo usuário. Líder de setor só cria colaboradores no próprio setor."""
+
+    # Líder de setor: restringir ao próprio setor e apenas colaboradores
+    if current_user.role == "lider_setor":
+        if data.setor != current_user.setor:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você só pode criar usuários no seu próprio setor.",
+            )
+        if data.role != "colaborador":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você só pode criar usuários com o papel 'colaborador'.",
+            )
 
     # Validar setor
     if data.setor not in settings.SETORES_VALIDOS:
@@ -165,9 +183,9 @@ async def editar_usuario(
     user_id: str,
     data: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(require_role(["admin"])),
+    current_user: TokenData = Depends(require_role(["admin", "lider_setor"])),
 ):
-    """Edita um usuário existente (somente admin)."""
+    """Edita um usuário. Líder de setor só edita colaboradores do próprio setor."""
     result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
     user = result.scalar_one_or_none()
 
@@ -176,6 +194,24 @@ async def editar_usuario(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Usuário não encontrado.",
         )
+
+    # Líder de setor: só edita usuários do seu setor, não pode promover
+    if current_user.role == "lider_setor":
+        if user.setor != current_user.setor:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você só pode editar usuários do seu setor.",
+            )
+        if data.role is not None and data.role != "colaborador":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você só pode atribuir o papel 'colaborador'.",
+            )
+        if data.setor is not None and data.setor != current_user.setor:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não pode mover usuários para outro setor.",
+            )
 
     if data.nome_completo is not None:
         user.nome_completo = data.nome_completo
@@ -221,9 +257,9 @@ async def editar_usuario(
 async def deletar_usuario(
     user_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(require_role(["admin"])),
+    current_user: TokenData = Depends(require_role(["admin", "lider_setor"])),
 ):
-    """Remove um usuário do sistema (somente admin)."""
+    """Remove um usuário. Líder de setor só remove colaboradores do próprio setor."""
     result = await db.execute(select(User).where(User.id == uuid.UUID(user_id)))
     user = result.scalar_one_or_none()
 
@@ -239,6 +275,19 @@ async def deletar_usuario(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Você não pode deletar seu próprio usuário.",
         )
+
+    # Líder de setor: só deleta colaboradores do seu setor
+    if current_user.role == "lider_setor":
+        if user.setor != current_user.setor:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você só pode remover usuários do seu setor.",
+            )
+        if user.role != "colaborador":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você só pode remover colaboradores.",
+            )
 
     await db.delete(user)
     await db.commit()
@@ -258,7 +307,7 @@ async def deletar_usuario(
 )
 async def listar_setores(
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(require_role(["admin"])),
+    current_user: TokenData = Depends(require_role(["admin", "lider_setor"])),
 ):
     """Lista todos os setores com a contagem de usuários em cada um."""
     result = await db.execute(

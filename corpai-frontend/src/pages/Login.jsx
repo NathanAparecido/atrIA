@@ -93,7 +93,7 @@ export default function Login() {
               <div className="flex flex-col space-y-2">
                 <CardTitle className="text-3xl tracking-tight">login</CardTitle>
                 <CardDescription>
-                  enter your credentials to access your account.
+                  insira suas credenciais para acessar sua conta.
                 </CardDescription>
               </div>
 
@@ -107,14 +107,14 @@ export default function Login() {
 
                   <div className="flex flex-col space-y-2">
                     <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                      email
+                      usuário
                     </label>
                     <input
                       id="email"
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      placeholder="name@company.com"
+                      placeholder="seu.usuario"
                       required
                       autoFocus
                       className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
@@ -123,7 +123,7 @@ export default function Login() {
 
                   <div className="flex flex-col space-y-2">
                     <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                      password
+                      senha
                     </label>
                     <input
                       id="password"
@@ -146,7 +146,7 @@ export default function Login() {
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      'sign in'
+                      'entrar'
                     )}
                   </button>
                   
@@ -154,7 +154,7 @@ export default function Login() {
                     type="button"
                     className="w-full h-12 text-xs font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
                   >
-                    don't have an account? register here
+                    não tem uma conta? cadastre-se aqui
                   </button>
                 </div>
               </form>

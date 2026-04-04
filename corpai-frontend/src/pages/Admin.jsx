@@ -6,12 +6,11 @@
 
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
+import { useAuth } from '../contexts/AuthContext';
 import {
   listarUsuarios, criarUsuario, editarUsuario, deletarUsuario,
   listarSetores, healthCheck,
 } from '../lib/api';
-
-const TABS = ['Usuários', 'Setores', 'Sistema'];
 
 const SETORES = [
   'noc', 'suporte_n2', 'suporte_n3', 'financeiro', 'diretoria',
@@ -21,6 +20,8 @@ const SETORES = [
 const ROLES = ['colaborador', 'lider_setor', 'admin'];
 
 export default function Admin() {
+  const { isAdmin, user } = useAuth();
+  const TABS = isAdmin ? ['Usuários', 'Setores', 'Sistema'] : ['Usuários'];
   const [tabAtiva, setTabAtiva] = useState('Usuários');
   const [usuarios, setUsuarios] = useState([]);
   const [setores, setSetores] = useState([]);
@@ -57,7 +58,11 @@ export default function Admin() {
 
   function abrirModalCriar() {
     setEditando(null);
-    setForm({ username: '', password: '', nome_completo: '', setor: 'noc', role: 'colaborador' });
+    setForm({
+      username: '', password: '', nome_completo: '',
+      setor: isAdmin ? 'noc' : user.setor,
+      role: 'colaborador',
+    });
     setErro('');
     setModalAberto(true);
   }
@@ -106,11 +111,12 @@ export default function Admin() {
     suporte_rua: 'Suporte Rua', global: 'Global',
   };
 
+  const baseDomain = window.location.hostname;
   const externalLinks = [
-    { nome: 'Grafana', url: 'http://grafana.empresa.com', cor: 'bg-orange-500' },
-    { nome: 'Zabbix', url: 'http://zabbix.empresa.com', cor: 'bg-red-500' },
-    { nome: 'Paperless-NGX', url: 'http://paperless.empresa.com', cor: 'bg-green-500' },
-    { nome: 'Dify', url: 'http://dify.empresa.com', cor: 'bg-blue-500' },
+    { nome: 'Grafana', url: `https://grafana.${baseDomain}`, cor: 'bg-orange-500' },
+    { nome: 'Zabbix', url: `https://zabbix.${baseDomain}`, cor: 'bg-red-500' },
+    { nome: 'Paperless-NGX', url: `https://paperless.${baseDomain}`, cor: 'bg-green-500' },
+    { nome: 'Dify', url: `https://dify.${baseDomain}`, cor: 'bg-blue-500' },
   ];
 
   return (
@@ -119,7 +125,9 @@ export default function Admin() {
       <main className="flex-1 overflow-y-auto p-6" style={{ background: 'var(--color-bg)' }}>
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Título */}
-          <h2 className="text-2xl font-bold">Painel de Administração</h2>
+          <h2 className="text-2xl font-bold">
+            {isAdmin ? 'Painel de Administração' : `Gestão do Setor — ${setorLabel[user?.setor] || user?.setor}`}
+          </h2>
 
           {/* Tabs */}
           <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--color-surface)' }}>
@@ -164,7 +172,7 @@ export default function Admin() {
                           <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--color-text-muted)' }}>Usuário</th>
                           <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--color-text-muted)' }}>Nome</th>
                           <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--color-text-muted)' }}>Setor</th>
-                          <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--color-text-muted)' }}>Role</th>
+                          <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--color-text-muted)' }}>Papel</th>
                           <th className="text-left px-4 py-3 font-medium" style={{ color: 'var(--color-text-muted)' }}>Status</th>
                           <th className="text-right px-4 py-3 font-medium" style={{ color: 'var(--color-text-muted)' }}>Ações</th>
                         </tr>
@@ -333,17 +341,19 @@ export default function Admin() {
                 <div>
                   <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Setor</label>
                   <select value={form.setor} onChange={e => setForm({ ...form, setor: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none"
+                    disabled={!isAdmin}
+                    className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none disabled:opacity-60"
                     style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
-                    {SETORES.map(s => <option key={s} value={s}>{setorLabel[s] || s}</option>)}
+                    {(isAdmin ? SETORES : [user.setor]).map(s => <option key={s} value={s}>{setorLabel[s] || s}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Role</label>
+                  <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Papel</label>
                   <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}
-                    className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none"
+                    disabled={!isAdmin}
+                    className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none disabled:opacity-60"
                     style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
-                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                    {(isAdmin ? ROLES : ['colaborador']).map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
               </div>
