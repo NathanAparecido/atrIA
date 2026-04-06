@@ -110,14 +110,15 @@ const STYLES = `
 
 /* Giant Background Text Masking */
 .footer-giant-bg-text {
-  font-family: 'Orbitron', sans-serif;
   font-size: 26vw;
   line-height: 0.75;
   font-weight: 900;
   letter-spacing: -0.05em;
   color: transparent;
-  -webkit-text-stroke: 1px color-mix(in oklch, var(--foreground) 30%, transparent);
-  opacity: 0.3;
+  -webkit-text-stroke: 1px color-mix(in oklch, var(--foreground) 5%, transparent);
+  background: linear-gradient(180deg, color-mix(in oklch, var(--foreground) 10%, transparent) 0%, transparent 60%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 /* Metallic Text Glow */
@@ -340,22 +341,6 @@ export function CinematicFooter() {
                     <line x1="15" y1="12" x2="3" y2="12" />
                   </svg>
                   sign in
-                </MagneticButton>
-              </div>
-
-              {/* Secondary Navigation Links */}
-              <div className="flex flex-wrap justify-center gap-3 mt-8 w-full max-w-3xl">
-                <MagneticButton className="footer-glass-pill px-6 py-3 rounded-full font-medium text-xs md:text-sm text-[var(--foreground)]">
-                  termos de uso
-                </MagneticButton>
-                <MagneticButton className="footer-glass-pill px-6 py-3 rounded-full font-medium text-xs md:text-sm text-[var(--foreground)]">
-                  como usar
-                </MagneticButton>
-                <MagneticButton className="footer-glass-pill px-6 py-3 rounded-full font-medium text-xs md:text-sm text-[var(--foreground)]">
-                  sobre nós
-                </MagneticButton>
-                <MagneticButton className="footer-glass-pill px-6 py-3 rounded-full font-medium text-xs md:text-sm text-[var(--foreground)]">
-                  política de privacidade
                 </MagneticButton>
               </div>
 

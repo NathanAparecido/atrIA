@@ -44,12 +44,12 @@ export function GooeyText({
       if (text1Ref.current && text2Ref.current) {
         const easedFraction = easeInOutCubic(Math.min(fraction, 1));
 
-        text2Ref.current.style.filter = `blur(${Math.min(6 / easedFraction - 6, 30)}px)`;
-        text2Ref.current.style.opacity = `${Math.pow(easedFraction, 0.4) * 100}%`;
+        text2Ref.current.style.filter = `blur(${Math.min(6 / easedFraction - 6, 80)}px)`;
+        text2Ref.current.style.opacity = `${Math.pow(easedFraction, 0.35) * 100}%`;
 
         const inv = 1 - easedFraction;
-        text1Ref.current.style.filter = `blur(${Math.min(6 / inv - 6, 30)}px)`;
-        text1Ref.current.style.opacity = `${Math.pow(inv, 0.4) * 100}%`;
+        text1Ref.current.style.filter = `blur(${Math.min(6 / inv - 6, 80)}px)`;
+        text1Ref.current.style.opacity = `${Math.pow(inv, 0.35) * 100}%`;
       }
     };
 
