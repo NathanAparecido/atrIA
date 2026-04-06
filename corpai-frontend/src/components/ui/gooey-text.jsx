@@ -32,7 +32,7 @@ export function GooeyText({
   const text2Ref = React.useRef(null);
 
   React.useEffect(() => {
-    let textIndex = texts.length - 1;
+    let textIndex = 0;
     let time = new Date();
     let morph = 0;
     let cooldown = cooldownTime;
@@ -101,10 +101,10 @@ export function GooeyText({
       }
     }
 
-    // Initial setup
+    // Initial setup starts exactly At index 0
     if (text1Ref.current && text2Ref.current) {
-      text1Ref.current.innerHTML = formatText(texts[textIndex % texts.length], highlightColor);
-      text2Ref.current.innerHTML = formatText(texts[(textIndex + 1) % texts.length], highlightColor);
+      text1Ref.current.innerHTML = formatText(texts[0], highlightColor);
+      text2Ref.current.innerHTML = formatText(texts[1 % texts.length], highlightColor);
       doCooldown();
     }
 
