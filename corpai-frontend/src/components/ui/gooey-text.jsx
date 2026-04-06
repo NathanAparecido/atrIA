@@ -12,7 +12,8 @@ function formatText(text, highlightColor) {
   if (pipeIndex === -1) return text;
   const before = text.slice(0, pipeIndex);
   const after = text.slice(pipeIndex + 1);
-  return `${before}<span style="color:${highlightColor};filter:drop-shadow(0 0 25px ${highlightColor})">${after}</span>`;
+  // Applied the login page neon style: drop-shadow and a subtle text-shadow for intensity
+  return `${before}<span style="color:${highlightColor};filter:drop-shadow(0 0 25px rgba(13,0,255,0.8));text-shadow:0 0 10px rgba(13,0,255,0.5)">${after}</span>`;
 }
 
 function plainText(text) {
@@ -74,6 +75,16 @@ export function GooeyText({
       cooldown -= dt;
 
       if (cooldown <= 0) {
+        // --- FIX: Update text ONLY at the very start of the morph phase ---
+        if (morph === 0) {
+           const idx1 = textIndex % texts.length;
+           const idx2 = (textIndex + 1) % texts.length;
+           if (text1Ref.current && text2Ref.current) {
+             text1Ref.current.innerHTML = formatText(texts[idx1], highlightColor);
+             text2Ref.current.innerHTML = formatText(texts[idx2], highlightColor);
+           }
+        }
+
         // We are in morph phase
         morph += dt;
         let fraction = morph / morphTime;
@@ -83,13 +94,6 @@ export function GooeyText({
           cooldown = cooldownTime;
           morph = 0;
           textIndex = (textIndex + 1) % texts.length;
-          
-          if (text1Ref.current && text2Ref.current) {
-            const idx1 = textIndex % texts.length;
-            const idx2 = (textIndex + 1) % texts.length;
-            text1Ref.current.innerHTML = formatText(texts[idx1], highlightColor);
-            text2Ref.current.innerHTML = formatText(texts[idx2], highlightColor);
-          }
           doCooldown();
         } else {
           setMorph(fraction);
