@@ -4,8 +4,8 @@
  */
 
 import { CinematicFooter } from '@/components/ui/motion-footer';
+import { GooeyText } from '@/components/ui/gooey-text';
 import { Particles } from '../components/magicui/Particles';
-import { TextAnimate } from '../components/magicui/TextAnimate';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Landing() {
@@ -28,26 +28,24 @@ export default function Landing() {
           <ThemeToggle />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center">
-          {/* Logo — same style as login */}
-          <div className="mb-8 font-['Orbitron'] text-6xl font-black flex tracking-tighter">
-            <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[var(--color-text)]">
-              limin
-            </TextAnimate>
-            <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#0d00ff] drop-shadow-[0_0_25px_rgba(13,0,255,0.8)]">
-              ai
-            </TextAnimate>
-          </div>
-
-          <p className="text-[var(--color-text-muted)] text-sm md:text-base tracking-widest uppercase mb-12">
-            inteligência artificial corporativa
-          </p>
+        <div className="relative z-10 flex flex-col items-center justify-center">
+          {/* GooeyText morphing: futuro → é → liminai (with ai in blue) */}
+          <GooeyText
+            texts={["futuro", "é", "limin|ai"]}
+            morphTime={1.5}
+            cooldownTime={0.5}
+            highlightColor="#0d00ff"
+            className="h-32 md:h-48 w-[90vw] max-w-4xl flex items-center justify-center"
+            textClassName="font-['Orbitron'] font-black text-7xl md:text-9xl lg:text-[10rem]"
+          />
 
           {/* Scroll indicator */}
-          <div className="w-[1px] h-32 bg-gradient-to-b from-[var(--color-text-muted)] to-transparent" />
-          <p className="text-[var(--color-text-muted)] text-xs tracking-widest uppercase mt-4 animate-pulse">
-            scroll
-          </p>
+          <div className="mt-20 flex flex-col items-center">
+            <div className="w-[1px] h-32 bg-gradient-to-b from-[var(--color-text-muted)] to-transparent" />
+            <p className="text-[var(--color-text-muted)] text-xs tracking-widest uppercase mt-4 animate-pulse">
+              scroll
+            </p>
+          </div>
         </div>
       </main>
 

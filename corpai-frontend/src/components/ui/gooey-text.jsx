@@ -3,12 +3,29 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * formatText — if a text entry contains a pipe like "limin|ai",
+ * the part after the pipe is wrapped in a colored span.
+ */
+function formatText(text, highlightColor) {
+  const pipeIndex = text.indexOf("|");
+  if (pipeIndex === -1) return text;
+  const before = text.slice(0, pipeIndex);
+  const after = text.slice(pipeIndex + 1);
+  return `${before}<span style="color:${highlightColor};filter:drop-shadow(0 0 25px ${highlightColor})">${after}</span>`;
+}
+
+function plainText(text) {
+  return text.replace("|", "");
+}
+
 export function GooeyText({
   texts,
   morphTime = 1,
   cooldownTime = 0.25,
   className,
-  textClassName
+  textClassName,
+  highlightColor = "#0d00ff"
 }) {
   const text1Ref = React.useRef(null);
   const text2Ref = React.useRef(null);
@@ -67,8 +84,10 @@ export function GooeyText({
         if (shouldIncrementIndex) {
           textIndex = (textIndex + 1) % texts.length;
           if (text1Ref.current && text2Ref.current) {
-            text1Ref.current.textContent = texts[textIndex % texts.length];
-            text2Ref.current.textContent = texts[(textIndex + 1) % texts.length];
+            const idx1 = textIndex % texts.length;
+            const idx2 = (textIndex + 1) % texts.length;
+            text1Ref.current.innerHTML = formatText(texts[idx1], highlightColor);
+            text2Ref.current.innerHTML = formatText(texts[idx2], highlightColor);
           }
         }
         doMorph();
@@ -82,7 +101,7 @@ export function GooeyText({
     return () => {
       if (animId) cancelAnimationFrame(animId);
     };
-  }, [texts, morphTime, cooldownTime]);
+  }, [texts, morphTime, cooldownTime, highlightColor]);
 
   return (
     <div className={cn("relative", className)}>
@@ -108,7 +127,7 @@ export function GooeyText({
         <span
           ref={text1Ref}
           className={cn(
-            "absolute inline-block select-none text-center text-6xl md:text-[60pt]",
+            "absolute inline-block select-none text-center",
             textClassName
           )}
           style={{ color: 'var(--foreground)' }}
@@ -116,7 +135,7 @@ export function GooeyText({
         <span
           ref={text2Ref}
           className={cn(
-            "absolute inline-block select-none text-center text-6xl md:text-[60pt]",
+            "absolute inline-block select-none text-center",
             textClassName
           )}
           style={{ color: 'var(--foreground)' }}
