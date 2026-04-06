@@ -215,11 +215,11 @@ MagneticButton.displayName = "MagneticButton";
 // -------------------------------------------------------------------------
 const MarqueeItem = () => (
   <div className="flex items-center space-x-12 px-6">
-    <span>inteligência artificial corporativa</span> <span className="text-[var(--primary)]/60">✦</span>
-    <span>100% on-premise</span> <span className="text-[var(--secondary)]/60">✦</span>
-    <span>rag por setor</span> <span className="text-[var(--primary)]/60">✦</span>
-    <span>air-gapped</span> <span className="text-[var(--secondary)]/60">✦</span>
-    <span>privacidade total</span> <span className="text-[var(--primary)]/60">✦</span>
+    <span>inteligência artificial corporativa</span> <span style={{ color: '#0d00ff' }}>✦</span>
+    <span>100% on-premise</span> <span style={{ color: '#0d00ff', opacity: 0.7 }}>✦</span>
+    <span>rag por setor</span> <span style={{ color: '#0d00ff' }}>✦</span>
+    <span>air-gapped</span> <span style={{ color: '#0d00ff', opacity: 0.7 }}>✦</span>
+    <span>privacidade total</span> <span style={{ color: '#0d00ff' }}>✦</span>
   </div>
 );
 
@@ -318,10 +318,10 @@ export function CinematicFooter() {
           </div>
 
           {/* Main Center Content */}
-          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 mt-20 w-full max-w-5xl mx-auto">
+          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-8 mt-20 w-full max-w-6xl mx-auto">
             <h2
               ref={headingRef}
-              className="text-5xl md:text-8xl font-black footer-text-glow tracking-tighter mb-12 text-center"
+              className="text-4xl md:text-7xl lg:text-8xl font-black footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
             >
               venha <span className="footer-elegant-serif">inovar</span> conosco
             </h2>
