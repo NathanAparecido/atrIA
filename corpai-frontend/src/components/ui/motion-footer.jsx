@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
+import { Particles } from "../magicui/Particles";
 
 // Register ScrollTrigger safely for React
 if (typeof window !== "undefined") {
@@ -290,6 +291,15 @@ export function CinematicFooter() {
           {/* Ambient Light & Grid Background */}
           <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
           <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
+
+          {/* Subtle blue star particles */}
+          <Particles
+            className="absolute inset-0 z-[1] pointer-events-none"
+            quantity={80}
+            ease={100}
+            color="#0d00ff"
+            staticity={70}
+          />
 
           {/* Giant background text */}
           <div

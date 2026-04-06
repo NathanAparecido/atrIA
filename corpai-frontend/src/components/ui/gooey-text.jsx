@@ -37,14 +37,19 @@ export function GooeyText({
     let cooldown = cooldownTime;
     let animId;
 
+    // Smooth easing curve for morph transitions
+    const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
     const setMorph = (fraction) => {
       if (text1Ref.current && text2Ref.current) {
-        text2Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
-        text2Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+        const easedFraction = easeInOutCubic(Math.min(fraction, 1));
 
-        fraction = 1 - fraction;
-        text1Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
-        text1Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+        text2Ref.current.style.filter = `blur(${Math.min(6 / easedFraction - 6, 80)}px)`;
+        text2Ref.current.style.opacity = `${Math.pow(easedFraction, 0.35) * 100}%`;
+
+        const inv = 1 - easedFraction;
+        text1Ref.current.style.filter = `blur(${Math.min(6 / inv - 6, 80)}px)`;
+        text1Ref.current.style.opacity = `${Math.pow(inv, 0.35) * 100}%`;
       }
     };
 

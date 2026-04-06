@@ -51,8 +51,8 @@ export default function Landing() {
           {/* GooeyText morphing: futuro → é → liminai (with ai in blue neon) */}
           <GooeyText
             texts={["futuro", "é", "limin|ai"]}
-            morphTime={1.5}
-            cooldownTime={0.5}
+            morphTime={2}
+            cooldownTime={0.8}
             highlightColor="#0d00ff"
             className="h-32 md:h-48 w-[90vw] max-w-4xl flex items-center justify-center"
             textClassName="font-['Orbitron'] font-black text-7xl md:text-9xl lg:text-[10rem]"
