@@ -6,6 +6,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Chat from './pages/Chat';
 import Documents from './pages/Documents';
@@ -29,11 +30,15 @@ function AppRoutes() {
   return (
     <Routes>
       <Route
-        path="/login"
-        element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+        path="/"
+        element={isAuthenticated ? <Navigate to="/chat" replace /> : <Landing />}
       />
       <Route
-        path="/"
+        path="/login"
+        element={isAuthenticated ? <Navigate to="/chat" replace /> : <Login />}
+      />
+      <Route
+        path="/chat"
         element={
           <ProtectedRoute>
             <Chat />

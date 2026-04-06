@@ -52,7 +52,7 @@ export default function Login() {
 
     try {
       await login(username, password);
-      navigate('/');
+      navigate('/chat');
     } catch (err) {
       setErro(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
     } finally {

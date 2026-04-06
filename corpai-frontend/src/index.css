@@ -16,6 +16,15 @@
   --color-success: #22c55e;
   --color-error: #ef4444;
   --color-warning: #f59e0b;
+
+  /* shadcn-compatible tokens (used by motion-footer) */
+  --background: #020617;
+  --foreground: #f1f5f9;
+  --primary: #8b5cf6;
+  --secondary: #6366f1;
+  --destructive: #ef4444;
+  --border: #1e293b;
+  --muted-foreground: #94a3b8;
 }
 
 .light {
@@ -25,6 +34,14 @@
   --color-border: #e2e8f0;
   --color-text: #1e293b;
   --color-text-muted: #64748b;
+
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --primary: #8b5cf6;
+  --secondary: #6366f1;
+  --destructive: #ef4444;
+  --border: #e2e8f0;
+  --muted-foreground: #64748b;
 }
 
 /* ─── Base ──────────────────────────────────────────────── */
