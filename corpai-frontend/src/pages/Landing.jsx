@@ -4,8 +4,8 @@
  */
 
 import { CinematicFooter } from '@/components/ui/motion-footer';
-import { GooeyText } from '@/components/ui/gooey-text';
 import { Particles } from '../components/magicui/Particles';
+import { TextAnimate } from '../components/magicui/TextAnimate';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Landing() {
@@ -29,16 +29,17 @@ export default function Landing() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center">
-          {/* GooeyText morphing: futuro / é / liminai */}
-          <GooeyText
-            texts={["futuro", "é", "liminai"]}
-            morphTime={1.5}
-            cooldownTime={0.5}
-            className="h-24 md:h-32 w-[90vw] max-w-2xl"
-            textClassName="font-['Orbitron'] font-black"
-          />
+          {/* Logo — same style as login */}
+          <div className="mb-8 font-['Orbitron'] text-6xl font-black flex tracking-tighter">
+            <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[var(--color-text)]">
+              limin
+            </TextAnimate>
+            <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#0d00ff] drop-shadow-[0_0_25px_rgba(13,0,255,0.8)]">
+              ai
+            </TextAnimate>
+          </div>
 
-          <p className="text-[var(--color-text-muted)] text-sm md:text-base tracking-widest uppercase mt-16 mb-12">
+          <p className="text-[var(--color-text-muted)] text-sm md:text-base tracking-widest uppercase mb-12">
             inteligência artificial corporativa
           </p>
 
