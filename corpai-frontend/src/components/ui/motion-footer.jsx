@@ -16,7 +16,7 @@ if (typeof window !== "undefined") {
 // 1. THEME-ADAPTIVE INLINE STYLES
 // -------------------------------------------------------------------------
 const STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@1,500;1,700&display=swap');
 
 .cinematic-footer-wrapper {
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -127,6 +127,13 @@ const STYLES = `
   -webkit-text-fill-color: transparent;
   background-clip: text;
   filter: drop-shadow(0px 0px 20px color-mix(in oklch, var(--foreground) 15%, transparent));
+}
+
+.footer-elegant-serif {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 `;
 
@@ -306,7 +313,7 @@ export function CinematicFooter() {
               ref={headingRef}
               className="text-5xl md:text-8xl font-black footer-text-glow tracking-tighter mb-12 text-center"
             >
-              pronto para começar?
+              venha <span className="footer-elegant-serif">inovar</span> conosco
             </h2>
 
             <div ref={linksRef} className="flex flex-col items-center gap-6 w-full">
