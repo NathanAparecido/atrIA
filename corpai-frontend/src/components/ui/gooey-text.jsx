@@ -91,11 +91,29 @@ export function GooeyText({
 
         if (fraction >= 1) {
           // Morph finished
-          cooldown = cooldownTime;
           morph = 0;
-          // Move to next word for the NEXT morph cycle
-          textIndex = (textIndex + 1) % texts.length;
-          doCooldown();
+          // Move to next word
+          const nextIndex = textIndex + 1;
+          
+          if (nextIndex < texts.length - 1) {
+            // Still more transitions to do
+            textIndex = nextIndex;
+            cooldown = cooldownTime;
+            doCooldown();
+          } else {
+            // We reached the final word (liminai)
+            // Ensure final state is clean and stop animation
+            textIndex = texts.length - 1;
+            if (text1Ref.current && text2Ref.current) {
+              text1Ref.current.innerHTML = formatText(texts[textIndex], highlightColor);
+              text1Ref.current.style.filter = "";
+              text1Ref.current.style.opacity = "100%";
+              text2Ref.current.style.filter = "";
+              text2Ref.current.style.opacity = "0%";
+            }
+            if (animId) cancelAnimationFrame(animId);
+            return;
+          }
         } else {
           setMorph(fraction);
         }
