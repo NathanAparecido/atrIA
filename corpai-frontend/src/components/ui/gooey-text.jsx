@@ -42,63 +42,66 @@ export function GooeyText({
 
     const setMorph = (fraction) => {
       if (text1Ref.current && text2Ref.current) {
-        const easedFraction = easeInOutCubic(Math.min(fraction, 1));
+        const easedFraction = easeInOutCubic(Math.min(Math.max(fraction, 0), 1));
 
-        text2Ref.current.style.filter = `blur(${Math.min(6 / easedFraction - 6, 80)}px)`;
-        text2Ref.current.style.opacity = `${Math.pow(easedFraction, 0.35) * 100}%`;
+        // Text 1 blurs and fades out
+        const blur1 = Math.min(8 * easedFraction, 20);
+        text1Ref.current.style.filter = `blur(${blur1}px)`;
+        text1Ref.current.style.opacity = `${(1 - easedFraction) * 100}%`;
 
-        const inv = 1 - easedFraction;
-        text1Ref.current.style.filter = `blur(${Math.min(6 / inv - 6, 80)}px)`;
-        text1Ref.current.style.opacity = `${Math.pow(inv, 0.35) * 100}%`;
+        // Text 2 blurs in and fades in
+        const blur2 = Math.min(8 * (1 - easedFraction), 20);
+        text2Ref.current.style.filter = `blur(${blur2}px)`;
+        text2Ref.current.style.opacity = `${easedFraction * 100}%`;
       }
     };
 
     const doCooldown = () => {
-      morph = 0;
       if (text1Ref.current && text2Ref.current) {
-        text2Ref.current.style.filter = "";
-        text2Ref.current.style.opacity = "100%";
         text1Ref.current.style.filter = "";
-        text1Ref.current.style.opacity = "0%";
+        text1Ref.current.style.opacity = "100%";
+        text2Ref.current.style.filter = "";
+        text2Ref.current.style.opacity = "0%";
       }
-    };
-
-    const doMorph = () => {
-      morph -= cooldown;
-      cooldown = 0;
-      let fraction = morph / morphTime;
-
-      if (fraction > 1) {
-        cooldown = cooldownTime;
-        fraction = 1;
-      }
-
-      setMorph(fraction);
     };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       const newTime = new Date();
-      const shouldIncrementIndex = cooldown > 0;
       const dt = (newTime.getTime() - time.getTime()) / 1000;
       time = newTime;
 
       cooldown -= dt;
 
       if (cooldown <= 0) {
-        if (shouldIncrementIndex) {
+        // We are in morph phase
+        morph += dt;
+        let fraction = morph / morphTime;
+
+        if (fraction >= 1) {
+          // Morph finished, start cooldown
+          cooldown = cooldownTime;
+          morph = 0;
           textIndex = (textIndex + 1) % texts.length;
+          
           if (text1Ref.current && text2Ref.current) {
             const idx1 = textIndex % texts.length;
             const idx2 = (textIndex + 1) % texts.length;
             text1Ref.current.innerHTML = formatText(texts[idx1], highlightColor);
             text2Ref.current.innerHTML = formatText(texts[idx2], highlightColor);
           }
+          doCooldown();
+        } else {
+          setMorph(fraction);
         }
-        doMorph();
-      } else {
-        doCooldown();
       }
+    }
+
+    // Initial setup
+    if (text1Ref.current && text2Ref.current) {
+      text1Ref.current.innerHTML = formatText(texts[textIndex % texts.length], highlightColor);
+      text2Ref.current.innerHTML = formatText(texts[(textIndex + 1) % texts.length], highlightColor);
+      doCooldown();
     }
 
     animate();
