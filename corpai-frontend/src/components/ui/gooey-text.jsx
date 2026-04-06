@@ -75,14 +75,13 @@ export function GooeyText({
       cooldown -= dt;
 
       if (cooldown <= 0) {
-        // We are in morph phase
+        // --- START OF MORPH PHASE ---
         if (morph === 0) {
-          // Prepare the two strings for morphing
-          const idx1 = textIndex % texts.length;
-          const idx2 = (textIndex + 1) % texts.length;
+          const idxCurrent = textIndex % texts.length;
+          const idxNext = (textIndex + 1) % texts.length;
           if (text1Ref.current && text2Ref.current) {
-            text1Ref.current.innerHTML = formatText(texts[idx1], highlightColor);
-            text2Ref.current.innerHTML = formatText(texts[idx2], highlightColor);
+            text1Ref.current.innerHTML = formatText(texts[idxCurrent], highlightColor);
+            text2Ref.current.innerHTML = formatText(texts[idxNext], highlightColor);
           }
         }
 
@@ -90,30 +89,12 @@ export function GooeyText({
         let fraction = morph / morphTime;
 
         if (fraction >= 1) {
-          // Morph finished
+          // --- END OF MORPH PHASE ---
           morph = 0;
-          // Move to next word
-          const nextIndex = textIndex + 1;
-          
-          if (nextIndex < texts.length - 1) {
-            // Still more transitions to do
-            textIndex = nextIndex;
-            cooldown = cooldownTime;
-            doCooldown();
-          } else {
-            // We reached the final word (liminai)
-            // Ensure final state is clean and stop animation
-            textIndex = texts.length - 1;
-            if (text1Ref.current && text2Ref.current) {
-              text1Ref.current.innerHTML = formatText(texts[textIndex], highlightColor);
-              text1Ref.current.style.filter = "";
-              text1Ref.current.style.opacity = "100%";
-              text2Ref.current.style.filter = "";
-              text2Ref.current.style.opacity = "0%";
-            }
-            if (animId) cancelAnimationFrame(animId);
-            return;
-          }
+          cooldown = cooldownTime;
+          // Move the index forward for the next cycle
+          textIndex = (textIndex + 1) % texts.length;
+          doCooldown(); // Reset styles to show the 'new' current word (text1)
         } else {
           setMorph(fraction);
         }
