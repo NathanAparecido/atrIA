@@ -75,24 +75,25 @@ export function GooeyText({
       cooldown -= dt;
 
       if (cooldown <= 0) {
-        // --- FIX: Update text ONLY at the very start of the morph phase ---
+        // We are in morph phase
         if (morph === 0) {
-           const idx1 = textIndex % texts.length;
-           const idx2 = (textIndex + 1) % texts.length;
-           if (text1Ref.current && text2Ref.current) {
-             text1Ref.current.innerHTML = formatText(texts[idx1], highlightColor);
-             text2Ref.current.innerHTML = formatText(texts[idx2], highlightColor);
-           }
+          // Prepare the two strings for morphing
+          const idx1 = textIndex % texts.length;
+          const idx2 = (textIndex + 1) % texts.length;
+          if (text1Ref.current && text2Ref.current) {
+            text1Ref.current.innerHTML = formatText(texts[idx1], highlightColor);
+            text2Ref.current.innerHTML = formatText(texts[idx2], highlightColor);
+          }
         }
 
-        // We are in morph phase
         morph += dt;
         let fraction = morph / morphTime;
 
         if (fraction >= 1) {
-          // Morph finished, start cooldown
+          // Morph finished
           cooldown = cooldownTime;
           morph = 0;
+          // Move to next word for the NEXT morph cycle
           textIndex = (textIndex + 1) % texts.length;
           doCooldown();
         } else {
@@ -101,7 +102,7 @@ export function GooeyText({
       }
     }
 
-    // Initial setup starts exactly At index 0
+    // Initial setup: Show word 0, hide word 1
     if (text1Ref.current && text2Ref.current) {
       text1Ref.current.innerHTML = formatText(texts[0], highlightColor);
       text2Ref.current.innerHTML = formatText(texts[1 % texts.length], highlightColor);
