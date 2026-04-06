@@ -289,7 +289,7 @@ export function CinematicFooter() {
             ref={giantTextRef}
             className="footer-giant-bg-text absolute -bottom-[5vh] left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none"
           >
-            atrIA
+            liminai
           </div>
 
           {/* Diagonal Sleek Marquee */}
@@ -327,50 +327,11 @@ export function CinematicFooter() {
                 </MagneticButton>
               </div>
 
-              {/* Secondary Text Links */}
-              <div className="flex flex-wrap justify-center gap-3 md:gap-6 w-full mt-2">
-                <MagneticButton as="a" href="#" className="footer-glass-pill px-6 py-3 rounded-full font-medium text-xs md:text-sm" style={{ color: 'var(--muted-foreground)' }}>
-                  política de privacidade
-                </MagneticButton>
-                <MagneticButton as="a" href="#" className="footer-glass-pill px-6 py-3 rounded-full font-medium text-xs md:text-sm" style={{ color: 'var(--muted-foreground)' }}>
-                  termos de uso
-                </MagneticButton>
-                <MagneticButton as="a" href="#" className="footer-glass-pill px-6 py-3 rounded-full font-medium text-xs md:text-sm" style={{ color: 'var(--muted-foreground)' }}>
-                  suporte
-                </MagneticButton>
-              </div>
             </div>
           </div>
 
-          {/* Bottom Bar / Credits */}
-          <div className="relative z-20 w-full pb-8 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-6">
-
-            {/* Copyright */}
-            <div className="text-[10px] md:text-xs font-semibold tracking-widest uppercase order-2 md:order-1" style={{ color: 'var(--muted-foreground)' }}>
-              © 2026 corpai. todos os direitos reservados.
-            </div>
-
-            {/* "Made with Love" Badge */}
-            <div className="footer-glass-pill px-6 py-3 rounded-full flex items-center gap-2 order-1 md:order-2 cursor-default" style={{ borderColor: 'var(--border)' }}>
-              <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)' }}>feito com</span>
-              <span className="animate-footer-heartbeat text-sm md:text-base" style={{ color: 'var(--destructive)' }}>❤</span>
-              <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--muted-foreground)' }}>por</span>
-              <span className="font-black text-xs md:text-sm tracking-normal ml-1" style={{ color: 'var(--foreground)' }}>atrIA</span>
-            </div>
-
-            {/* Back to top */}
-            <MagneticButton
-              as="button"
-              onClick={scrollToTop}
-              className="w-12 h-12 rounded-full footer-glass-pill flex items-center justify-center group order-3"
-              style={{ color: 'var(--muted-foreground)' }}
-            >
-              <svg className="w-5 h-5 transform group-hover:-translate-y-1.5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-              </svg>
-            </MagneticButton>
-
-          </div>
+          {/* Bottom spacer */}
+          <div className="relative z-20 w-full pb-8" />
         </footer>
       </div>
     </>

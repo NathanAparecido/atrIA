@@ -66,7 +66,7 @@ export default function Login() {
         className="absolute inset-0 z-0 pointer-events-none"
         quantity={150}
         ease={80}
-        color="#8b5cf6"
+        color="#0d00ff"
         refresh
       />
 
@@ -78,15 +78,15 @@ export default function Login() {
       <div className="flex flex-col items-center z-10 w-full max-w-md px-4">
         <div className="mb-8 font-['Orbitron'] text-6xl font-black flex tracking-tighter">
           <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[var(--color-text)]">
-            atr
+            limin
           </TextAnimate>
-          <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#8b5cf6] drop-shadow-[0_0_25px_rgba(139,92,246,0.8)]">
-            IA
+          <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#0d00ff] drop-shadow-[0_0_25px_rgba(13,0,255,0.8)]">
+            ai
           </TextAnimate>
         </div>
 
         <Backlight className="w-full">
-          <Card className="relative w-full border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-2xl shadow-purple-500/10">
+          <Card className="relative w-full border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-2xl shadow-blue-700/10">
             <BorderBeam duration={6} />
             
             <CardContent className="flex flex-col gap-6 p-8">
@@ -141,7 +141,7 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 flex items-center justify-center rounded-lg bg-[var(--color-primary)] text-sm font-black text-white transition-all hover:bg-[var(--color-primary-hover)] hover:shadow-[0_0_20px_rgba(139,92,246,0.4)] disabled:opacity-50"
+                    className="w-full h-12 flex items-center justify-center rounded-lg bg-[var(--color-primary)] text-sm font-black text-white transition-all hover:bg-[var(--color-primary-hover)] hover:shadow-[0_0_20px_rgba(13,0,255,0.4)] disabled:opacity-50"
                   >
                     {loading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

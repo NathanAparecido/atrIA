@@ -1,11 +1,11 @@
 /**
- * CorpAI — Página Inicial (Landing)
+ * Liminai — Página Inicial (Landing)
  * Scroll para revelar o CinematicFooter com sign in.
  */
 
 import { CinematicFooter } from '@/components/ui/motion-footer';
+import { GooeyText } from '@/components/ui/gooey-text';
 import { Particles } from '../components/magicui/Particles';
-import { TextAnimate } from '../components/magicui/TextAnimate';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Landing() {
@@ -19,7 +19,7 @@ export default function Landing() {
           className="absolute inset-0 z-0 pointer-events-none"
           quantity={150}
           ease={80}
-          color="#8b5cf6"
+          color="#0d00ff"
           refresh
         />
 
@@ -29,17 +29,16 @@ export default function Landing() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center">
-          {/* Logo */}
-          <div className="mb-8 font-['Orbitron'] text-7xl md:text-9xl font-black flex tracking-tighter">
-            <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[var(--color-text)]">
-              atr
-            </TextAnimate>
-            <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#8b5cf6] drop-shadow-[0_0_25px_rgba(139,92,246,0.8)]">
-              IA
-            </TextAnimate>
-          </div>
+          {/* GooeyText morphing: futuro / é / liminai */}
+          <GooeyText
+            texts={["futuro", "é", "liminai"]}
+            morphTime={1.5}
+            cooldownTime={0.5}
+            className="h-24 md:h-32 w-[90vw] max-w-2xl"
+            textClassName="font-['Orbitron'] font-black"
+          />
 
-          <p className="text-[var(--color-text-muted)] text-sm md:text-base tracking-widest uppercase mb-12">
+          <p className="text-[var(--color-text-muted)] text-sm md:text-base tracking-widest uppercase mt-16 mb-12">
             inteligência artificial corporativa
           </p>
 
