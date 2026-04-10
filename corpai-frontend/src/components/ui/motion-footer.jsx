@@ -325,9 +325,9 @@ export function CinematicFooter() {
               className="text-4xl md:text-7xl lg:text-8xl font-black footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
             >
               <Typewriter
-                words={["inovar.", "proteger.", "crescer.", "liminai"]}
+                words={["venha inovar conosco", "liminai"]}
                 speed={85}
-                delayBetweenWords={1600}
+                delayBetweenWords={2000}
                 stopAtLast={true}
                 highlightFrom={5}
                 highlightColor="#0d00ff"
