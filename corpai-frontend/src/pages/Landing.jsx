@@ -6,6 +6,7 @@
 import { CinematicFooter } from '@/components/ui/motion-footer';
 import { GooeyText } from '@/components/ui/gooey-text';
 import { Particles } from '../components/magicui/Particles';
+import { NeuralOrb } from '../components/magicui/NeuralOrb';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Landing() {
@@ -22,6 +23,11 @@ export default function Landing() {
           color="#0d00ff"
           refresh
         />
+
+        {/* Neural Orb 3D — centro do hero, atrás do texto */}
+        <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
+          <NeuralOrb className="w-[88vmin] h-[88vmin]" />
+        </div>
 
         {/* Theme Toggle */}
         <div className="absolute top-4 right-4 z-20">
