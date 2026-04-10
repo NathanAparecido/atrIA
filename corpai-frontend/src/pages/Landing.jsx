@@ -72,31 +72,29 @@ export default function Landing() {
               className="font-['Orbitron'] font-black tracking-[0.25em] lowercase select-none"
               style={{
                 fontSize: 'clamp(2.4rem, 6.5vw, 5rem)',
-                color: 'var(--color-text)',
-                textShadow:
-                  '0 0 30px rgba(13,0,255,0.85), 0 0 70px rgba(13,0,255,0.35)',
+                color: '#FFFFFF',
+                textShadow: '0 2px 10px rgba(0,0,0,0.95), 0 0 40px rgba(0,0,0,0.6)',
               }}
             >
               limin
               <span
                 style={{
-                  color: '#0d00ff',
-                  textShadow:
-                    '0 0 18px #0d00ff, 0 0 50px rgba(13,0,255,0.7)',
+                  // Vermelhão do torii — conexão visual com os portões
+                  color: '#C23B10',
+                  textShadow: '0 2px 10px rgba(0,0,0,0.95)',
                 }}
               >
                 ai
               </span>
             </span>
 
-            {/* Linha decorativa abaixo */}
+            {/* Linha decorativa — mesma cor do torii */}
             <div
               style={{
                 width: '36%',
                 height: '1px',
-                background:
-                  'linear-gradient(to right, transparent, #0d00ff, transparent)',
-                opacity: 0.65,
+                background: 'linear-gradient(to right, transparent, #C23B10, transparent)',
+                opacity: 0.8,
               }}
             />
           </div>
@@ -108,9 +106,13 @@ export default function Landing() {
           style={{ opacity: indicatorOpacity, transition: 'opacity 0.3s ease' }}
         >
           <div
-            className="w-[1px] h-20 bg-gradient-to-b from-[var(--color-text-muted)] to-transparent"
+            className="w-[1px] h-20"
+            style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.7), transparent)' }}
           />
-          <p className="text-[var(--color-text-muted)] text-[10px] tracking-[0.35em] uppercase animate-pulse">
+          <p
+            className="text-[10px] tracking-[0.35em] uppercase animate-pulse"
+            style={{ color: 'rgba(255,255,255,0.75)' }}
+          >
             scroll
           </p>
         </div>
