@@ -1,125 +1,80 @@
 /**
- * Liminai — Landing Page
- * Escadaria com corredor de torii (inspirado em Fushimi Inari Taisha).
- * O scroll sobe a escadaria, atravessa o portão e revela o CinematicFooter.
+ * Liminai — Página Inicial (Landing)
+ * Scroll para revelar o CinematicFooter com sign in.
  */
 
-import { useRef, useEffect, useState } from 'react'
-import { CinematicFooter } from '@/components/ui/motion-footer'
-import { FushimiGate } from '../components/magicui/FushimiGate'
-import ThemeToggle from '../components/ThemeToggle'
-
-// Distância de scroll (em px) que cobre a animação completa (≈ 2 alturas de tela)
-const ANIM_DISTANCE = () => window.innerHeight * 2
+import { useRef, useEffect } from 'react';
+import { CinematicFooter } from '@/components/ui/motion-footer';
+import { GooeyText } from '@/components/ui/gooey-text';
+import { Particles } from '../components/magicui/Particles';
+import { TorusOrb } from '../components/magicui/TorusOrb';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function Landing() {
-  const scrollRef            = useRef(0)
-  const [canvasOpacity,      setCanvasOpacity]      = useState(1)
-  const [liminaiOpacity,     setLiminaiOpacity]     = useState(0)
-  const [indicatorOpacity,   setIndicatorOpacity]   = useState(1)
+  const scrollRef = useRef(0);
 
   useEffect(() => {
     const onScroll = () => {
-      const progress = Math.min(window.scrollY / ANIM_DISTANCE(), 1)
-      scrollRef.current = progress
-
-      // Canvas: fica visível até 85%, depois dissolve gradualmente
-      setCanvasOpacity(
-        progress < 0.85 ? 1 : Math.max(0, 1 - (progress - 0.85) / 0.15)
-      )
-
-      // "liminai": aparece ao se aproximar do portão final, some ao atravessar
-      const lp =
-        progress < 0.60 ? 0 :
-        progress < 0.76 ? (progress - 0.60) / 0.16 :
-        progress < 0.86 ? 1 :
-        Math.max(0, 1 - (progress - 0.86) / 0.12)
-      setLiminaiOpacity(lp)
-
-      // Indicador de scroll: some rápido
-      setIndicatorOpacity(Math.max(0, 1 - progress * 7))
-    }
-
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      scrollRef.current = max > 0 ? Math.min(window.scrollY / max, 1) : 0;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <div className="relative w-full" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="relative w-full min-h-screen font-sans selection:bg-white/20 overflow-x-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
 
-      {/* ── Seção principal: cria espaço para o scroll da animação ── */}
-      <main className="relative min-h-[300vh] border-b rounded-b-3xl"
-        style={{ borderColor: 'var(--color-border)', backgroundColor: 'transparent' }}
-      >
-        {/* Canvas 3D da escadaria / portão */}
-        <FushimiGate
-          scrollRef={scrollRef}
-          style={{ opacity: canvasOpacity, transition: 'opacity 0.4s ease' }}
+      {/* Main content — scroll down to reveal footer */}
+      <main className="relative z-10 w-full min-h-[120vh] flex flex-col items-center justify-center border-b rounded-b-3xl shadow-md" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+
+        <Particles
+          className="absolute inset-0 z-[1] pointer-events-none"
+          quantity={200}
+          ease={60}
+          color="#0d00ff"
+          refresh
         />
 
-        {/* Theme toggle */}
-        <div className="fixed top-4 right-4 z-20">
+        {/* Theme Toggle */}
+        <div className="absolute top-4 right-4 z-20">
           <ThemeToggle />
         </div>
 
-        {/* ── "liminai" — surge ao se aproximar do portão ── */}
-        <div
-          className="fixed inset-0 z-[15] flex items-center justify-center pointer-events-none"
-          style={{ opacity: liminaiOpacity, transition: 'opacity 0.2s ease' }}
-        >
-          <div className="flex flex-col items-center gap-4">
-            <span
-              className="font-['Orbitron'] font-black tracking-[0.25em] lowercase select-none"
-              style={{
-                fontSize: 'clamp(2.4rem, 6.5vw, 5rem)',
-                color: '#FFFFFF',
-                textShadow: '0 2px 10px rgba(0,0,0,0.95), 0 0 40px rgba(0,0,0,0.6)',
-              }}
-            >
-              limin
-              <span
-                style={{
-                  // Vermelhão do torii — conexão visual com os portões
-                  color: '#C23B10',
-                  textShadow: '0 2px 10px rgba(0,0,0,0.95)',
-                }}
-              >
-                ai
-              </span>
-            </span>
-
-            {/* Linha decorativa — mesma cor do torii */}
-            <div
-              style={{
-                width: '36%',
-                height: '1px',
-                background: 'linear-gradient(to right, transparent, #C23B10, transparent)',
-                opacity: 0.8,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* ── Indicador de scroll ── */}
-        <div
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[15] flex flex-col items-center gap-3 pointer-events-none"
-          style={{ opacity: indicatorOpacity, transition: 'opacity 0.3s ease' }}
-        >
-          <div
-            className="w-[1px] h-20"
-            style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.7), transparent)' }}
+        <div className="relative z-10 flex flex-col items-center justify-center">
+          {/* Neon glow hugging the text */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[200px] md:w-[700px] md:h-[280px] rounded-full blur-[100px] opacity-25 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse, #0d00ff 0%, transparent 70%)' }}
           />
-          <p
-            className="text-[10px] tracking-[0.35em] uppercase animate-pulse"
-            style={{ color: 'rgba(255,255,255,0.75)' }}
-          >
-            scroll
-          </p>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[120px] md:w-[500px] md:h-[180px] rounded-full blur-[60px] opacity-15 pointer-events-none"
+            style={{ background: 'radial-gradient(ellipse, #4400ff 0%, transparent 70%)' }}
+          />
+
+          {/* GooeyText morphing: futuro → é → liminai (with ai in blue neon) */}
+          <GooeyText
+            texts={["futuro", "é", "limin|ai"]}
+            morphTime={2}
+            cooldownTime={0.8}
+            highlightColor="#0d00ff"
+            className="h-32 md:h-48 w-[90vw] max-w-4xl flex items-center justify-center"
+            textClassName="font-['Orbitron'] font-black text-7xl md:text-9xl lg:text-[10rem]"
+          />
+
+          {/* Scroll indicator */}
+          <div className="mt-20 flex flex-col items-center">
+            <div className="w-[1px] h-32 bg-gradient-to-b from-[var(--color-text-muted)] to-transparent" />
+            <p className="text-[var(--color-text-muted)] text-xs tracking-widest uppercase mt-4 animate-pulse">
+              scroll
+            </p>
+          </div>
         </div>
       </main>
 
-      {/* ── Footer cinematográfico (sign in) ── */}
+      {/* Torus wireframe — flutua fixo no lado direito, anima com scroll */}
+      <TorusOrb scrollRef={scrollRef} />
+
+      {/* Cinematic Footer with Sign In */}
       <CinematicFooter />
     </div>
-  )
+  );
 }
