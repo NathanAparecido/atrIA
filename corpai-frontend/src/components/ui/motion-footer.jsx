@@ -236,36 +236,53 @@ export function CinematicFooter() {
     if (!wrapperRef.current) return;
 
     const ctx = gsap.context(() => {
+      // Giant background text: subtle parallax — drifts up as user scrolls away
       gsap.fromTo(
         giantTextRef.current,
-        { y: "10vh", scale: 0.8, opacity: 0 },
+        { y: "0vh", opacity: 0.6 },
         {
-          y: "0vh",
-          scale: 1,
-          opacity: 1,
-          ease: "power1.out",
+          y: "-8vh",
+          opacity: 0,
+          ease: "none",
           scrollTrigger: {
             trigger: wrapperRef.current,
-            start: "top 80%",
-            end: "bottom bottom",
+            start: "top top",
+            end: "bottom top",
+            scrub: 1.5,
+          },
+        }
+      );
+
+      // Heading exits faster (leading the parallax)
+      gsap.fromTo(
+        headingRef.current,
+        { y: 0, opacity: 1 },
+        {
+          y: -60,
+          opacity: 0,
+          ease: "none",
+          scrollTrigger: {
+            trigger: wrapperRef.current,
+            start: "top top",
+            end: "40% top",
             scrub: 1,
           },
         }
       );
 
+      // Links exit slower (trailing the parallax)
       gsap.fromTo(
-        [headingRef.current, linksRef.current],
-        { y: 50, opacity: 0 },
+        linksRef.current,
+        { y: 0, opacity: 1 },
         {
-          y: 0,
-          opacity: 1,
-          stagger: 0.15,
-          ease: "power3.out",
+          y: -30,
+          opacity: 0,
+          ease: "none",
           scrollTrigger: {
             trigger: wrapperRef.current,
-            start: "top 40%",
-            end: "bottom bottom",
-            scrub: 1,
+            start: "5% top",
+            end: "50% top",
+            scrub: 1.4,
           },
         }
       );
