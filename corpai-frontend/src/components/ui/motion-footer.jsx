@@ -7,6 +7,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
 import { Particles } from "../magicui/Particles";
+import { Typewriter } from "./typewriter";
 
 // Register ScrollTrigger safely for React
 if (typeof window !== "undefined") {
@@ -323,7 +324,15 @@ export function CinematicFooter() {
               ref={headingRef}
               className="text-4xl md:text-7xl lg:text-8xl font-black footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
             >
-              venha <span className="footer-elegant-serif">inovar</span> conosco
+              <Typewriter
+                words={["inovar.", "proteger.", "crescer.", "liminai"]}
+                speed={85}
+                delayBetweenWords={1600}
+                stopAtLast={true}
+                highlightFrom={5}
+                highlightColor="#0d00ff"
+                cursorChar="|"
+              />
             </h2>
 
             <div ref={linksRef} className="flex flex-col items-center gap-6 w-full">

@@ -25,7 +25,10 @@ export default function Landing() {
   return (
     <div className="relative w-full min-h-screen font-sans selection:bg-white/20 overflow-x-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
 
-      {/* Main content — scroll down to reveal footer */}
+      {/* ── Seção 1: CTA — visível ao abrir o site ── */}
+      <CinematicFooter />
+
+      {/* ── Seção 2: Hero — revelado no scroll ── */}
       <main className="relative z-10 w-full min-h-[120vh] flex flex-col items-center justify-center border-b rounded-b-3xl shadow-md" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
 
         <Particles
@@ -72,9 +75,6 @@ export default function Landing() {
 
       {/* Torus wireframe — flutua fixo no lado direito, anima com scroll */}
       <TorusOrb scrollRef={scrollRef} />
-
-      {/* Cinematic Footer with Sign In */}
-      <CinematicFooter />
     </div>
   );
 }
