@@ -306,17 +306,13 @@ export function CinematicFooter() {
       >
         <footer className="fixed bottom-0 left-0 flex h-screen w-full flex-col justify-between overflow-hidden cinematic-footer-wrapper" style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}>
 
-          {/* Ambient Light & Grid Background */}
-          <div className="footer-aurora absolute left-1/2 top-1/2 h-[60vh] w-[80vw] -translate-x-1/2 -translate-y-1/2 animate-footer-breathe rounded-[50%] blur-[80px] pointer-events-none z-0" />
-          <div className="footer-bg-grid absolute inset-0 z-0 pointer-events-none" />
-
-          {/* Subtle blue star particles */}
+          {/* Particles — mesmo estilo da tela de login */}
           <Particles
             className="absolute inset-0 z-[1] pointer-events-none"
-            quantity={80}
-            ease={100}
+            quantity={150}
+            ease={80}
             color="#0d00ff"
-            staticity={70}
+            refresh
           />
 
           {/* Giant background text */}

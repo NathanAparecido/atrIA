@@ -10,40 +10,22 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { CinematicFooter } from '@/components/ui/motion-footer';
 import { GooeyText } from '@/components/ui/gooey-text';
 import { Particles } from '../components/magicui/Particles';
-import { TorusOrb } from '../components/magicui/TorusOrb';
 import ThemeToggle from '../components/ThemeToggle';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Landing() {
-  const scrollRef      = useRef(0);
-  const heroRef        = useRef(null);
-  const progressBarRef = useRef(null);
-  const torusWrapRef   = useRef(null);
+  const scrollRef = useRef(0);
+  const heroRef   = useRef(null);
 
   // ── Lenis smooth scroll + GSAP ticker ────────────────────────────────────
   useEffect(() => {
     const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
 
-    // Feed Lenis scroll value into scrollRef + progress bar + torus opacity
     lenis.on('scroll', ({ progress }) => {
       scrollRef.current = progress;
-
-      // Progress bar — direct DOM update (no re-render)
-      if (progressBarRef.current) {
-        progressBarRef.current.style.height = `${progress * 100}%`;
-      }
-
-      // Torus: fade out when fully into hero section
-      if (torusWrapRef.current) {
-        const opacity = progress > 0.85
-          ? Math.max(0, 1 - (progress - 0.85) / 0.15)
-          : 0.85;
-        torusWrapRef.current.style.opacity = opacity;
-      }
     });
 
-    // Sync GSAP ScrollTrigger with Lenis
     gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
 
@@ -92,8 +74,8 @@ export default function Landing() {
 
         <Particles
           className="absolute inset-0 z-[1] pointer-events-none"
-          quantity={200}
-          ease={60}
+          quantity={150}
+          ease={80}
           color="#0d00ff"
           refresh
         />
@@ -131,32 +113,6 @@ export default function Landing() {
           </div>
         </div>
       </main>
-
-      {/* ── Progress indicator — faixa vertical esquerda ─────────────────── */}
-      <div
-        className="fixed left-5 top-0 z-50 flex flex-col items-center pointer-events-none"
-        style={{ height: '100vh' }}
-      >
-        {/* Track */}
-        <div
-          className="relative mt-12 rounded-full overflow-hidden"
-          style={{ width: 2, height: 'calc(100vh - 6rem)', backgroundColor: 'color-mix(in oklch, var(--foreground) 8%, transparent)' }}
-        >
-          {/* Fill */}
-          <div
-            ref={progressBarRef}
-            className="absolute top-0 left-0 w-full rounded-full"
-            style={{
-              height: '0%',
-              background: 'linear-gradient(to bottom, #0d00ff, color-mix(in oklch, #0d00ff 40%, transparent))',
-              boxShadow: '0 0 6px #0d00ff',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Torus wireframe — flutua fixo no lado direito */}
-      <TorusOrb scrollRef={scrollRef} wrapperRef={torusWrapRef} />
     </div>
   );
 }
