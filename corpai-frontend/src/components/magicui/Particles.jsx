@@ -98,9 +98,9 @@ export function Particles({
     const translateY = 0;
     const pX = 0;
     const pY = 0;
-    const size = Math.floor(Math.random() * 2) + 0.5;
+    const size = Math.floor(Math.random() * 2) + 0.4;
     const alpha = 0;
-    const targetAlpha = parseFloat((Math.random() * 0.55 + 0.25).toFixed(2));
+    const targetAlpha = parseFloat((Math.random() * 0.45 + 0.15).toFixed(2));
     const particleColor = colors && colors.length > 0
       ? colors[Math.floor(Math.random() * colors.length)]
       : color;
@@ -140,9 +140,9 @@ export function Particles({
       const { x, y, translateX, translateY, size, alpha } = circle;
       const { r, g, b } = rgb(circle.color || color);
       context.current.translate(translateX, translateY);
-      // soft glow halo
-      context.current.shadowBlur = size * 6;
-      context.current.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha * 0.7})`;
+      // subtle bokeh halo — soft light point, not too bright
+      context.current.shadowBlur = size * 3.5;
+      context.current.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha * 0.5})`;
       context.current.beginPath();
       context.current.arc(x, y, size, 0, 2 * Math.PI);
       context.current.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;

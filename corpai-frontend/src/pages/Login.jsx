@@ -16,13 +16,13 @@ import ThemeToggle from '../components/ThemeToggle';
 /* Dark iridescent metallic "ai" — static, sharp metallic, neon only on outline */
 const IRIS_STYLES = `
   .iris-text {
-    background: linear-gradient(135deg, #3868c0 0%, #7848d0 50%, #30b8d0 100%);
+    background: linear-gradient(135deg, #7030c0 0%, #d040b0 52%, #00c8b8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow:
-      0 0 6px rgba(80, 120, 220, 0.50),
-      0 0 14px rgba(110, 70, 210, 0.28);
+      0 0 6px rgba(208, 64, 176, 0.45),
+      0 0 14px rgba(112, 48, 192, 0.22);
   }
   /* Iridescent focus ring on inputs */
   .iris-input:focus {
@@ -64,7 +64,7 @@ export default function Login() {
           className="absolute inset-0 z-0 pointer-events-none"
           quantity={150}
           ease={80}
-          colors={["#3a5878", "#6848a8", "#2898b0", "#5060a0", "#7050b0"]}
+          colors={["#e040a8", "#7030c0", "#00c8b8", "#c040d0", "#3060d0", "#30c880"]}
           refresh
         />
 
@@ -141,12 +141,12 @@ export default function Login() {
                       disabled={loading}
                       className="w-full h-12 flex items-center justify-center rounded-lg text-sm font-black text-white transition-all disabled:opacity-50"
                       style={{
-                        background: 'linear-gradient(135deg, #2850a0 0%, #5040a0 60%, #288898 100%)',
-                        boxShadow: '0 0 0 0 rgba(60,100,200,0)',
+                        background: 'linear-gradient(135deg, #6020b0 0%, #c030b0 55%, #00c8b8 100%)',
+                        boxShadow: '0 0 0 0 rgba(200,48,176,0)',
                         transition: 'box-shadow 0.3s ease, opacity 0.2s',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 24px rgba(60,100,200,0.60)'}
-                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(60,100,200,0)'}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 22px rgba(200,48,176,0.55)'}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(200,48,176,0)'}
                     >
                       {loading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

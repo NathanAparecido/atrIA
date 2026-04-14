@@ -31,8 +31,8 @@ const GLOW_STYLES = `
       calc(var(--y, 0) * 1px),
       hsl(
         var(--hue, 260)
-        calc(var(--saturation, 80) * 1%)
-        calc(var(--lightness, 56) * 1%)
+        calc(var(--saturation, 85) * 1%)
+        calc(var(--lightness, 58) * 1%)
         / var(--border-spot-opacity, 1)
       ),
       transparent 100%
@@ -95,12 +95,12 @@ export function GlowCard({
   }, []);
 
   const inlineStyles = {
-    // Iridescent spectrum — violet (260°) sweeps 220° through pink → red → orange → green
-    '--base': 260,
-    '--spread': 220,
+    // Iridescent: teal (180°) → blue → violet → magenta/pink (330°) — no yellow, no orange
+    '--base': 180,
+    '--spread': 150,
     '--hue': 'calc(var(--base) + (var(--xp, 0) * var(--spread, 0)))',
-    '--saturation': 80,
-    '--lightness': 56,
+    '--saturation': 85,
+    '--lightness': 58,
 
     '--radius': 16,
     '--border': 1.5,
@@ -114,8 +114,8 @@ export function GlowCard({
     '--border-light-opacity': 0.38,
 
     // Subtle dark metallic surface (respects the background token)
-    '--backdrop': 'color-mix(in oklch, var(--background) 88%, hsl(270 30% 10%))',
-    '--backup-border': 'color-mix(in oklch, hsl(270 70% 50%) 20%, transparent)',
+    '--backdrop': 'color-mix(in oklch, var(--background) 88%, hsl(260 30% 10%))',
+    '--backup-border': 'color-mix(in oklch, hsl(280 75% 52%) 20%, transparent)',
 
     backgroundImage: `radial-gradient(
       var(--spotlight-size) var(--spotlight-size) at
@@ -123,8 +123,8 @@ export function GlowCard({
       calc(var(--y, 0) * 1px),
       hsl(
         var(--hue, 260)
-        calc(var(--saturation, 80) * 1%)
-        calc(var(--lightness, 56) * 1%)
+        calc(var(--saturation, 85) * 1%)
+        calc(var(--lightness, 58) * 1%)
         / var(--bg-spot-opacity, 0.12)
       ),
       transparent
