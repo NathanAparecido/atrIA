@@ -76,7 +76,7 @@ export default function Landing() {
           className="absolute inset-0 z-[1] pointer-events-none"
           quantity={150}
           ease={80}
-          color="#3a5878"
+          colors={["#3a5878", "#6848a8", "#2898b0", "#5060a0", "#7050b0"]}
           refresh
         />
 

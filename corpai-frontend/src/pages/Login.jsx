@@ -13,26 +13,20 @@ import { GlowCard } from '../components/magicui/GlowCard';
 import { Card, CardContent, CardTitle, CardDescription } from '../components/ui/card';
 import ThemeToggle from '../components/ThemeToggle';
 
-/* Dark iridescent metallic "ai" shimmer */
+/* Dark iridescent metallic "ai" — static, subtle neon */
 const IRIS_STYLES = `
-  @keyframes iris-shift {
-    0%   { filter: drop-shadow(0 0 26px rgba(60, 100, 210, 0.95)) drop-shadow(0 0 10px rgba(90, 140, 230, 0.55)) hue-rotate(0deg);   }
-    33%  { filter: drop-shadow(0 0 34px rgba(105, 60, 210, 0.95)) drop-shadow(0 0 14px rgba(135, 90, 230, 0.55)) hue-rotate(40deg);  }
-    66%  { filter: drop-shadow(0 0 28px rgba(40, 135, 195, 0.90)) drop-shadow(0 0 10px rgba(60, 165, 215, 0.55)) hue-rotate(-25deg); }
-    100% { filter: drop-shadow(0 0 26px rgba(60, 100, 210, 0.95)) drop-shadow(0 0 10px rgba(90, 140, 230, 0.55)) hue-rotate(0deg);   }
-  }
   .iris-text {
     background: linear-gradient(135deg, #2850a0 0%, #6840b8 50%, #28a0b8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: iris-shift 4s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(60, 100, 200, 0.55)) drop-shadow(0 0 4px rgba(90, 140, 220, 0.25));
   }
   /* Iridescent focus ring on inputs */
   .iris-input:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(60, 100, 210, 0.45), 0 0 0 1px rgba(105, 60, 210, 0.3);
-    border-color: rgba(60, 100, 210, 0.55) !important;
+    box-shadow: 0 0 0 2px rgba(60, 100, 210, 0.40), 0 0 0 1px rgba(105, 60, 210, 0.25);
+    border-color: rgba(60, 100, 210, 0.50) !important;
   }
 `;
 
@@ -68,7 +62,7 @@ export default function Login() {
           className="absolute inset-0 z-0 pointer-events-none"
           quantity={150}
           ease={80}
-          color="#3a5878"
+          colors={["#3a5878", "#6848a8", "#2898b0", "#5060a0", "#7050b0"]}
           refresh
         />
 
