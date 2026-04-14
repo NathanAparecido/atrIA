@@ -27,9 +27,9 @@ const IRIS_STYLES = `
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow:
-      0 0 4px rgba(0, 120, 104, 0.28),
-      0 0 10px rgba(144, 24, 112, 0.14);
+    filter:
+      drop-shadow(0 0 7px rgba(0, 128, 112, 0.72))
+      drop-shadow(0 0 16px rgba(144, 24, 112, 0.42));
   }
   /* Iridescent focus ring on inputs */
   .iris-input:focus {
@@ -153,12 +153,26 @@ export default function Login() {
                       disabled={loading}
                       className="w-full h-12 flex items-center justify-center rounded-lg text-sm font-black text-white transition-all disabled:opacity-50"
                       style={{
-                        background: 'radial-gradient(ellipse 200% 70% at 12% 88%, #b01888 0%, transparent 46%) , radial-gradient(ellipse 130% 200% at 88% 12%, #008878 0%, transparent 46%), radial-gradient(ellipse 140% 120% at 42% 38%, #4a18b0 0%, transparent 52%), radial-gradient(ellipse 100% 90% at 72% 80%, #7028c0 0%, transparent 44%), radial-gradient(ellipse 80% 55% at 58% 12%, #006860 0%, transparent 40%), #150540',
-                        boxShadow: '0 0 0 0 rgba(0,136,128,0)',
+                        background: [
+                          'radial-gradient(ellipse 210% 80% at 0% 100%,   #c020a8 0%, transparent 48%)',
+                          'radial-gradient(ellipse 160% 210% at 100% 0%,  #00b8a8 0%, transparent 48%)',
+                          'radial-gradient(ellipse 155% 135% at 44% 42%,  #5828c8 0%, transparent 52%)',
+                          'radial-gradient(ellipse 115% 105% at 76% 78%,  #8830d8 0%, transparent 44%)',
+                          'radial-gradient(ellipse 95%  62%  at 60% 8%,   #009090 0%, transparent 42%)',
+                          '#180848',
+                        ].join(', '),
+                        border: '1px solid rgba(0, 184, 168, 0.22)',
+                        boxShadow: '0 0 0 0 rgba(0,184,168,0)',
                         transition: 'box-shadow 0.3s ease, opacity 0.2s',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px rgba(0,136,128,0.40)'}
-                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,136,128,0)'}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.boxShadow = '0 0 22px rgba(0,184,168,0.45), 0 0 8px rgba(192,32,160,0.30)';
+                        e.currentTarget.style.borderColor = 'rgba(0,184,168,0.45)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,184,168,0)';
+                        e.currentTarget.style.borderColor = 'rgba(0,184,168,0.22)';
+                      }}
                     >
                       {loading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
