@@ -18,21 +18,21 @@ const IRIS_STYLES = `
   .iris-text {
     background: linear-gradient(
       135deg,
-      #a8ddd8 0%,
-      #f2f2fa 18%,
-      #88c8b8 34%,
-      #f0f0f8 50%,
-      #a890d8 66%,
-      #f0eef8 80%,
-      #d8a8d0 92%,
-      #a8ddd8 100%
+      #0a0428 0%,
+      #5820b0 16%,
+      #00d8c8 33%,
+      #e0f8f6 44%,
+      #00c8b8 52%,
+      #d020a8 68%,
+      #7030c0 82%,
+      #0a0428 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow:
-      0 0 4px rgba(168, 221, 216, 0.30),
-      0 0 10px rgba(168, 144, 216, 0.15);
+      0 0 5px rgba(0, 216, 200, 0.35),
+      0 0 12px rgba(208, 32, 168, 0.18);
   }
   /* Iridescent focus ring on inputs */
   .iris-input:focus {
@@ -151,12 +151,12 @@ export default function Login() {
                       disabled={loading}
                       className="w-full h-12 flex items-center justify-center rounded-lg text-sm font-black text-white transition-all disabled:opacity-50"
                       style={{
-                        background: 'linear-gradient(135deg, #4aa8a0 0%, #d0d0ec 22%, #7060b0 48%, #d8c0e0 72%, #4aa8a0 100%)',
-                        boxShadow: '0 0 0 0 rgba(112,96,176,0)',
+                        background: 'linear-gradient(135deg, #0e0530 0%, #6028c0 22%, #00d0c0 45%, #d020a8 70%, #3a10a0 100%)',
+                        boxShadow: '0 0 0 0 rgba(0,208,192,0)',
                         transition: 'box-shadow 0.3s ease, opacity 0.2s',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px rgba(112,96,176,0.45)'}
-                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(112,96,176,0)'}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 22px rgba(0,208,192,0.45)'}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,208,192,0)'}
                     >
                       {loading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
