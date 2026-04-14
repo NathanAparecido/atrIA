@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { WarpBackground } from '../components/magicui/WarpBackground';
 import { TextAnimate } from '../components/magicui/TextAnimate';
@@ -18,21 +19,20 @@ const IRIS_STYLES = `
   .iris-text {
     background: linear-gradient(
       135deg,
-      #0a0428 0%,
-      #5820b0 16%,
-      #00d8c8 33%,
-      #e0f8f6 44%,
-      #00c8b8 52%,
-      #d020a8 68%,
-      #7030c0 82%,
-      #0a0428 100%
+      #0c0632 0%,
+      #4a1898 20%,
+      #007870 38%,
+      #008c7c 52%,
+      #a01880 68%,
+      #5820a0 84%,
+      #0c0632 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow:
-      0 0 5px rgba(0, 216, 200, 0.35),
-      0 0 12px rgba(208, 32, 168, 0.18);
+      0 0 4px rgba(0, 136, 124, 0.30),
+      0 0 10px rgba(160, 24, 128, 0.15);
   }
   /* Iridescent focus ring on inputs */
   .iris-input:focus {
@@ -89,9 +89,14 @@ export default function Login() {
             <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[var(--color-text)]">
               limin
             </TextAnimate>
-            <span className="iris-text font-['Orbitron'] font-black text-6xl tracking-tighter">
+            <motion.span
+              className="iris-text font-['Orbitron'] font-black text-6xl tracking-tighter"
+              initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.45 }}
+            >
               ai
-            </span>
+            </motion.span>
           </div>
 
           {/* GlowCard wraps the login card */}
@@ -151,12 +156,12 @@ export default function Login() {
                       disabled={loading}
                       className="w-full h-12 flex items-center justify-center rounded-lg text-sm font-black text-white transition-all disabled:opacity-50"
                       style={{
-                        background: 'linear-gradient(135deg, #0e0530 0%, #6028c0 22%, #00d0c0 45%, #d020a8 70%, #3a10a0 100%)',
-                        boxShadow: '0 0 0 0 rgba(0,208,192,0)',
+                        background: 'linear-gradient(135deg, #150540 0%, #5520b8 28%, #008880 52%, #b01898 76%, #2a0888 100%)',
+                        boxShadow: '0 0 0 0 rgba(0,136,128,0)',
                         transition: 'box-shadow 0.3s ease, opacity 0.2s',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 22px rgba(0,208,192,0.45)'}
-                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,208,192,0)'}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 20px rgba(0,136,128,0.40)'}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,136,128,0)'}
                     >
                       {loading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
