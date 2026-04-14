@@ -139,15 +139,34 @@ export function Particles({
     if (context.current) {
       const { x, y, translateX, translateY, size, alpha } = circle;
       const { r, g, b } = rgb(circle.color || color);
+
       context.current.translate(translateX, translateY);
-      // subtle bokeh halo — soft light point, not too bright
-      context.current.shadowBlur = size * 3.5;
-      context.current.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha * 0.5})`;
+
+      // Glitter: tight bright core with soft halo
+      context.current.shadowBlur = size * 2.5;
+      context.current.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha * 0.55})`;
       context.current.beginPath();
-      context.current.arc(x, y, size, 0, 2 * Math.PI);
-      context.current.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      context.current.arc(x, y, size * 0.55, 0, 2 * Math.PI);
+      context.current.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.min(alpha * 1.6, 1)})`;
       context.current.fill();
       context.current.shadowBlur = 0;
+
+      // Cross glint on larger specks (glitter sparkle)
+      if (size > 1) {
+        const gl = size * 2.8;
+        context.current.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.45})`;
+        context.current.lineWidth = 0.4;
+        context.current.lineCap = 'round';
+        context.current.beginPath();
+        context.current.moveTo(x - gl, y);
+        context.current.lineTo(x + gl, y);
+        context.current.stroke();
+        context.current.beginPath();
+        context.current.moveTo(x, y - gl);
+        context.current.lineTo(x, y + gl);
+        context.current.stroke();
+      }
+
       context.current.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       if (!update) {

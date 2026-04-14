@@ -16,13 +16,13 @@ import ThemeToggle from '../components/ThemeToggle';
 /* Dark iridescent metallic "ai" — static, sharp metallic, neon only on outline */
 const IRIS_STYLES = `
   .iris-text {
-    background: linear-gradient(135deg, #7030c0 0%, #d040b0 52%, #00c8b8 100%);
+    background: linear-gradient(135deg, #00c8b8 0%, #30c880 42%, #7030c0 78%, #d040b0 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow:
-      0 0 6px rgba(208, 64, 176, 0.45),
-      0 0 14px rgba(112, 48, 192, 0.22);
+      0 0 6px rgba(0, 200, 184, 0.40),
+      0 0 14px rgba(112, 48, 192, 0.20);
   }
   /* Iridescent focus ring on inputs */
   .iris-input:focus {
@@ -141,12 +141,12 @@ export default function Login() {
                       disabled={loading}
                       className="w-full h-12 flex items-center justify-center rounded-lg text-sm font-black text-white transition-all disabled:opacity-50"
                       style={{
-                        background: 'linear-gradient(135deg, #6020b0 0%, #c030b0 55%, #00c8b8 100%)',
-                        boxShadow: '0 0 0 0 rgba(200,48,176,0)',
+                        background: 'linear-gradient(135deg, #00c8b8 0%, #30c880 40%, #7030c0 78%, #d040b0 100%)',
+                        boxShadow: '0 0 0 0 rgba(0,200,184,0)',
                         transition: 'box-shadow 0.3s ease, opacity 0.2s',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 22px rgba(200,48,176,0.55)'}
-                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(200,48,176,0)'}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 22px rgba(0,200,184,0.50)'}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(0,200,184,0)'}
                     >
                       {loading ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
