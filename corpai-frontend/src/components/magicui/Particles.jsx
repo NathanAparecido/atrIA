@@ -142,30 +142,18 @@ export function Particles({
 
       context.current.translate(translateX, translateY);
 
-      // Glitter: tight bright core with soft halo
-      context.current.shadowBlur = size * 2.5;
-      context.current.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha * 0.55})`;
-      context.current.beginPath();
-      context.current.arc(x, y, size * 0.55, 0, 2 * Math.PI);
-      context.current.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.min(alpha * 1.6, 1)})`;
-      context.current.fill();
-      context.current.shadowBlur = 0;
+      // Glitter bokeh: radial gradient — bright centre fading to transparent
+      const blobR = size * 2.2;
+      const grad = context.current.createRadialGradient(x, y, 0, x, y, blobR);
+      grad.addColorStop(0,    `rgba(${r}, ${g}, ${b}, ${Math.min(alpha * 1.8, 1)})`);
+      grad.addColorStop(0.32, `rgba(${r}, ${g}, ${b}, ${alpha * 0.65})`);
+      grad.addColorStop(0.68, `rgba(${r}, ${g}, ${b}, ${alpha * 0.15})`);
+      grad.addColorStop(1,    `rgba(${r}, ${g}, ${b}, 0)`);
 
-      // Cross glint on larger specks (glitter sparkle)
-      if (size > 1) {
-        const gl = size * 2.8;
-        context.current.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.45})`;
-        context.current.lineWidth = 0.4;
-        context.current.lineCap = 'round';
-        context.current.beginPath();
-        context.current.moveTo(x - gl, y);
-        context.current.lineTo(x + gl, y);
-        context.current.stroke();
-        context.current.beginPath();
-        context.current.moveTo(x, y - gl);
-        context.current.lineTo(x, y + gl);
-        context.current.stroke();
-      }
+      context.current.beginPath();
+      context.current.arc(x, y, blobR, 0, 2 * Math.PI);
+      context.current.fillStyle = grad;
+      context.current.fill();
 
       context.current.setTransform(dpr, 0, 0, dpr, 0, 0);
 
