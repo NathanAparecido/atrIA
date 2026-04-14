@@ -76,7 +76,7 @@ export default function Landing() {
           className="absolute inset-0 z-[1] pointer-events-none"
           quantity={150}
           ease={80}
-          color="#0d00ff"
+          color="#3a5878"
           refresh
         />
 
@@ -88,10 +88,10 @@ export default function Landing() {
         <div className="relative z-10 flex flex-col items-center justify-center">
           {/* Neon glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[200px] md:w-[700px] md:h-[280px] rounded-full blur-[100px] opacity-25 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse, #0d00ff 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(ellipse, #3a5878 0%, transparent 70%)' }}
           />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[120px] md:w-[500px] md:h-[180px] rounded-full blur-[60px] opacity-15 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse, #4400ff 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(ellipse, #4a4878 0%, transparent 70%)' }}
           />
 
           {/* GooeyText morphing: futuro → é → liminai */}
@@ -99,7 +99,7 @@ export default function Landing() {
             texts={["futuro", "é", "limin|ai"]}
             morphTime={2}
             cooldownTime={0.8}
-            highlightColor="#0d00ff"
+            highlightColor="#3a5878"
             className="h-32 md:h-48 w-[90vw] max-w-4xl flex items-center justify-center"
             textClassName="font-['Orbitron'] font-black text-7xl md:text-9xl lg:text-[10rem]"
           />

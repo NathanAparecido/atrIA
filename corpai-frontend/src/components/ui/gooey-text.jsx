@@ -13,7 +13,7 @@ function formatText(text, highlightColor) {
   const before = text.slice(0, pipeIndex);
   const after = text.slice(pipeIndex + 1);
   // Applied the login page neon style: drop-shadow and a subtle text-shadow for intensity
-  return `${before}<span style="color:${highlightColor};filter:drop-shadow(0 0 25px rgba(13,0,255,0.8));text-shadow:0 0 10px rgba(13,0,255,0.5)">${after}</span>`;
+  return `${before}<span style="color:${highlightColor};filter:drop-shadow(0 0 28px rgba(60,100,210,0.9)) drop-shadow(0 0 12px rgba(90,140,230,0.55));text-shadow:0 0 12px rgba(60,100,210,0.6)">${after}</span>`;
 }
 
 function plainText(text) {

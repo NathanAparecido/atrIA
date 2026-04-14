@@ -1,41 +1,40 @@
 /**
- * CorpAI — Página de Login
- * Campo de usuário + senha com UI "shadcn" estendida com BorderBeam.
+ * Liminai — Página de Login
+ * Campo de usuário + senha com GlowCard iridescente metálico.
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { WarpBackground } from '../components/magicui/WarpBackground';
-import { Backlight } from '../components/magicui/Backlight';
 import { TextAnimate } from '../components/magicui/TextAnimate';
 import { Particles } from '../components/magicui/Particles';
+import { GlowCard } from '../components/magicui/GlowCard';
 import { Card, CardContent, CardTitle, CardDescription } from '../components/ui/card';
 import ThemeToggle from '../components/ThemeToggle';
 
-// ─── BorderBeam Componente ──────────────────────────────── 
-function BorderBeam({ duration = 8 }) {
-  return (
-    <div 
-      className="absolute inset-0 pointer-events-none rounded-xl"
-      style={{
-        padding: '1.5px', // Espessura da borda brilhante
-        WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-        WebkitMaskComposite: 'xor',
-        maskComposite: 'exclude',
-        zIndex: 20
-      }}
-    >
-      <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250%] h-[250%] animate-[spin_8s_linear_infinite]"
-        style={{
-          background: 'conic-gradient(from 0deg, transparent 75%, var(--color-primary) 100%)',
-          animationDuration: `${duration}s`
-        }}
-      />
-    </div>
-  );
-}
+/* Dark iridescent metallic "ai" shimmer */
+const IRIS_STYLES = `
+  @keyframes iris-shift {
+    0%   { filter: drop-shadow(0 0 26px rgba(60, 100, 210, 0.95)) drop-shadow(0 0 10px rgba(90, 140, 230, 0.55)) hue-rotate(0deg);   }
+    33%  { filter: drop-shadow(0 0 34px rgba(105, 60, 210, 0.95)) drop-shadow(0 0 14px rgba(135, 90, 230, 0.55)) hue-rotate(40deg);  }
+    66%  { filter: drop-shadow(0 0 28px rgba(40, 135, 195, 0.90)) drop-shadow(0 0 10px rgba(60, 165, 215, 0.55)) hue-rotate(-25deg); }
+    100% { filter: drop-shadow(0 0 26px rgba(60, 100, 210, 0.95)) drop-shadow(0 0 10px rgba(90, 140, 230, 0.55)) hue-rotate(0deg);   }
+  }
+  .iris-text {
+    background: linear-gradient(135deg, #2850a0 0%, #6840b8 50%, #28a0b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: iris-shift 4s ease-in-out infinite;
+  }
+  /* Iridescent focus ring on inputs */
+  .iris-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(60, 100, 210, 0.45), 0 0 0 1px rgba(105, 60, 210, 0.3);
+    border-color: rgba(60, 100, 210, 0.55) !important;
+  }
+`;
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -49,7 +48,6 @@ export default function Login() {
     e.preventDefault();
     setErro('');
     setLoading(true);
-
     try {
       await login(username, password);
       navigate('/chat');
@@ -61,107 +59,120 @@ export default function Login() {
   }
 
   return (
-    <WarpBackground className="transition-theme flex items-center justify-center p-4 relative">
-      <Particles
-        className="absolute inset-0 z-0 pointer-events-none"
-        quantity={150}
-        ease={80}
-        color="#0d00ff"
-        refresh
-      />
+    <>
+      <style dangerouslySetInnerHTML={{ __html: IRIS_STYLES }} />
+      <WarpBackground className="transition-theme flex items-center justify-center p-4 relative">
 
-      {/* Theme Toggle no Topo */}
-      <div className="absolute top-4 right-4 z-20">
-        <ThemeToggle />
-      </div>
+        {/* Iridescent particles — softer than pure blue */}
+        <Particles
+          className="absolute inset-0 z-0 pointer-events-none"
+          quantity={150}
+          ease={80}
+          color="#3a5878"
+          refresh
+        />
 
-      <div className="flex flex-col items-center z-10 w-full max-w-md px-4">
-        <div className="mb-8 font-['Orbitron'] text-6xl font-black flex tracking-tighter">
-          <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[var(--color-text)]">
-            limin
-          </TextAnimate>
-          <TextAnimate animation="blurInUp" by="character" once delayOffset={0.3} className="text-[#0d00ff] drop-shadow-[0_0_25px_rgba(13,0,255,0.8)]">
-            ai
-          </TextAnimate>
+        <div className="absolute top-4 right-4 z-20">
+          <ThemeToggle />
         </div>
 
-        <Backlight className="w-full">
-          <Card className="relative w-full border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-2xl shadow-blue-700/10">
-            <BorderBeam duration={6} />
-            
-            <CardContent className="flex flex-col gap-6 p-8">
-              <div className="flex flex-col space-y-2">
-                <CardTitle className="text-3xl tracking-tight">login</CardTitle>
-                <CardDescription>
-                  insira suas credenciais para acessar sua conta.
-                </CardDescription>
-              </div>
+        <div className="flex flex-col items-center z-10 w-full max-w-md px-4">
 
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid w-full items-center gap-5">
-                  {erro && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-xs text-red-400 animate-fade-in font-bold">
-                      {erro}
-                    </div>
-                  )}
+          {/* Logo */}
+          <div className="mb-8 font-['Orbitron'] text-6xl font-black flex tracking-tighter">
+            <TextAnimate animation="blurInUp" by="character" once delayOffset={0} className="text-[var(--color-text)]">
+              limin
+            </TextAnimate>
+            <span className="iris-text font-['Orbitron'] font-black text-6xl tracking-tighter">
+              ai
+            </span>
+          </div>
 
-                  <div className="flex flex-col space-y-2">
-                    <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                      usuário
-                    </label>
-                    <input
-                      id="email"
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="seu.usuario"
-                      required
-                      autoFocus
-                      className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
-                      senha
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      className="flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50 focus:border-[var(--color-primary)]/50"
-                    />
-                  </div>
+          {/* GlowCard wraps the login card */}
+          <GlowCard customSize className="w-full">
+            <Card className="w-full border-0 bg-transparent shadow-none">
+              <CardContent className="flex flex-col gap-6 p-8">
+                <div className="flex flex-col space-y-2">
+                  <CardTitle className="text-3xl tracking-tight">login</CardTitle>
+                  <CardDescription>
+                    insira suas credenciais para acessar sua conta.
+                  </CardDescription>
                 </div>
 
-                <div className="flex flex-col gap-3 pt-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-12 flex items-center justify-center rounded-lg bg-[var(--color-primary)] text-sm font-black text-white transition-all hover:bg-[var(--color-primary-hover)] hover:shadow-[0_0_20px_rgba(13,0,255,0.4)] disabled:opacity-50"
-                  >
-                    {loading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      'entrar'
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid w-full items-center gap-5">
+                    {erro && (
+                      <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-xs text-red-400 animate-fade-in font-bold">
+                        {erro}
+                      </div>
                     )}
-                  </button>
-                  
-                  <button
-                    type="button"
-                    className="w-full h-12 text-xs font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
-                  >
-                    não tem uma conta? cadastre-se aqui
-                  </button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </Backlight>
-      </div>
-    </WarpBackground>
+
+                    <div className="flex flex-col space-y-2">
+                      <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+                        usuário
+                      </label>
+                      <input
+                        id="email"
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="seu.usuario"
+                        required
+                        autoFocus
+                        className="iris-input flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-500 transition-all"
+                      />
+                    </div>
+
+                    <div className="flex flex-col space-y-2">
+                      <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-[var(--color-text-muted)]">
+                        senha
+                      </label>
+                      <input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="iris-input flex h-12 w-full rounded-lg border border-[var(--color-border)] bg-white/95 px-4 py-2 text-sm text-slate-900 placeholder:text-slate-500 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full h-12 flex items-center justify-center rounded-lg text-sm font-black text-white transition-all disabled:opacity-50"
+                      style={{
+                        background: 'linear-gradient(135deg, #2850a0 0%, #5040a0 60%, #288898 100%)',
+                        boxShadow: '0 0 0 0 rgba(60,100,200,0)',
+                        transition: 'box-shadow 0.3s ease, opacity 0.2s',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.boxShadow = '0 0 24px rgba(60,100,200,0.60)'}
+                      onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 rgba(60,100,200,0)'}
+                    >
+                      {loading ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        'entrar'
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="w-full h-12 text-xs font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+                    >
+                      não tem uma conta? cadastre-se aqui
+                    </button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </GlowCard>
+
+        </div>
+      </WarpBackground>
+    </>
   );
 }

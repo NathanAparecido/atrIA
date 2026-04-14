@@ -111,7 +111,7 @@ const STYLES = `
 
 /* Giant Background Text Masking */
 .footer-giant-bg-text {
-  font-size: 26vw;
+  font-size: 38vw;
   line-height: 0.75;
   font-weight: 900;
   letter-spacing: -0.05em;
@@ -216,11 +216,11 @@ MagneticButton.displayName = "MagneticButton";
 // -------------------------------------------------------------------------
 const MarqueeItem = () => (
   <div className="flex items-center space-x-12 px-6">
-    <span>inteligência artificial corporativa</span> <span style={{ color: '#0d00ff' }}>✦</span>
-    <span>100% on-premise</span> <span style={{ color: '#0d00ff', opacity: 0.7 }}>✦</span>
-    <span>rag por setor</span> <span style={{ color: '#0d00ff' }}>✦</span>
-    <span>air-gapped</span> <span style={{ color: '#0d00ff', opacity: 0.7 }}>✦</span>
-    <span>privacidade total</span> <span style={{ color: '#0d00ff' }}>✦</span>
+    <span>inteligência artificial corporativa</span> <span style={{ color: '#3a5878' }}>✦</span>
+    <span>100% on-premise</span> <span style={{ color: '#3a5878', opacity: 0.7 }}>✦</span>
+    <span>rag por setor</span> <span style={{ color: '#3a5878' }}>✦</span>
+    <span>air-gapped</span> <span style={{ color: '#3a5878', opacity: 0.7 }}>✦</span>
+    <span>privacidade total</span> <span style={{ color: '#3a5878' }}>✦</span>
   </div>
 );
 
@@ -311,14 +311,14 @@ export function CinematicFooter() {
             className="absolute inset-0 z-[1] pointer-events-none"
             quantity={150}
             ease={80}
-            color="#0d00ff"
+            color="#3a5878"
             refresh
           />
 
           {/* Giant background text */}
           <div
             ref={giantTextRef}
-            className="footer-giant-bg-text absolute -bottom-[5vh] left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none"
+            className="footer-giant-bg-text absolute -bottom-[2vh] left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none"
           >
             liminai
           </div>
@@ -343,7 +343,7 @@ export function CinematicFooter() {
                 delayBetweenWords={2000}
                 stopAtLast={true}
                 highlightFrom={5}
-                highlightColor="#0d00ff"
+                highlightColor="#3a5878"
                 cursorChar="|"
               />
             </h2>
