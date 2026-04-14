@@ -30,9 +30,9 @@ const GLOW_STYLES = `
       calc(var(--x, 0) * 1px)
       calc(var(--y, 0) * 1px),
       hsl(
-        var(--hue, 220)
-        calc(var(--saturation, 92) * 1%)
-        calc(var(--lightness, 66) * 1%)
+        var(--hue, 260)
+        calc(var(--saturation, 80) * 1%)
+        calc(var(--lightness, 56) * 1%)
         / var(--border-spot-opacity, 1)
       ),
       transparent 100%
@@ -95,12 +95,12 @@ export function GlowCard({
   }, []);
 
   const inlineStyles = {
-    // Dark iridescent metal — steel-navy (205°) sweeps 160° through titanium-violet to teal-chrome
-    '--base': 205,
-    '--spread': 160,
+    // Iridescent spectrum — violet (260°) sweeps 220° through pink → red → orange → green
+    '--base': 260,
+    '--spread': 220,
     '--hue': 'calc(var(--base) + (var(--xp, 0) * var(--spread, 0)))',
-    '--saturation': 72,
-    '--lightness': 48,
+    '--saturation': 80,
+    '--lightness': 56,
 
     '--radius': 16,
     '--border': 1.5,
@@ -114,17 +114,17 @@ export function GlowCard({
     '--border-light-opacity': 0.38,
 
     // Subtle dark metallic surface (respects the background token)
-    '--backdrop': 'color-mix(in oklch, var(--background) 88%, hsl(210 45% 10%))',
-    '--backup-border': 'color-mix(in oklch, hsl(210 60% 40%) 24%, transparent)',
+    '--backdrop': 'color-mix(in oklch, var(--background) 88%, hsl(270 30% 10%))',
+    '--backup-border': 'color-mix(in oklch, hsl(270 70% 50%) 20%, transparent)',
 
     backgroundImage: `radial-gradient(
       var(--spotlight-size) var(--spotlight-size) at
       calc(var(--x, 0) * 1px)
       calc(var(--y, 0) * 1px),
       hsl(
-        var(--hue, 205)
-        calc(var(--saturation, 72) * 1%)
-        calc(var(--lightness, 48) * 1%)
+        var(--hue, 260)
+        calc(var(--saturation, 80) * 1%)
+        calc(var(--lightness, 56) * 1%)
         / var(--bg-spot-opacity, 0.12)
       ),
       transparent

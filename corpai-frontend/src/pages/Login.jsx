@@ -13,14 +13,16 @@ import { GlowCard } from '../components/magicui/GlowCard';
 import { Card, CardContent, CardTitle, CardDescription } from '../components/ui/card';
 import ThemeToggle from '../components/ThemeToggle';
 
-/* Dark iridescent metallic "ai" — static, subtle neon */
+/* Dark iridescent metallic "ai" — static, sharp metallic, neon only on outline */
 const IRIS_STYLES = `
   .iris-text {
-    background: linear-gradient(135deg, #2850a0 0%, #6840b8 50%, #28a0b8 100%);
+    background: linear-gradient(135deg, #3868c0 0%, #7848d0 50%, #30b8d0 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter: drop-shadow(0 0 10px rgba(60, 100, 200, 0.55)) drop-shadow(0 0 4px rgba(90, 140, 220, 0.25));
+    text-shadow:
+      0 0 6px rgba(80, 120, 220, 0.50),
+      0 0 14px rgba(110, 70, 210, 0.28);
   }
   /* Iridescent focus ring on inputs */
   .iris-input:focus {

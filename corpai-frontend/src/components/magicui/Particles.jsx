@@ -138,12 +138,16 @@ export function Particles({
   const drawCircle = (circle, update = false) => {
     if (context.current) {
       const { x, y, translateX, translateY, size, alpha } = circle;
+      const { r, g, b } = rgb(circle.color || color);
       context.current.translate(translateX, translateY);
+      // soft glow halo
+      context.current.shadowBlur = size * 6;
+      context.current.shadowColor = `rgba(${r}, ${g}, ${b}, ${alpha * 0.7})`;
       context.current.beginPath();
       context.current.arc(x, y, size, 0, 2 * Math.PI);
-      const { r, g, b } = rgb(circle.color || color);
       context.current.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
       context.current.fill();
+      context.current.shadowBlur = 0;
       context.current.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       if (!update) {
