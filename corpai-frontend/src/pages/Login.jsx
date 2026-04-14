@@ -17,22 +17,19 @@ import ThemeToggle from '../components/ThemeToggle';
 /* Dark iridescent metallic "ai" — static, sharp metallic, neon only on outline */
 const IRIS_STYLES = `
   .iris-text {
-    background: linear-gradient(
-      135deg,
-      #0c0632 0%,
-      #4a1898 20%,
-      #007870 38%,
-      #008c7c 52%,
-      #a01880 68%,
-      #5820a0 84%,
-      #0c0632 100%
-    );
+    background:
+      radial-gradient(ellipse 190% 65% at 8% 92%,  #901870 0%, transparent 48%),
+      radial-gradient(ellipse 110% 190% at 92% 8%,  #007868 0%, transparent 48%),
+      radial-gradient(ellipse 130% 110% at 38% 42%, #3a1488 0%, transparent 52%),
+      radial-gradient(ellipse 85%  75%  at 78% 72%, #6020a0 0%, transparent 44%),
+      radial-gradient(ellipse 70%  50%  at 55% 15%, #007058 0%, transparent 40%),
+      #0c0632;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow:
-      0 0 4px rgba(0, 136, 124, 0.30),
-      0 0 10px rgba(160, 24, 128, 0.15);
+      0 0 4px rgba(0, 120, 104, 0.28),
+      0 0 10px rgba(144, 24, 112, 0.14);
   }
   /* Iridescent focus ring on inputs */
   .iris-input:focus {
@@ -156,7 +153,7 @@ export default function Login() {
                       disabled={loading}
                       className="w-full h-12 flex items-center justify-center rounded-lg text-sm font-black text-white transition-all disabled:opacity-50"
                       style={{
-                        background: 'linear-gradient(135deg, #150540 0%, #5520b8 28%, #008880 52%, #b01898 76%, #2a0888 100%)',
+                        background: 'radial-gradient(ellipse 200% 70% at 12% 88%, #b01888 0%, transparent 46%) , radial-gradient(ellipse 130% 200% at 88% 12%, #008878 0%, transparent 46%), radial-gradient(ellipse 140% 120% at 42% 38%, #4a18b0 0%, transparent 52%), radial-gradient(ellipse 100% 90% at 72% 80%, #7028c0 0%, transparent 44%), radial-gradient(ellipse 80% 55% at 58% 12%, #006860 0%, transparent 40%), #150540',
                         boxShadow: '0 0 0 0 rgba(0,136,128,0)',
                         transition: 'box-shadow 0.3s ease, opacity 0.2s',
                       }}
