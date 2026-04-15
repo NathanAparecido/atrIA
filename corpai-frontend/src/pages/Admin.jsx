@@ -17,6 +17,10 @@ const SETORES = [
   'vendas', 'marketing', 'vendas_dc', 'infra', 'suporte_rua', 'global',
 ];
 
+// 'global' é um namespace compartilhado invisível — todos os usuários já têm acesso
+// automaticamente. Não deve aparecer no formulário de criação/edição de usuários.
+const SETORES_FORM = SETORES.filter((s) => s !== 'global');
+
 const ROLES = ['colaborador', 'lider_setor', 'admin'];
 
 export default function Admin() {
@@ -344,7 +348,7 @@ export default function Admin() {
                     disabled={!isAdmin}
                     className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none disabled:opacity-60"
                     style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
-                    {(isAdmin ? SETORES : [user.setor]).map(s => <option key={s} value={s}>{setorLabel[s] || s}</option>)}
+                    {(isAdmin ? SETORES_FORM : [user.setor]).map(s => <option key={s} value={s}>{setorLabel[s] || s}</option>)}
                   </select>
                 </div>
                 <div>

@@ -65,13 +65,17 @@ export function Typewriter({
     return () => clearInterval(id)
   }, [cursor])
 
-  // Renderiza com destaque na última palavra (durante digitação e quando congelado)
+  // Renderiza com destaque + neon na última palavra (durante digitação e quando congelado)
   const renderText = () => {
     if (isLastWord && highlightFrom >= 0 && displayText.length > highlightFrom) {
       return (
         <>
           {displayText.substring(0, highlightFrom)}
-          <span style={{ color: highlightColor }}>
+          <span style={{
+            color: highlightColor,
+            filter: 'drop-shadow(0 0 28px rgba(60,100,210,0.9)) drop-shadow(0 0 12px rgba(90,140,230,0.55))',
+            textShadow: '0 0 12px rgba(60,100,210,0.6)',
+          }}>
             {displayText.substring(highlightFrom)}
           </span>
         </>

@@ -165,14 +165,40 @@ export default function Chat() {
             {mensagens.length === 0 ? (
               // Tela de boas-vindas
               <div className="h-full flex flex-col items-center justify-center p-8">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-corpai-500 to-corpai-700 flex items-center justify-center mb-6 shadow-lg shadow-corpai-500/20">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-corpai-500 to-corpai-700 flex items-center justify-center mb-6 shadow-lg shadow-corpai-500/20">
+                  {/* neon blob atrás do ícone */}
+                  <div
+                    className="absolute inset-0 -m-3 rounded-full pointer-events-none"
+                    style={{
+                      background: 'radial-gradient(ellipse, #3a5878 0%, transparent 70%)',
+                      filter: 'blur(18px)',
+                      opacity: 0.45,
+                    }}
+                  />
+                  <svg xmlns="http://www.w3.org/2000/svg" className="relative w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold mb-2">
-                  Olá! Eu sou o Corp<span className="text-corpai-400">AI</span>
-                </h2>
+                <div className="relative flex flex-col items-center">
+                  {/* neon blob atrás do "AI" */}
+                  <div
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[60px] rounded-full pointer-events-none"
+                    style={{
+                      background: 'radial-gradient(ellipse, #3a5878 0%, transparent 70%)',
+                      filter: 'blur(28px)',
+                      opacity: 0.35,
+                    }}
+                  />
+                  <h2 className="relative text-2xl font-bold mb-2">
+                    olá! eu sou o corp<span
+                      className="text-corpai-400"
+                      style={{
+                        filter: 'drop-shadow(0 0 28px rgba(60,100,210,0.9)) drop-shadow(0 0 12px rgba(90,140,230,0.55))',
+                        textShadow: '0 0 12px rgba(60,100,210,0.6)',
+                      }}
+                    >AI</span>
+                  </h2>
+                </div>
                 <p className="text-center max-w-md" style={{ color: 'var(--color-text-muted)' }}>
                   Sou seu assistente de IA interno. Posso responder perguntas baseadas na documentação do seu setor.
                 </p>

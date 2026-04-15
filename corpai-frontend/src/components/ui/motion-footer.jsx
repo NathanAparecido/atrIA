@@ -120,6 +120,7 @@ const STYLES = `
   background: linear-gradient(180deg, color-mix(in oklch, var(--foreground) 10%, transparent) 0%, transparent 60%);
   -webkit-background-clip: text;
   background-clip: text;
+  filter: drop-shadow(0 0 60px rgba(58,88,120,0.45)) drop-shadow(0 0 120px rgba(58,88,120,0.2));
 }
 
 /* Metallic Text Glow */
@@ -313,6 +314,26 @@ export function CinematicFooter() {
             ease={80}
             colors={["#e040a8", "#7030c0", "#00c8b8", "#c040d0", "#3060d0", "#30c880"]}
             refresh
+          />
+
+          {/* Neon blob atrás do texto gigante — mesmo padrão da Landing */}
+          <div
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full pointer-events-none z-0"
+            style={{
+              height: '45vh',
+              background: 'radial-gradient(ellipse at center bottom, #3a5878 0%, transparent 65%)',
+              filter: 'blur(80px)',
+              opacity: 0.22,
+            }}
+          />
+          <div
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] pointer-events-none z-0"
+            style={{
+              height: '25vh',
+              background: 'radial-gradient(ellipse at center bottom, #4a4878 0%, transparent 70%)',
+              filter: 'blur(50px)',
+              opacity: 0.15,
+            }}
           />
 
           {/* Giant background text */}
