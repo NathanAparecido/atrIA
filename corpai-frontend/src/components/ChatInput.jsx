@@ -1,6 +1,7 @@
 /**
  * liminai — ChatInput
- * Campo de entrada estilo Claude com upload, paste detection, drag-drop e rate limiting.
+ * Layout exato do componente Claude-style + paleta iridescente do Login.
+ * Upload, paste detection, drag-drop, rate limiting (sliding window).
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -21,16 +22,96 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+// ── Estilos iridescentes (injetados como <style>) ───────────────────────────
+const IRIS_STYLES = `
+  .iris-send-btn {
+    background:
+      radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%),
+      radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%),
+      radial-gradient(ellipse 155% 135% at 44%  42%,  #5828c8 0%, transparent 52%),
+      radial-gradient(ellipse 115% 105% at 76%  78%,  #8830d8 0%, transparent 44%),
+      radial-gradient(ellipse 95%  62%  at 60%  8%,   #009090 0%, transparent 42%),
+      #180848;
+    border: 1px solid rgba(0, 184, 168, 0.28);
+    box-shadow: 0 0 0 0 rgba(0,184,168,0);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.2s;
+  }
+  .iris-send-btn:hover:not(:disabled) {
+    box-shadow: 0 0 18px rgba(0,184,168,0.45), 0 0 6px rgba(192,32,160,0.30);
+    border-color: rgba(0,184,168,0.50);
+  }
+  .iris-send-btn:disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+  }
+
+  .iris-container {
+    background:
+      radial-gradient(ellipse 190% 65% at 8%  92%, rgba(144,24,112,0.13) 0%, transparent 50%),
+      radial-gradient(ellipse 110% 190% at 92% 8%,  rgba(0,120,104,0.13) 0%, transparent 50%),
+      radial-gradient(ellipse 130% 110% at 40% 45%, rgba(58,20,136,0.16) 0%, transparent 55%),
+      #0e0c1a;
+    border: 1px solid rgba(0, 184, 168, 0.18);
+  }
+
+  .iris-preview-strip {
+    background:
+      radial-gradient(ellipse 200% 100% at 0% 100%, rgba(144,24,112,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 150% 200% at 100% 0%, rgba(0,120,104,0.10) 0%, transparent 55%),
+      #09080f;
+    border-top: 1px solid rgba(0, 184, 168, 0.13);
+  }
+
+  .iris-card {
+    background:
+      radial-gradient(ellipse 180% 80% at 0% 100%, rgba(144,24,112,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 130% 180% at 100% 0%, rgba(0,120,104,0.10) 0%, transparent 55%),
+      #13101e;
+    border: 1px solid rgba(0, 184, 168, 0.14);
+  }
+
+  .iris-card-overlay {
+    background: linear-gradient(to bottom, transparent 30%, #13101e);
+  }
+
+  .iris-badge {
+    background: rgba(14, 12, 26, 0.85);
+    border: 1px solid rgba(0, 184, 168, 0.20);
+    color: rgba(226, 224, 245, 0.85);
+  }
+
+  .iris-drag-overlay {
+    background: rgba(58, 20, 136, 0.12);
+    border: 2px dashed rgba(0, 184, 168, 0.40);
+  }
+
+  .iris-action-btn {
+    color: rgba(226, 224, 245, 0.45);
+    transition: color 0.2s, background 0.2s;
+  }
+  .iris-action-btn:hover:not(:disabled) {
+    color: rgba(226, 224, 245, 0.85);
+    background: rgba(88, 40, 200, 0.12);
+  }
+  .iris-action-btn:disabled {
+    opacity: 0.22;
+    cursor: not-allowed;
+  }
+
+  .iris-container textarea::placeholder {
+    color: rgba(226, 224, 245, 0.28);
+  }
+`;
+
 // ── Constantes ──────────────────────────────────────────────────────────────
 const MAX_FILES        = 10;
 const MAX_FILE_SIZE    = 50 * 1024 * 1024; // 50 MB
-const PASTE_THRESHOLD  = 200;              // chars mínimos para tratar como "colado"
+const PASTE_THRESHOLD  = 200;
 
-// rate limit: janela deslizante
-const RATE_LIMIT_MAX    = 5;       // mensagens máximas
-const RATE_LIMIT_WINDOW = 60_000;  // por janela de 60 s
+const RATE_LIMIT_MAX    = 5;
+const RATE_LIMIT_WINDOW = 60_000; // 60 s
 
-// ── Helpers de arquivo ──────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
 const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -83,37 +164,26 @@ function TextualFilePreviewCard({ file, onRemove }) {
   const ext           = getFileExtension(file.file.name);
 
   return (
-    <div
-      className="relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden"
-      style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}
-    >
-      {/* conteúdo textual */}
+    <div className="iris-card relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden">
       <div
         className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
-        style={{ color: 'var(--color-text-muted)' }}
+        style={{ color: 'rgba(226,224,245,0.55)' }}
       >
         {file.textContent
           ? <>{preview}{needsTruncate ? '...' : ''}</>
           : <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-4 w-4 animate-spin text-corpai-400" />
+              <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'rgba(0,184,168,0.7)' }} />
             </div>
         }
       </div>
 
-      {/* overlay degradê */}
-      <div
-        className="group absolute inset-0 flex items-end justify-start p-2 overflow-hidden"
-        style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-surface-hover))' }}
-      >
-        <span
-          className="text-xs px-2 py-1 rounded-md"
-          style={{ color: 'var(--color-text)', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-        >
-          {ext}
-        </span>
+      <div className="iris-card-overlay group absolute inset-0 flex items-end justify-start p-2 overflow-hidden">
+        <span className="iris-badge text-xs px-2 py-1 rounded-md">{ext}</span>
 
         {file.uploadStatus === 'uploading' && (
-          <div className="absolute top-2 left-2"><Loader2 className="h-3.5 w-3.5 animate-spin text-corpai-400" /></div>
+          <div className="absolute top-2 left-2">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: 'rgba(0,184,168,0.8)' }} />
+          </div>
         )}
         {file.uploadStatus === 'error' && (
           <div className="absolute top-2 left-2"><AlertCircle className="h-3.5 w-3.5 text-red-400" /></div>
@@ -145,39 +215,25 @@ function FilePreviewCard({ file, onRemove }) {
   if (isTextual) return <TextualFilePreviewCard file={file} onRemove={onRemove} />;
 
   return (
-    <div
-      className={cn('relative group rounded-lg size-[125px] shadow-md flex-shrink-0 overflow-hidden', isImage ? 'p-0' : 'p-3')}
-      style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}
-    >
+    <div className={cn('iris-card relative group rounded-lg size-[125px] shadow-md flex-shrink-0 overflow-hidden', isImage ? 'p-0' : 'p-3')}>
       {isImage && file.preview ? (
         <img src={file.preview} alt={file.file.name} className="w-full h-full object-cover rounded-lg" />
       ) : (
         <div className="flex-1 min-w-0 overflow-hidden h-full">
-          <div
-            className="absolute inset-0 flex items-end justify-start p-2"
-            style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-surface-hover))' }}
-          >
-            <span
-              className="text-xs px-2 py-1 rounded-md"
-              style={{ color: 'var(--color-text)', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-            >
-              {getFileTypeLabel(file.type)}
-            </span>
+          <div className="iris-card-overlay absolute inset-0 flex items-end justify-start p-2">
+            <span className="iris-badge text-xs px-2 py-1 rounded-md">{getFileTypeLabel(file.type)}</span>
           </div>
           {file.uploadStatus === 'uploading' && (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-corpai-400 absolute top-2 left-2" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin absolute top-2 left-2" style={{ color: 'rgba(0,184,168,0.8)' }} />
           )}
           {file.uploadStatus === 'error' && (
             <AlertCircle className="h-3.5 w-3.5 text-red-400 absolute top-2 left-2" />
           )}
-          <p
-            className="text-xs font-medium truncate max-w-[90%] mt-1"
-            title={file.file.name}
-            style={{ color: 'var(--color-text)' }}
-          >
+          <p className="text-xs font-medium truncate max-w-[90%] mt-1" title={file.file.name}
+            style={{ color: 'rgba(226,224,245,0.85)' }}>
             {file.file.name}
           </p>
-          <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[10px] mt-1" style={{ color: 'rgba(226,224,245,0.40)' }}>
             {formatFileSize(file.file.size)}
           </p>
         </div>
@@ -200,27 +256,16 @@ function PastedContentCard({ content, onRemove }) {
   const needsTruncate = content.content.length > 150;
 
   return (
-    <div
-      className="relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden"
-      style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}
-    >
+    <div className="iris-card relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden">
       <div
         className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
-        style={{ color: 'var(--color-text-muted)' }}
+        style={{ color: 'rgba(226,224,245,0.55)' }}
       >
         {needsTruncate ? preview + '...' : content.content}
       </div>
 
-      <div
-        className="group absolute inset-0 flex items-end justify-start p-2 overflow-hidden"
-        style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-surface-hover))' }}
-      >
-        <span
-          className="text-xs px-2 py-1 rounded-md"
-          style={{ color: 'var(--color-text)', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-        >
-          colado
-        </span>
+      <div className="iris-card-overlay group absolute inset-0 flex items-end justify-start p-2 overflow-hidden">
+        <span className="iris-badge text-xs px-2 py-1 rounded-md">colado</span>
 
         <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button size="icon" variant="outline" className="size-6"
@@ -254,17 +299,17 @@ export default function ChatInput({
 
   const textareaRef    = useRef(null);
   const fileInputRef   = useRef(null);
-  const sentTimestamps = useRef([]);   // timestamps das msgs enviadas (rate limit)
+  const sentTimestamps = useRef([]);
   const cooldownTimer  = useRef(null);
 
-  // ── countdown do cooldown ──────────────────────────────────────────────
+  // ── countdown ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (cooldownSec <= 0) return;
     cooldownTimer.current = setTimeout(() => setCooldownSec((s) => s - 1), 1000);
     return () => clearTimeout(cooldownTimer.current);
   }, [cooldownSec]);
 
-  // ── checa rate limit (sliding window) ─────────────────────────────────
+  // ── rate limit (sliding window) ────────────────────────────────────────
   const checkRateLimit = useCallback(() => {
     const now = Date.now();
     sentTimestamps.current = sentTimestamps.current.filter((t) => now - t < RATE_LIMIT_WINDOW);
@@ -277,7 +322,7 @@ export default function ChatInput({
     return true;
   }, []);
 
-  // ── auto-resize do textarea ────────────────────────────────────────────
+  // ── auto-resize textarea ───────────────────────────────────────────────
   useEffect(() => {
     if (!textareaRef.current) return;
     textareaRef.current.style.height = 'auto';
@@ -314,7 +359,6 @@ export default function ChatInput({
           .then((textContent) => setFiles((prev) => prev.map((p) => p.id === f.id ? { ...p, textContent } : p)))
           .catch(() => setFiles((prev) => prev.map((p) => p.id === f.id ? { ...p, textContent: 'erro ao ler' } : p)));
       }
-
       setFiles((prev) => prev.map((p) => p.id === f.id ? { ...p, uploadStatus: 'uploading' } : p));
       let progress = 0;
       const iv = setInterval(() => {
@@ -396,134 +440,123 @@ export default function ChatInput({
   const canSend     = hasContent && !disabled && !files.some((f) => f.uploadStatus === 'uploading') && !isThrottled;
 
   return (
-    <div
-      className="px-4 pb-4 pt-2"
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <div className="relative max-w-4xl mx-auto">
+    <>
+      <style dangerouslySetInnerHTML={{ __html: IRIS_STYLES }} />
 
-        {/* overlay de drag — fora do card, cobre tudo */}
-        {isDragging && (
-          <div
-            className="absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none"
-            style={{ backgroundColor: 'rgba(11,0,221,0.07)', border: '2px dashed var(--color-border)' }}
-          >
-            <ImageIcon className="h-6 w-6 text-corpai-400 opacity-70" />
-            <p className="text-sm text-corpai-400">solte os arquivos aqui</p>
-          </div>
-        )}
+      <div
+        className="px-4 pb-4 pt-2"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="relative max-w-4xl mx-auto">
 
-        {/* container principal */}
-        <div
-          className="rounded-2xl shadow-lg flex flex-col"
-          style={{
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            minHeight: '130px',
-          }}
-        >
-          {/* textarea */}
-          <textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onPaste={handlePaste}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            disabled={disabled}
-            rows={1}
-            className="flex-1 w-full px-4 pt-4 pb-2 resize-none focus:outline-none bg-transparent text-sm sm:text-base placeholder:opacity-40"
-            style={{
-              color:      'var(--color-text)',
-              maxHeight:  '120px',
-              minHeight:  '90px',
-            }}
-          />
-
-          {/* barra de ações */}
-          <div className="flex items-center justify-between px-3 pb-3">
-            <div className="flex items-center gap-1">
-              <Button
-                type="button" size="icon" variant="ghost"
-                className="h-9 w-9 p-0 transition-colors"
-                style={{ color: 'var(--color-text-muted)' }}
-                onClick={() => fileInputRef.current?.click()}
-                disabled={disabled || files.length >= maxFiles}
-                title={files.length >= maxFiles ? `máximo de ${maxFiles} arquivos` : 'anexar arquivo'}
-              >
-                <Plus className="h-5 w-5" />
-              </Button>
-              <Button
-                type="button" size="icon" variant="ghost"
-                className="h-9 w-9 p-0 transition-colors"
-                style={{ color: 'var(--color-text-muted)' }}
-                disabled={disabled} title="opções"
-              >
-                <SlidersHorizontal className="h-5 w-5" />
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {isThrottled && (
-                <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-muted)' }}>
-                  aguarde {cooldownSec}s
-                </span>
-              )}
-              <Button
-                type="button" size="icon"
-                className={cn(
-                  'h-9 w-9 p-0 rounded-lg transition-colors',
-                  canSend
-                    ? 'bg-corpai-600 hover:bg-corpai-700 text-white'
-                    : 'opacity-30 cursor-not-allowed'
-                )}
-                style={canSend ? undefined : { backgroundColor: 'var(--color-surface-hover)' }}
-                onClick={handleSend}
-                disabled={!canSend}
-                title={isThrottled ? `limite atingido — aguarde ${cooldownSec}s` : 'enviar mensagem'}
-              >
-                <ArrowUp className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* prévia de arquivos e conteúdo colado */}
-          {(files.length > 0 || pastedContent.length > 0) && (
-            <div
-              className="overflow-x-auto border-t p-3"
-              style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg)' }}
-            >
-              <div className="flex gap-3">
-                {pastedContent.map((c) => (
-                  <PastedContentCard
-                    key={c.id}
-                    content={c}
-                    onRemove={(id) => setPastedContent((prev) => prev.filter((x) => x.id !== id))}
-                  />
-                ))}
-                {files.map((f) => (
-                  <FilePreviewCard key={f.id} file={f} onRemove={removeFile} />
-                ))}
-              </div>
+          {/* overlay de drag */}
+          {isDragging && (
+            <div className="iris-drag-overlay absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none">
+              <ImageIcon className="h-6 w-6 opacity-60" style={{ color: 'rgba(0,184,168,0.9)' }} />
+              <p className="text-sm" style={{ color: 'rgba(0,184,168,0.9)' }}>solte os arquivos aqui</p>
             </div>
           )}
+
+          {/* container principal */}
+          <div
+            className="iris-container rounded-2xl shadow-xl flex flex-col"
+            style={{ minHeight: '150px' }}
+          >
+            {/* textarea */}
+            <textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onPaste={handlePaste}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={disabled}
+              rows={1}
+              className="flex-1 w-full px-4 pt-4 pb-2 resize-none focus:outline-none bg-transparent text-sm sm:text-base"
+              style={{
+                color:       'rgba(226,224,245,0.92)',
+                caretColor:  'rgba(0,184,168,0.9)',
+                minHeight:   '100px',
+                maxHeight:   '120px',
+              }}
+            />
+            {/* placeholder customizado via CSS inline — fallback para o placeholder nativo */}
+
+            {/* barra de ações */}
+            <div className="flex items-center justify-between px-3 pb-3">
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  className="iris-action-btn h-9 w-9 flex items-center justify-center rounded-md"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={disabled || files.length >= maxFiles}
+                  title={files.length >= maxFiles ? `máximo de ${maxFiles} arquivos` : 'anexar arquivo'}
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  className="iris-action-btn h-9 w-9 flex items-center justify-center rounded-md"
+                  disabled={disabled}
+                  title="opções"
+                >
+                  <SlidersHorizontal className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isThrottled && (
+                  <span className="text-xs tabular-nums" style={{ color: 'rgba(0,184,168,0.7)' }}>
+                    aguarde {cooldownSec}s
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="iris-send-btn h-9 w-9 flex items-center justify-center rounded-lg text-white flex-shrink-0"
+                  onClick={handleSend}
+                  disabled={!canSend}
+                  title={isThrottled ? `limite atingido — aguarde ${cooldownSec}s` : 'enviar mensagem'}
+                >
+                  <ArrowUp className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* prévia de arquivos / conteúdo colado */}
+            {(files.length > 0 || pastedContent.length > 0) && (
+              <div className="iris-preview-strip overflow-x-auto p-3 rounded-b-2xl">
+                <div className="flex gap-3">
+                  {pastedContent.map((c) => (
+                    <PastedContentCard
+                      key={c.id}
+                      content={c}
+                      onRemove={(id) => setPastedContent((prev) => prev.filter((x) => x.id !== id))}
+                    />
+                  ))}
+                  {files.map((f) => (
+                    <FilePreviewCard key={f.id} file={f} onRemove={removeFile} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <p className="text-center text-xs mt-2" style={{ color: 'rgba(226,224,245,0.25)' }}>
+            liminai pode cometer erros. sempre verifique informações críticas.
+          </p>
         </div>
 
-        <p className="text-center text-xs mt-2" style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>
-          liminai pode cometer erros. sempre verifique informações críticas.
-        </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          accept={acceptedFileTypes?.join(',')}
+          onChange={(e) => { handleFileSelect(e.target.files); if (e.target) e.target.value = ''; }}
+        />
       </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        accept={acceptedFileTypes?.join(',')}
-        onChange={(e) => { handleFileSelect(e.target.files); if (e.target) e.target.value = ''; }}
-      />
-    </div>
+    </>
   );
 }
