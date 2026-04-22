@@ -1,6 +1,6 @@
 /**
  * liminai — ChatInput
- * Campo de entrada estilo Claude com upload de arquivos, detecção de paste e drag-drop.
+ * Campo de entrada estilo Claude com upload, paste detection, drag-drop e rate limiting.
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -26,16 +26,11 @@ const MAX_FILES        = 10;
 const MAX_FILE_SIZE    = 50 * 1024 * 1024; // 50 MB
 const PASTE_THRESHOLD  = 200;              // chars mínimos para tratar como "colado"
 
-// ── Helpers de arquivo ──────────────────────────────────────────────────────
-const getFileIcon = (type) => {
-  if (type.startsWith('image/'))  return <ImageIcon className="h-5 w-5 text-dark-400" />;
-  if (type.startsWith('video/'))  return <Video    className="h-5 w-5 text-dark-400" />;
-  if (type.startsWith('audio/'))  return <Music    className="h-5 w-5 text-dark-400" />;
-  if (type.includes('zip') || type.includes('rar') || type.includes('tar'))
-    return <Archive className="h-5 w-5 text-dark-400" />;
-  return <FileText className="h-5 w-5 text-dark-400" />;
-};
+// rate limit: janela deslizante
+const RATE_LIMIT_MAX    = 5;       // mensagens máximas
+const RATE_LIMIT_WINDOW = 60_000;  // por janela de 60 s
 
+// ── Helpers de arquivo ──────────────────────────────────────────────────────
 const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -63,7 +58,7 @@ const isTextualFile = (file) => {
     'txt','md','py','js','ts','jsx','tsx','html','htm','css','scss','sass','json','xml',
     'yaml','yml','csv','sql','sh','bash','php','rb','go','java','c','cpp','h','hpp',
     'cs','rs','swift','kt','scala','r','vue','svelte','astro','config','conf','ini',
-    'toml','log',
+    'toml','log','gitignore','dockerfile','makefile','readme',
   ];
   const isTextualMime = textualTypes.some((t) => file.type.toLowerCase().startsWith(t));
   const ext = file.name.split('.').pop()?.toLowerCase() || '';
@@ -92,10 +87,16 @@ function TextualFilePreviewCard({ file, onRemove }) {
       className="relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden"
       style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}
     >
-      <div className="text-[8px] text-dark-300 whitespace-pre-wrap break-words max-h-24 overflow-y-auto">
+      {/* conteúdo textual */}
+      <div
+        className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
+        style={{ color: 'var(--color-text-muted)' }}
+      >
         {file.textContent
           ? <>{preview}{needsTruncate ? '...' : ''}</>
-          : <div className="flex items-center justify-center h-full"><Loader2 className="h-4 w-4 animate-spin text-dark-400" /></div>
+          : <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-4 w-4 animate-spin text-corpai-400" />
+            </div>
         }
       </div>
 
@@ -105,14 +106,18 @@ function TextualFilePreviewCard({ file, onRemove }) {
         style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-surface-hover))' }}
       >
         <span
-          className="capitalize text-xs px-2 py-1 rounded-md"
+          className="text-xs px-2 py-1 rounded-md"
           style={{ color: 'var(--color-text)', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
         >
           {ext}
         </span>
 
-        {file.uploadStatus === 'uploading' && <div className="absolute top-2 left-2"><Loader2 className="h-3.5 w-3.5 animate-spin text-corpai-400" /></div>}
-        {file.uploadStatus === 'error'     && <div className="absolute top-2 left-2"><AlertCircle className="h-3.5 w-3.5 text-red-400" /></div>}
+        {file.uploadStatus === 'uploading' && (
+          <div className="absolute top-2 left-2"><Loader2 className="h-3.5 w-3.5 animate-spin text-corpai-400" /></div>
+        )}
+        {file.uploadStatus === 'error' && (
+          <div className="absolute top-2 left-2"><AlertCircle className="h-3.5 w-3.5 text-red-400" /></div>
+        )}
 
         <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           {file.textContent && (
@@ -145,25 +150,36 @@ function FilePreviewCard({ file, onRemove }) {
       style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}
     >
       {isImage && file.preview ? (
-        <img src={file.preview} alt={file.file.name} className="w-full h-full object-cover" />
+        <img src={file.preview} alt={file.file.name} className="w-full h-full object-cover rounded-lg" />
       ) : (
-        <div className="flex-1 min-w-0 overflow-hidden">
-          {/* overlay com label */}
+        <div className="flex-1 min-w-0 overflow-hidden h-full">
           <div
-            className="absolute inset-0 flex items-end justify-start p-2 overflow-hidden"
+            className="absolute inset-0 flex items-end justify-start p-2"
             style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-surface-hover))' }}
           >
             <span
-              className="absolute bottom-2 left-2 capitalize text-xs px-2 py-1 rounded-md"
+              className="text-xs px-2 py-1 rounded-md"
               style={{ color: 'var(--color-text)', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
             >
               {getFileTypeLabel(file.type)}
             </span>
           </div>
-          {file.uploadStatus === 'uploading' && <Loader2 className="h-3.5 w-3.5 animate-spin text-corpai-400 absolute top-2 left-2" />}
-          {file.uploadStatus === 'error'     && <AlertCircle className="h-3.5 w-3.5 text-red-400 absolute top-2 left-2" />}
-          <p className="max-w-[90%] text-xs font-medium text-dark-100 truncate mt-1" title={file.file.name}>{file.file.name}</p>
-          <p className="text-[10px] text-dark-500 mt-1">{formatFileSize(file.file.size)}</p>
+          {file.uploadStatus === 'uploading' && (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-corpai-400 absolute top-2 left-2" />
+          )}
+          {file.uploadStatus === 'error' && (
+            <AlertCircle className="h-3.5 w-3.5 text-red-400 absolute top-2 left-2" />
+          )}
+          <p
+            className="text-xs font-medium truncate max-w-[90%] mt-1"
+            title={file.file.name}
+            style={{ color: 'var(--color-text)' }}
+          >
+            {file.file.name}
+          </p>
+          <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            {formatFileSize(file.file.size)}
+          </p>
         </div>
       )}
 
@@ -188,7 +204,10 @@ function PastedContentCard({ content, onRemove }) {
       className="relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden"
       style={{ backgroundColor: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}
     >
-      <div className="text-[8px] text-dark-300 whitespace-pre-wrap break-words max-h-24 overflow-y-auto">
+      <div
+        className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
+        style={{ color: 'var(--color-text-muted)' }}
+      >
         {needsTruncate ? preview + '...' : content.content}
       </div>
 
@@ -197,7 +216,7 @@ function PastedContentCard({ content, onRemove }) {
         style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-surface-hover))' }}
       >
         <span
-          className="capitalize text-xs px-2 py-1 rounded-md"
+          className="text-xs px-2 py-1 rounded-md"
           style={{ color: 'var(--color-text)', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
         >
           colado
@@ -231,11 +250,34 @@ export default function ChatInput({
   const [files,         setFiles]         = useState([]);
   const [pastedContent, setPastedContent] = useState([]);
   const [isDragging,    setIsDragging]    = useState(false);
+  const [cooldownSec,   setCooldownSec]   = useState(0);
 
-  const textareaRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const textareaRef    = useRef(null);
+  const fileInputRef   = useRef(null);
+  const sentTimestamps = useRef([]);   // timestamps das msgs enviadas (rate limit)
+  const cooldownTimer  = useRef(null);
 
-  // auto-resize do textarea
+  // ── countdown do cooldown ──────────────────────────────────────────────
+  useEffect(() => {
+    if (cooldownSec <= 0) return;
+    cooldownTimer.current = setTimeout(() => setCooldownSec((s) => s - 1), 1000);
+    return () => clearTimeout(cooldownTimer.current);
+  }, [cooldownSec]);
+
+  // ── checa rate limit (sliding window) ─────────────────────────────────
+  const checkRateLimit = useCallback(() => {
+    const now = Date.now();
+    sentTimestamps.current = sentTimestamps.current.filter((t) => now - t < RATE_LIMIT_WINDOW);
+    if (sentTimestamps.current.length >= RATE_LIMIT_MAX) {
+      const waitMs = RATE_LIMIT_WINDOW - (now - sentTimestamps.current[0]);
+      setCooldownSec(Math.ceil(waitMs / 1000));
+      return false;
+    }
+    sentTimestamps.current.push(now);
+    return true;
+  }, []);
+
+  // ── auto-resize do textarea ────────────────────────────────────────────
   useEffect(() => {
     if (!textareaRef.current) return;
     textareaRef.current.style.height = 'auto';
@@ -256,7 +298,7 @@ export default function ChatInput({
       }
       return true;
     }).map((file) => ({
-      id: Math.random().toString(36).slice(2),
+      id:             Math.random().toString(36).slice(2),
       file,
       preview:        file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
       type:           file.type || 'application/octet-stream',
@@ -267,14 +309,12 @@ export default function ChatInput({
     setFiles((prev) => [...prev, ...toAdd]);
 
     toAdd.forEach((f) => {
-      // ler conteúdo textual
       if (isTextualFile(f.file)) {
         readFileAsText(f.file)
           .then((textContent) => setFiles((prev) => prev.map((p) => p.id === f.id ? { ...p, textContent } : p)))
           .catch(() => setFiles((prev) => prev.map((p) => p.id === f.id ? { ...p, textContent: 'erro ao ler' } : p)));
       }
 
-      // simular progresso de upload
       setFiles((prev) => prev.map((p) => p.id === f.id ? { ...p, uploadStatus: 'uploading' } : p));
       let progress = 0;
       const iv = setInterval(() => {
@@ -334,6 +374,7 @@ export default function ChatInput({
   const handleSend = useCallback(() => {
     if (disabled || (!message.trim() && files.length === 0 && pastedContent.length === 0)) return;
     if (files.some((f) => f.uploadStatus === 'uploading')) { alert('Aguarde o upload finalizar.'); return; }
+    if (!checkRateLimit()) return;
 
     onSend?.(message.trim() || '[arquivo(s) anexado(s)]');
     setMessage('');
@@ -341,7 +382,7 @@ export default function ChatInput({
     setFiles([]);
     setPastedContent([]);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
-  }, [message, files, pastedContent, disabled, onSend]);
+  }, [message, files, pastedContent, disabled, onSend, checkRateLimit]);
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -350,25 +391,26 @@ export default function ChatInput({
     }
   }, [handleSend]);
 
-  const hasContent = message.trim() || files.length > 0 || pastedContent.length > 0;
-  const canSend    = hasContent && !disabled && !files.some((f) => f.uploadStatus === 'uploading');
+  const hasContent  = message.trim() || files.length > 0 || pastedContent.length > 0;
+  const isThrottled = cooldownSec > 0;
+  const canSend     = hasContent && !disabled && !files.some((f) => f.uploadStatus === 'uploading') && !isThrottled;
 
   return (
     <div
-      className="p-4"
+      className="px-4 pb-4 pt-2"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       <div className="relative max-w-4xl mx-auto">
 
-        {/* overlay de drag */}
+        {/* overlay de drag — fora do card, cobre tudo */}
         {isDragging && (
           <div
-            className="absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center pointer-events-none"
-            style={{ backgroundColor: 'rgba(13,0,255,0.08)', border: '2px dashed #4d52ff' }}
+            className="absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none"
+            style={{ backgroundColor: 'rgba(11,0,221,0.07)', border: '2px dashed var(--color-border)' }}
           >
-            <ImageIcon className="h-6 w-6 text-corpai-400 mb-2 opacity-70" />
+            <ImageIcon className="h-6 w-6 text-corpai-400 opacity-70" />
             <p className="text-sm text-corpai-400">solte os arquivos aqui</p>
           </div>
         )}
@@ -379,7 +421,7 @@ export default function ChatInput({
           style={{
             backgroundColor: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
-            minHeight: '80px',
+            minHeight: '130px',
           }}
         >
           {/* textarea */}
@@ -392,15 +434,21 @@ export default function ChatInput({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 w-full px-4 pt-4 pb-2 resize-none focus:outline-none bg-transparent text-sm sm:text-base"
-            style={{ color: 'var(--color-text)', maxHeight: '120px' }}
+            className="flex-1 w-full px-4 pt-4 pb-2 resize-none focus:outline-none bg-transparent text-sm sm:text-base placeholder:opacity-40"
+            style={{
+              color:      'var(--color-text)',
+              maxHeight:  '120px',
+              minHeight:  '90px',
+            }}
           />
 
           {/* barra de ações */}
-          <div className="flex items-center justify-between px-3 pb-2.5">
+          <div className="flex items-center justify-between px-3 pb-3">
             <div className="flex items-center gap-1">
               <Button
-                type="button" size="icon" variant="ghost" className="h-9 w-9 p-0"
+                type="button" size="icon" variant="ghost"
+                className="h-9 w-9 p-0 transition-colors"
+                style={{ color: 'var(--color-text-muted)' }}
                 onClick={() => fileInputRef.current?.click()}
                 disabled={disabled || files.length >= maxFiles}
                 title={files.length >= maxFiles ? `máximo de ${maxFiles} arquivos` : 'anexar arquivo'}
@@ -408,25 +456,37 @@ export default function ChatInput({
                 <Plus className="h-5 w-5" />
               </Button>
               <Button
-                type="button" size="icon" variant="ghost" className="h-9 w-9 p-0"
+                type="button" size="icon" variant="ghost"
+                className="h-9 w-9 p-0 transition-colors"
+                style={{ color: 'var(--color-text-muted)' }}
                 disabled={disabled} title="opções"
               >
                 <SlidersHorizontal className="h-5 w-5" />
               </Button>
             </div>
 
-            <Button
-              type="button" size="icon"
-              className={cn(
-                'h-9 w-9 p-0 rounded-md transition-colors',
-                canSend ? 'bg-corpai-600 hover:bg-corpai-700 text-white' : 'opacity-40 cursor-not-allowed'
+            <div className="flex items-center gap-2">
+              {isThrottled && (
+                <span className="text-xs tabular-nums" style={{ color: 'var(--color-text-muted)' }}>
+                  aguarde {cooldownSec}s
+                </span>
               )}
-              onClick={handleSend}
-              disabled={!canSend}
-              title="enviar mensagem"
-            >
-              <ArrowUp className="h-5 w-5" />
-            </Button>
+              <Button
+                type="button" size="icon"
+                className={cn(
+                  'h-9 w-9 p-0 rounded-lg transition-colors',
+                  canSend
+                    ? 'bg-corpai-600 hover:bg-corpai-700 text-white'
+                    : 'opacity-30 cursor-not-allowed'
+                )}
+                style={canSend ? undefined : { backgroundColor: 'var(--color-surface-hover)' }}
+                onClick={handleSend}
+                disabled={!canSend}
+                title={isThrottled ? `limite atingido — aguarde ${cooldownSec}s` : 'enviar mensagem'}
+              >
+                <ArrowUp className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
 
           {/* prévia de arquivos e conteúdo colado */}
@@ -450,11 +510,11 @@ export default function ChatInput({
             </div>
           )}
         </div>
-      </div>
 
-      <p className="text-center text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
-        liminai pode cometer erros. sempre verifique informações críticas.
-      </p>
+        <p className="text-center text-xs mt-2" style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>
+          liminai pode cometer erros. sempre verifique informações críticas.
+        </p>
+      </div>
 
       <input
         ref={fileInputRef}

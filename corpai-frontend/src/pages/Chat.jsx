@@ -189,18 +189,18 @@ export default function Chat() {
                       opacity: 0.35,
                     }}
                   />
-                  <h2 className="relative text-2xl font-bold mb-2">
-                    olá! eu sou o corp<span
+                  <h2 className="relative text-2xl font-bold mb-2 font-['Orbitron'] tracking-tight">
+                    limin<span
                       className="text-corpai-400"
                       style={{
                         filter: 'drop-shadow(0 0 28px rgba(60,100,210,0.9)) drop-shadow(0 0 12px rgba(90,140,230,0.55))',
                         textShadow: '0 0 12px rgba(60,100,210,0.6)',
                       }}
-                    >AI</span>
+                    >ai</span>
                   </h2>
                 </div>
                 <p className="text-center max-w-md" style={{ color: 'var(--color-text-muted)' }}>
-                  Sou seu assistente de IA interno. Posso responder perguntas baseadas na documentação do seu setor.
+                  seu assistente de IA interno. pergunte sobre documentos, processos e informações do seu setor.
                 </p>
                 <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
                   {[
