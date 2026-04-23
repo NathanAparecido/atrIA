@@ -33,17 +33,18 @@ export default function DocumentUpload({ onUpload, uploading, progress }) {
       {...getRootProps()}
       className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
         isDragActive
-          ? 'border-corpai-500 bg-corpai-500/10'
+          ? 'border-teal-500 bg-teal-500/10'
           : uploading
           ? 'border-dark-600 cursor-wait opacity-60'
-          : 'border-dark-600 hover:border-corpai-500/50 hover:bg-corpai-500/5'
+          : 'border-dark-600 hover:border-teal-500/50 hover:bg-teal-500/5'
       }`}
     >
       <input {...getInputProps()} />
 
       {uploading ? (
         <div className="space-y-3">
-          <div className="w-12 h-12 mx-auto rounded-full border-4 border-corpai-500 border-t-transparent animate-spin" />
+          <div className="w-12 h-12 mx-auto rounded-full border-4 border-t-transparent animate-spin"
+            style={{ borderColor: 'rgba(0,184,168,0.5)', borderTopColor: 'transparent' }} />
           <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
             Processando documento...
           </p>
@@ -51,7 +52,8 @@ export default function DocumentUpload({ onUpload, uploading, progress }) {
             <div className="max-w-xs mx-auto">
               <div className="h-2 rounded-full bg-dark-700 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-corpai-500 transition-all duration-300"
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ backgroundColor: 'rgba(0,184,168,0.8)' }}
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -63,7 +65,7 @@ export default function DocumentUpload({ onUpload, uploading, progress }) {
         <div className="space-y-3">
           <div className="w-12 h-12 mx-auto rounded-full flex items-center justify-center"
             style={{ background: 'var(--color-surface-hover)' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-corpai-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" style={{ color: 'rgba(0,184,168,0.8)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>

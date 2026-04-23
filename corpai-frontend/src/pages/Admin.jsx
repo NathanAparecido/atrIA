@@ -139,12 +139,16 @@ export default function Admin() {
               <button
                 key={tab}
                 onClick={() => setTabAtiva(tab)}
-                className={`px-4 py-2 text-sm rounded-lg font-medium transition-all ${
-                  tabAtiva === tab
-                    ? 'bg-corpai-600 text-white'
-                    : ''
-                }`}
-                style={tabAtiva !== tab ? { color: 'var(--color-text-muted)' } : undefined}
+                className="px-4 py-2 text-sm rounded-lg font-medium transition-all"
+                style={tabAtiva === tab ? {
+                  backgroundImage: [
+                    'radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%)',
+                    'radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%)',
+                    'radial-gradient(ellipse 130% 120% at 50%  50%,  #5828c8 0%, transparent 52%)',
+                  ].join(', '),
+                  backgroundColor: '#180848',
+                  color: '#ffffff',
+                } : { color: 'var(--color-text-muted)' }}
               >
                 {tab}
               </button>
@@ -153,7 +157,8 @@ export default function Admin() {
 
           {loading ? (
             <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-corpai-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
+                style={{ borderColor: 'rgba(0,184,168,0.5)', borderTopColor: 'transparent' }} />
             </div>
           ) : (
             <>
@@ -164,7 +169,16 @@ export default function Admin() {
                     <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
                       {usuarios.length} usuário(s) cadastrado(s)
                     </p>
-                    <button onClick={abrirModalCriar} className="px-4 py-2 bg-corpai-600 hover:bg-corpai-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <button onClick={abrirModalCriar} className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-opacity hover:opacity-90"
+                      style={{
+                        backgroundImage: [
+                          'radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%)',
+                          'radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%)',
+                          'radial-gradient(ellipse 130% 120% at 50%  50%,  #5828c8 0%, transparent 52%)',
+                        ].join(', '),
+                        backgroundColor: '#180848',
+                        border: '1px solid rgba(0,184,168,0.28)',
+                      }}>
                       + Novo Usuário
                     </button>
                   </div>
@@ -187,7 +201,7 @@ export default function Admin() {
                             <td className="px-4 py-3 font-medium">{u.username}</td>
                             <td className="px-4 py-3" style={{ color: 'var(--color-text-muted)' }}>{u.nome_completo}</td>
                             <td className="px-4 py-3">
-                              <span className="px-2 py-1 rounded-md text-xs font-medium bg-corpai-600/20 text-corpai-400">
+                              <span className="px-2 py-1 rounded-md text-xs font-medium" style={{ background: 'rgba(0,184,168,0.12)', color: 'rgba(0,184,168,0.9)' }}>
                                 {setorLabel[u.setor] || u.setor}
                               </span>
                             </td>
@@ -207,7 +221,7 @@ export default function Admin() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">
-                              <button onClick={() => abrirModalEditar(u)} className="px-3 py-1 text-xs rounded-md hover:bg-corpai-500/10 text-corpai-400 transition-colors">
+                              <button onClick={() => abrirModalEditar(u)} className="px-3 py-1 text-xs rounded-md transition-colors hover:bg-white/5" style={{ color: 'rgba(0,184,168,0.9)' }}>
                                 Editar
                               </button>
                               <button onClick={() => handleDeletar(u)} className="px-3 py-1 text-xs rounded-md hover:bg-red-500/10 text-red-400 transition-colors ml-1">
@@ -228,7 +242,7 @@ export default function Admin() {
                   {setores.map(s => (
                     <div key={s.nome} className="rounded-xl p-4 transition-colors"
                       style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                      <p className="text-sm font-semibold text-corpai-400">{setorLabel[s.nome] || s.nome}</p>
+                      <p className="text-sm font-semibold" style={{ color: 'rgba(0,184,168,0.9)' }}>{setorLabel[s.nome] || s.nome}</p>
                       <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
                         namespace: <code className="text-xs">{s.nome}</code>
                       </p>
@@ -292,7 +306,16 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  <button onClick={carregarDados} className="px-4 py-2 bg-corpai-600 hover:bg-corpai-700 text-white text-sm rounded-lg transition-colors">
+                  <button onClick={carregarDados} className="px-4 py-2 text-white text-sm rounded-lg transition-opacity hover:opacity-90"
+                    style={{
+                      backgroundImage: [
+                        'radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%)',
+                        'radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%)',
+                        'radial-gradient(ellipse 130% 120% at 50%  50%,  #5828c8 0%, transparent 52%)',
+                      ].join(', '),
+                      backgroundColor: '#180848',
+                      border: '1px solid rgba(0,184,168,0.28)',
+                    }}>
                     Atualizar Status
                   </button>
                 </div>
@@ -322,14 +345,14 @@ export default function Admin() {
                 <div>
                   <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Usuário</label>
                   <input type="text" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} required
-                    className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-corpai-500/50"
+                    className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/30"
                     style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
                 </div>
               )}
               <div>
                 <label className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>Nome Completo</label>
                 <input type="text" value={form.nome_completo} onChange={e => setForm({ ...form, nome_completo: e.target.value })} required
-                  className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-corpai-500/50"
+                  className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/30"
                   style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
               </div>
               <div>
@@ -338,7 +361,7 @@ export default function Admin() {
                 </label>
                 <input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                   required={!editando}
-                  className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-corpai-500/50"
+                  className="w-full mt-1 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400/30"
                   style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -368,7 +391,16 @@ export default function Admin() {
                   Cancelar
                 </button>
                 <button type="submit"
-                  className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-corpai-600 hover:bg-corpai-700 text-white transition-colors">
+                  className="flex-1 py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
+                  style={{
+                    backgroundImage: [
+                      'radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%)',
+                      'radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%)',
+                      'radial-gradient(ellipse 130% 120% at 50%  50%,  #5828c8 0%, transparent 52%)',
+                    ].join(', '),
+                    backgroundColor: '#180848',
+                    border: '1px solid rgba(0,184,168,0.28)',
+                  }}>
                   {editando ? 'Salvar' : 'Criar'}
                 </button>
               </div>

@@ -18,28 +18,39 @@ export default function Sidebar({
     noc: 'NOC', suporte_n2: 'Suporte N2', suporte_n3: 'Suporte N3',
     financeiro: 'Financeiro', diretoria: 'Diretoria', vendas: 'Vendas',
     marketing: 'Marketing', vendas_dc: 'Vendas DC', infra: 'Infraestrutura',
-    suporte_rua: 'Suporte Rua', global: 'Global',
+    suporte_rua: 'Suporte Rua',
   };
 
   return (
     <aside className="w-72 h-full flex flex-col border-r transition-theme"
       style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
       
-      {/* Setor do usuário */}
-      <div className="p-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
-        <p className="text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
-          Setor
-        </p>
-        <p className="text-sm font-semibold text-corpai-400 mt-1">
-          {setorLabel[user?.setor] || user?.setor}
-        </p>
-      </div>
+      {/* Setor do usuário — oculto para setor global */}
+      {user?.setor && user.setor !== 'global' && (
+        <div className="p-4 border-b" style={{ borderColor: 'var(--color-border)' }}>
+          <p className="text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+            Setor
+          </p>
+          <p className="text-sm font-semibold mt-1" style={{ color: 'rgba(0,184,168,0.9)' }}>
+            {setorLabel[user?.setor] || user?.setor}
+          </p>
+        </div>
+      )}
 
       {/* Botão Nova Conversa */}
       <div className="p-3">
         <button
           onClick={onNovaConversa}
-          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium bg-corpai-600 hover:bg-corpai-700 text-white transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
+          style={{
+            backgroundImage: [
+              'radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%)',
+              'radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%)',
+              'radial-gradient(ellipse 130% 120% at 50%  50%,  #5828c8 0%, transparent 52%)',
+            ].join(', '),
+            backgroundColor: '#180848',
+            border: '1px solid rgba(0,184,168,0.28)',
+          }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -60,11 +71,12 @@ export default function Sidebar({
               <div
                 key={conv.id}
                 className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  conversaAtual === conv.id
-                    ? 'bg-corpai-600/20 text-corpai-400'
-                    : 'hover:bg-white/5'
+                  conversaAtual === conv.id ? '' : 'hover:bg-white/5'
                 }`}
-                style={conversaAtual !== conv.id ? { color: 'var(--color-text)' } : undefined}
+                style={conversaAtual === conv.id
+                  ? { background: 'rgba(0,184,168,0.12)', color: 'rgba(0,184,168,0.9)' }
+                  : { color: 'var(--color-text)' }
+                }
                 onClick={() => onSelectConversa(conv.id)}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">

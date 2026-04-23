@@ -1,10 +1,27 @@
 /**
- * CorpAI — ChatMessage
+ * liminai — ChatMessage
  * Renderiza uma mensagem do chat com Markdown para respostas da IA.
  */
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+// Avatar iridescente da IA — inicial "L"
+const AI_AVATAR_BG = [
+  'radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%)',
+  'radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%)',
+  'radial-gradient(ellipse 130% 120% at 50%  50%,  #5828c8 0%, transparent 52%)',
+  '#180848',
+].join(', ');
+
+// Bolha de mensagem do usuário — iridescente sólido
+const USER_BUBBLE_BG = [
+  'radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%)',
+  'radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%)',
+  'radial-gradient(ellipse 155% 135% at 44%  42%,  #5828c8 0%, transparent 52%)',
+  'radial-gradient(ellipse 115% 105% at 76%  78%,  #8830d8 0%, transparent 44%)',
+  '#180848',
+].join(', ');
 
 export default function ChatMessage({ role, content, isStreaming }) {
   const isUser = role === 'user';
@@ -13,24 +30,36 @@ export default function ChatMessage({ role, content, isStreaming }) {
     <div className={`flex gap-3 animate-fade-in ${isUser ? 'justify-end' : 'justify-start'}`}>
       {/* Avatar IA */}
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-corpai-500 to-corpai-700 flex items-center justify-center mt-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-          </svg>
+        <div
+          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-0.5 shadow-md"
+          style={{
+            backgroundImage: AI_AVATAR_BG,
+            border: '1px solid rgba(0,184,168,0.25)',
+          }}
+        >
+          <span
+            className="text-white font-black text-xs"
+            style={{ fontFamily: 'Orbitron, sans-serif' }}
+          >
+            L
+          </span>
         </div>
       )}
 
       {/* Conteúdo da mensagem */}
       <div
-        className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-          isUser
-            ? 'bg-corpai-600 text-white rounded-br-md'
-            : 'rounded-bl-md'
-        }`}
-        style={!isUser ? {
+        className="max-w-[75%] rounded-2xl px-4 py-3"
+        style={isUser ? {
+          backgroundImage: USER_BUBBLE_BG,
+          backgroundColor: '#180848',
+          border: '1px solid rgba(0,184,168,0.22)',
+          color: '#ffffff',
+          borderRadius: '16px 16px 4px 16px',
+        } : {
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
-        } : undefined}
+          borderRadius: '4px 16px 16px 16px',
+        }}
       >
         {isUser ? (
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
@@ -40,7 +69,10 @@ export default function ChatMessage({ role, content, isStreaming }) {
               {content}
             </ReactMarkdown>
             {isStreaming && (
-              <span className="inline-block w-2 h-4 bg-corpai-400 animate-pulse ml-0.5 rounded-sm" />
+              <span
+                className="inline-block w-2 h-4 animate-pulse ml-0.5 rounded-sm"
+                style={{ backgroundColor: 'rgba(0,184,168,0.8)' }}
+              />
             )}
           </div>
         )}
@@ -48,8 +80,11 @@ export default function ChatMessage({ role, content, isStreaming }) {
 
       {/* Avatar Usuário */}
       {isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-dark-600 flex items-center justify-center mt-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-dark-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div
+          className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-0.5"
+          style={{ background: 'var(--color-surface-hover)', border: '1px solid var(--color-border)' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </div>

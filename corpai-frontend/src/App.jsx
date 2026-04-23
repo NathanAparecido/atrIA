@@ -20,8 +20,9 @@ function AppRoutes() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-dark-950">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-corpai-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-dark-400 text-sm">Carregando CorpAI...</p>
+          <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: 'rgba(0,184,168,0.5)', borderTopColor: 'transparent' }} />
+          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>carregando liminai...</p>
         </div>
       </div>
     );
