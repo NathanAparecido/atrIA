@@ -1,7 +1,7 @@
 /**
  * liminai — ChatInput
- * Layout Claude-style + identidade iridescente (index.css .iris-*).
- * Upload, paste detection, drag-drop, rate limiting (sliding window).
+ * Layout exato do componente de referência + cores iridescentes via inline styles.
+ * Mesma abordagem do Login.jsx (sem injeção de CSS — inline styles diretos).
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -22,13 +22,54 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+// ── Paleta iridescente (mesma do Login) ─────────────────────────────────────
+const IRIS = {
+  // fundo do container — blobs sobre var(--color-surface)
+  containerBg: [
+    'radial-gradient(ellipse 190% 65% at 8%  92%, rgba(144,24,112,0.14) 0%, transparent 50%)',
+    'radial-gradient(ellipse 110% 190% at 92% 8%,  rgba(0,120,104,0.14) 0%, transparent 50%)',
+    'radial-gradient(ellipse 130% 110% at 40% 45%, rgba(58,20,136,0.17) 0%, transparent 55%)',
+  ].join(', '),
+  containerBorder:      'rgba(0,184,168,0.20)',
+  containerBorderFocus: 'rgba(0,184,168,0.42)',
+
+  // strip de arquivos
+  stripBg: [
+    'radial-gradient(ellipse 200% 100% at 0% 100%, rgba(144,24,112,0.09) 0%, transparent 55%)',
+    'radial-gradient(ellipse 150% 200% at 100% 0%, rgba(0,120,104,0.09) 0%, transparent 55%)',
+  ].join(', '),
+
+  // cards de arquivo/paste
+  cardBg: [
+    'radial-gradient(ellipse 180% 80%  at 0%   100%, rgba(144,24,112,0.11) 0%, transparent 55%)',
+    'radial-gradient(ellipse 130% 180% at 100% 0%,   rgba(0,120,104,0.11) 0%, transparent 55%)',
+  ].join(', '),
+  cardBorder: 'rgba(0,184,168,0.15)',
+
+  // botão enviar
+  sendBg: [
+    'radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%)',
+    'radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%)',
+    'radial-gradient(ellipse 155% 135% at 44%  42%,  #5828c8 0%, transparent 52%)',
+    'radial-gradient(ellipse 115% 105% at 76%  78%,  #8830d8 0%, transparent 44%)',
+    'radial-gradient(ellipse 95%  62%  at 60%  8%,   #009090 0%, transparent 42%)',
+    '#180848',
+  ].join(', '),
+  sendBorder:      'rgba(0,184,168,0.28)',
+  sendBorderHover: 'rgba(0,184,168,0.55)',
+  sendGlow:        '0 0 18px rgba(0,184,168,0.45), 0 0 6px rgba(192,32,160,0.30)',
+
+  // drag overlay
+  dragBg:     'rgba(58,20,136,0.10)',
+  dragBorder: '2px dashed rgba(0,184,168,0.45)',
+};
+
 // ── Constantes ──────────────────────────────────────────────────────────────
 const MAX_FILES        = 10;
-const MAX_FILE_SIZE    = 50 * 1024 * 1024; // 50 MB
+const MAX_FILE_SIZE    = 50 * 1024 * 1024;
 const PASTE_THRESHOLD  = 200;
-
 const RATE_LIMIT_MAX    = 5;
-const RATE_LIMIT_WINDOW = 60_000; // 60 s
+const RATE_LIMIT_WINDOW = 60_000;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const formatFileSize = (bytes) => {
@@ -76,6 +117,26 @@ const readFileAsText = (file) => new Promise((resolve, reject) => {
   reader.readAsText(file);
 });
 
+// ── Estilos compartilhados dos cartões ──────────────────────────────────────
+const cardStyle = {
+  backgroundImage: IRIS.cardBg,
+  backgroundColor: 'var(--color-surface-hover)',
+  border: `1px solid ${IRIS.cardBorder}`,
+};
+
+const cardOverlayStyle = {
+  background: 'linear-gradient(to bottom, transparent 30%, var(--color-surface-hover))',
+};
+
+const badgeStyle = {
+  backgroundColor: 'var(--color-surface)',
+  border: `1px solid ${IRIS.cardBorder}`,
+  color: 'var(--color-text)',
+  fontSize: '0.65rem',
+  padding: '2px 8px',
+  borderRadius: '6px',
+};
+
 // ── Cartão: arquivo textual ─────────────────────────────────────────────────
 function TextualFilePreviewCard({ file, onRemove }) {
   const preview       = file.textContent?.slice(0, 150) || '';
@@ -83,7 +144,7 @@ function TextualFilePreviewCard({ file, onRemove }) {
   const ext           = getFileExtension(file.file.name);
 
   return (
-    <div className="iris-card relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden">
+    <div className="relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden" style={cardStyle}>
       <div className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
         style={{ color: 'var(--color-text-muted)' }}>
         {file.textContent
@@ -94,8 +155,8 @@ function TextualFilePreviewCard({ file, onRemove }) {
         }
       </div>
 
-      <div className="iris-card-overlay group absolute inset-0 flex items-end justify-start p-2 overflow-hidden">
-        <span className="iris-badge">{ext}</span>
+      <div className="group absolute inset-0 flex items-end justify-start p-2 overflow-hidden" style={cardOverlayStyle}>
+        <span style={badgeStyle}>{ext}</span>
 
         {file.uploadStatus === 'uploading' && (
           <div className="absolute top-2 left-2">
@@ -132,13 +193,16 @@ function FilePreviewCard({ file, onRemove }) {
   if (isTextual) return <TextualFilePreviewCard file={file} onRemove={onRemove} />;
 
   return (
-    <div className={cn('iris-card relative group rounded-lg size-[125px] shadow-md flex-shrink-0 overflow-hidden', isImage ? 'p-0' : 'p-3')}>
+    <div
+      className={cn('relative group rounded-lg size-[125px] shadow-md flex-shrink-0 overflow-hidden', isImage ? 'p-0' : 'p-3')}
+      style={cardStyle}
+    >
       {isImage && file.preview ? (
         <img src={file.preview} alt={file.file.name} className="w-full h-full object-cover rounded-lg" />
       ) : (
         <div className="flex-1 min-w-0 overflow-hidden h-full">
-          <div className="iris-card-overlay absolute inset-0 flex items-end justify-start p-2">
-            <span className="iris-badge">{getFileTypeLabel(file.type)}</span>
+          <div className="absolute inset-0 flex items-end justify-start p-2" style={cardOverlayStyle}>
+            <span style={badgeStyle}>{getFileTypeLabel(file.type)}</span>
           </div>
           {file.uploadStatus === 'uploading' && (
             <Loader2 className="h-3.5 w-3.5 animate-spin absolute top-2 left-2" style={{ color: 'rgba(0,184,168,0.8)' }} />
@@ -171,14 +235,14 @@ function PastedContentCard({ content, onRemove }) {
   const needsTruncate = content.content.length > 150;
 
   return (
-    <div className="iris-card relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden">
+    <div className="relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden" style={cardStyle}>
       <div className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
         style={{ color: 'var(--color-text-muted)' }}>
         {needsTruncate ? preview + '...' : content.content}
       </div>
 
-      <div className="iris-card-overlay group absolute inset-0 flex items-end justify-start p-2 overflow-hidden">
-        <span className="iris-badge">colado</span>
+      <div className="group absolute inset-0 flex items-end justify-start p-2 overflow-hidden" style={cardOverlayStyle}>
+        <span style={badgeStyle}>colado</span>
 
         <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button size="icon" variant="outline" className="size-6"
@@ -209,6 +273,7 @@ export default function ChatInput({
   const [pastedContent, setPastedContent] = useState([]);
   const [isDragging,    setIsDragging]    = useState(false);
   const [cooldownSec,   setCooldownSec]   = useState(0);
+  const [focused,       setFocused]       = useState(false);
 
   const textareaRef    = useRef(null);
   const fileInputRef   = useRef(null);
@@ -222,7 +287,7 @@ export default function ChatInput({
     return () => clearTimeout(cooldownTimer.current);
   }, [cooldownSec]);
 
-  // ── rate limit (sliding window) ────────────────────────────────────────
+  // ── rate limit ─────────────────────────────────────────────────────────
   const checkRateLimit = useCallback(() => {
     const now = Date.now();
     sentTimestamps.current = sentTimestamps.current.filter((t) => now - t < RATE_LIMIT_WINDOW);
@@ -363,15 +428,25 @@ export default function ChatInput({
 
         {/* overlay de drag */}
         {isDragging && (
-          <div className="iris-drag-overlay absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none">
+          <div
+            className="absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none"
+            style={{ background: IRIS.dragBg, border: IRIS.dragBorder }}
+          >
             <ImageIcon className="h-6 w-6 opacity-70" style={{ color: 'rgba(0,184,168,0.9)' }} />
             <p className="text-sm" style={{ color: 'rgba(0,184,168,0.9)' }}>solte os arquivos aqui</p>
           </div>
         )}
 
         {/* container principal */}
-        <div className="iris-container rounded-2xl shadow-xl flex flex-col" style={{ minHeight: '150px' }}>
-
+        <div
+          className="rounded-2xl shadow-xl flex flex-col transition-all duration-200"
+          style={{
+            backgroundImage: IRIS.containerBg,
+            backgroundColor: 'var(--color-surface)',
+            border: `1px solid ${focused ? IRIS.containerBorderFocus : IRIS.containerBorder}`,
+            minHeight: '150px',
+          }}
+        >
           {/* textarea */}
           <textarea
             ref={textareaRef}
@@ -379,30 +454,45 @@ export default function ChatInput({
             onChange={(e) => setMessage(e.target.value)}
             onPaste={handlePaste}
             onKeyDown={handleKeyDown}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
             className="flex-1 w-full px-4 pt-4 pb-2 resize-none focus:outline-none bg-transparent text-sm sm:text-base"
-            style={{ minHeight: '100px', maxHeight: '120px' }}
+            style={{
+              color:       'var(--color-text)',
+              caretColor:  'rgba(0,184,168,0.9)',
+              minHeight:   '100px',
+              maxHeight:   '120px',
+            }}
           />
 
           {/* barra de ações */}
           <div className="flex items-center justify-between px-3 pb-3">
             <div className="flex items-center gap-1">
+              {/* botão anexar */}
               <button
                 type="button"
-                className="iris-action-btn h-9 w-9"
+                className="h-9 w-9 flex items-center justify-center rounded-md transition-colors"
+                style={{ color: 'var(--color-text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
                 onClick={() => fileInputRef.current?.click()}
                 disabled={disabled || files.length >= maxFiles}
                 title={files.length >= maxFiles ? `máximo de ${maxFiles} arquivos` : 'anexar arquivo'}
+                onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.background = 'rgba(88,40,200,0.10)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <Plus className="h-5 w-5" />
               </button>
+              {/* botão opções */}
               <button
                 type="button"
-                className="iris-action-btn h-9 w-9"
+                className="h-9 w-9 flex items-center justify-center rounded-md transition-colors"
+                style={{ color: 'var(--color-text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }}
                 disabled={disabled}
                 title="opções"
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(88,40,200,0.10)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <SlidersHorizontal className="h-5 w-5" />
               </button>
@@ -410,14 +500,35 @@ export default function ChatInput({
 
             <div className="flex items-center gap-2">
               {isThrottled && (
-                <span className="iris-cooldown">aguarde {cooldownSec}s</span>
+                <span className="text-xs tabular-nums" style={{ color: 'rgba(0,184,168,0.75)' }}>
+                  aguarde {cooldownSec}s
+                </span>
               )}
+              {/* botão enviar */}
               <button
                 type="button"
-                className="iris-send-btn h-9 w-9 flex-shrink-0"
+                className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-lg text-white"
+                style={{
+                  backgroundImage: canSend ? IRIS.sendBg : 'none',
+                  backgroundColor: canSend ? '#180848' : 'var(--color-surface-hover)',
+                  border: `1px solid ${canSend ? IRIS.sendBorder : 'var(--color-border)'}`,
+                  opacity: canSend ? 1 : 0.30,
+                  cursor: canSend ? 'pointer' : 'not-allowed',
+                  transition: 'box-shadow 0.25s ease, border-color 0.25s ease, opacity 0.2s',
+                  color: canSend ? '#fff' : 'var(--color-text-muted)',
+                }}
                 onClick={handleSend}
                 disabled={!canSend}
                 title={isThrottled ? `limite atingido — aguarde ${cooldownSec}s` : 'enviar mensagem'}
+                onMouseEnter={e => {
+                  if (!canSend) return;
+                  e.currentTarget.style.boxShadow = IRIS.sendGlow;
+                  e.currentTarget.style.borderColor = IRIS.sendBorderHover;
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.borderColor = canSend ? IRIS.sendBorder : 'var(--color-border)';
+                }}
               >
                 <ArrowUp className="h-5 w-5" />
               </button>
@@ -426,7 +537,14 @@ export default function ChatInput({
 
           {/* strip de prévia */}
           {(files.length > 0 || pastedContent.length > 0) && (
-            <div className="iris-preview-strip overflow-x-auto p-3 rounded-b-2xl">
+            <div
+              className="overflow-x-auto p-3 rounded-b-2xl"
+              style={{
+                backgroundImage: IRIS.stripBg,
+                backgroundColor: 'var(--color-bg)',
+                borderTop: `1px solid ${IRIS.cardBorder}`,
+              }}
+            >
               <div className="flex gap-3">
                 {pastedContent.map((c) => (
                   <PastedContentCard
@@ -443,7 +561,9 @@ export default function ChatInput({
           )}
         </div>
 
-        <p className="iris-hint">liminai pode cometer erros. sempre verifique informações críticas.</p>
+        <p className="text-center text-xs mt-2" style={{ color: 'var(--color-text-muted)', opacity: 0.4 }}>
+          liminai pode cometer erros. sempre verifique informações críticas.
+        </p>
       </div>
 
       <input
