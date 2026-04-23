@@ -1,6 +1,6 @@
 /**
  * liminai — ChatInput
- * Layout exato do componente Claude-style + paleta iridescente do Login.
+ * Layout Claude-style + identidade iridescente (index.css .iris-*).
  * Upload, paste detection, drag-drop, rate limiting (sliding window).
  */
 
@@ -21,87 +21,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-// ── Estilos iridescentes (injetados como <style>) ───────────────────────────
-const IRIS_STYLES = `
-  .iris-send-btn {
-    background:
-      radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%),
-      radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%),
-      radial-gradient(ellipse 155% 135% at 44%  42%,  #5828c8 0%, transparent 52%),
-      radial-gradient(ellipse 115% 105% at 76%  78%,  #8830d8 0%, transparent 44%),
-      radial-gradient(ellipse 95%  62%  at 60%  8%,   #009090 0%, transparent 42%),
-      #180848;
-    border: 1px solid rgba(0, 184, 168, 0.28);
-    box-shadow: 0 0 0 0 rgba(0,184,168,0);
-    transition: box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.2s;
-  }
-  .iris-send-btn:hover:not(:disabled) {
-    box-shadow: 0 0 18px rgba(0,184,168,0.45), 0 0 6px rgba(192,32,160,0.30);
-    border-color: rgba(0,184,168,0.50);
-  }
-  .iris-send-btn:disabled {
-    opacity: 0.28;
-    cursor: not-allowed;
-  }
-
-  .iris-container {
-    background:
-      radial-gradient(ellipse 190% 65% at 8%  92%, rgba(144,24,112,0.13) 0%, transparent 50%),
-      radial-gradient(ellipse 110% 190% at 92% 8%,  rgba(0,120,104,0.13) 0%, transparent 50%),
-      radial-gradient(ellipse 130% 110% at 40% 45%, rgba(58,20,136,0.16) 0%, transparent 55%),
-      #0e0c1a;
-    border: 1px solid rgba(0, 184, 168, 0.18);
-  }
-
-  .iris-preview-strip {
-    background:
-      radial-gradient(ellipse 200% 100% at 0% 100%, rgba(144,24,112,0.10) 0%, transparent 55%),
-      radial-gradient(ellipse 150% 200% at 100% 0%, rgba(0,120,104,0.10) 0%, transparent 55%),
-      #09080f;
-    border-top: 1px solid rgba(0, 184, 168, 0.13);
-  }
-
-  .iris-card {
-    background:
-      radial-gradient(ellipse 180% 80% at 0% 100%, rgba(144,24,112,0.10) 0%, transparent 55%),
-      radial-gradient(ellipse 130% 180% at 100% 0%, rgba(0,120,104,0.10) 0%, transparent 55%),
-      #13101e;
-    border: 1px solid rgba(0, 184, 168, 0.14);
-  }
-
-  .iris-card-overlay {
-    background: linear-gradient(to bottom, transparent 30%, #13101e);
-  }
-
-  .iris-badge {
-    background: rgba(14, 12, 26, 0.85);
-    border: 1px solid rgba(0, 184, 168, 0.20);
-    color: rgba(226, 224, 245, 0.85);
-  }
-
-  .iris-drag-overlay {
-    background: rgba(58, 20, 136, 0.12);
-    border: 2px dashed rgba(0, 184, 168, 0.40);
-  }
-
-  .iris-action-btn {
-    color: rgba(226, 224, 245, 0.45);
-    transition: color 0.2s, background 0.2s;
-  }
-  .iris-action-btn:hover:not(:disabled) {
-    color: rgba(226, 224, 245, 0.85);
-    background: rgba(88, 40, 200, 0.12);
-  }
-  .iris-action-btn:disabled {
-    opacity: 0.22;
-    cursor: not-allowed;
-  }
-
-  .iris-container textarea::placeholder {
-    color: rgba(226, 224, 245, 0.28);
-  }
-`;
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 const MAX_FILES        = 10;
@@ -165,10 +84,8 @@ function TextualFilePreviewCard({ file, onRemove }) {
 
   return (
     <div className="iris-card relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden">
-      <div
-        className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
-        style={{ color: 'rgba(226,224,245,0.55)' }}
-      >
+      <div className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
+        style={{ color: 'var(--color-text-muted)' }}>
         {file.textContent
           ? <>{preview}{needsTruncate ? '...' : ''}</>
           : <div className="flex items-center justify-center h-full">
@@ -178,7 +95,7 @@ function TextualFilePreviewCard({ file, onRemove }) {
       </div>
 
       <div className="iris-card-overlay group absolute inset-0 flex items-end justify-start p-2 overflow-hidden">
-        <span className="iris-badge text-xs px-2 py-1 rounded-md">{ext}</span>
+        <span className="iris-badge">{ext}</span>
 
         {file.uploadStatus === 'uploading' && (
           <div className="absolute top-2 left-2">
@@ -221,7 +138,7 @@ function FilePreviewCard({ file, onRemove }) {
       ) : (
         <div className="flex-1 min-w-0 overflow-hidden h-full">
           <div className="iris-card-overlay absolute inset-0 flex items-end justify-start p-2">
-            <span className="iris-badge text-xs px-2 py-1 rounded-md">{getFileTypeLabel(file.type)}</span>
+            <span className="iris-badge">{getFileTypeLabel(file.type)}</span>
           </div>
           {file.uploadStatus === 'uploading' && (
             <Loader2 className="h-3.5 w-3.5 animate-spin absolute top-2 left-2" style={{ color: 'rgba(0,184,168,0.8)' }} />
@@ -230,20 +147,18 @@ function FilePreviewCard({ file, onRemove }) {
             <AlertCircle className="h-3.5 w-3.5 text-red-400 absolute top-2 left-2" />
           )}
           <p className="text-xs font-medium truncate max-w-[90%] mt-1" title={file.file.name}
-            style={{ color: 'rgba(226,224,245,0.85)' }}>
+            style={{ color: 'var(--color-text)' }}>
             {file.file.name}
           </p>
-          <p className="text-[10px] mt-1" style={{ color: 'rgba(226,224,245,0.40)' }}>
+          <p className="text-[10px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
             {formatFileSize(file.file.size)}
           </p>
         </div>
       )}
 
-      <Button
-        size="icon" variant="outline"
+      <Button size="icon" variant="outline"
         className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={() => onRemove(file.id)}
-      >
+        onClick={() => onRemove(file.id)}>
         <X className="h-4 w-4" />
       </Button>
     </div>
@@ -257,15 +172,13 @@ function PastedContentCard({ content, onRemove }) {
 
   return (
     <div className="iris-card relative rounded-lg p-3 size-[125px] shadow-md flex-shrink-0 overflow-hidden">
-      <div
-        className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
-        style={{ color: 'rgba(226,224,245,0.55)' }}
-      >
+      <div className="text-[8px] whitespace-pre-wrap break-words max-h-24 overflow-y-auto"
+        style={{ color: 'var(--color-text-muted)' }}>
         {needsTruncate ? preview + '...' : content.content}
       </div>
 
       <div className="iris-card-overlay group absolute inset-0 flex items-end justify-start p-2 overflow-hidden">
-        <span className="iris-badge text-xs px-2 py-1 rounded-md">colado</span>
+        <span className="iris-badge">colado</span>
 
         <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <Button size="icon" variant="outline" className="size-6"
@@ -440,123 +353,107 @@ export default function ChatInput({
   const canSend     = hasContent && !disabled && !files.some((f) => f.uploadStatus === 'uploading') && !isThrottled;
 
   return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: IRIS_STYLES }} />
+    <div
+      className="px-4 pb-4 pt-2"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <div className="relative max-w-4xl mx-auto">
 
-      <div
-        className="px-4 pb-4 pt-2"
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <div className="relative max-w-4xl mx-auto">
+        {/* overlay de drag */}
+        {isDragging && (
+          <div className="iris-drag-overlay absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none">
+            <ImageIcon className="h-6 w-6 opacity-70" style={{ color: 'rgba(0,184,168,0.9)' }} />
+            <p className="text-sm" style={{ color: 'rgba(0,184,168,0.9)' }}>solte os arquivos aqui</p>
+          </div>
+        )}
 
-          {/* overlay de drag */}
-          {isDragging && (
-            <div className="iris-drag-overlay absolute inset-0 z-50 rounded-2xl flex flex-col items-center justify-center gap-2 pointer-events-none">
-              <ImageIcon className="h-6 w-6 opacity-60" style={{ color: 'rgba(0,184,168,0.9)' }} />
-              <p className="text-sm" style={{ color: 'rgba(0,184,168,0.9)' }}>solte os arquivos aqui</p>
-            </div>
-          )}
+        {/* container principal */}
+        <div className="iris-container rounded-2xl shadow-xl flex flex-col" style={{ minHeight: '150px' }}>
 
-          {/* container principal */}
-          <div
-            className="iris-container rounded-2xl shadow-xl flex flex-col"
-            style={{ minHeight: '150px' }}
-          >
-            {/* textarea */}
-            <textarea
-              ref={textareaRef}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onPaste={handlePaste}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              disabled={disabled}
-              rows={1}
-              className="flex-1 w-full px-4 pt-4 pb-2 resize-none focus:outline-none bg-transparent text-sm sm:text-base"
-              style={{
-                color:       'rgba(226,224,245,0.92)',
-                caretColor:  'rgba(0,184,168,0.9)',
-                minHeight:   '100px',
-                maxHeight:   '120px',
-              }}
-            />
-            {/* placeholder customizado via CSS inline — fallback para o placeholder nativo */}
+          {/* textarea */}
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onPaste={handlePaste}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            rows={1}
+            className="flex-1 w-full px-4 pt-4 pb-2 resize-none focus:outline-none bg-transparent text-sm sm:text-base"
+            style={{ minHeight: '100px', maxHeight: '120px' }}
+          />
 
-            {/* barra de ações */}
-            <div className="flex items-center justify-between px-3 pb-3">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  className="iris-action-btn h-9 w-9 flex items-center justify-center rounded-md"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={disabled || files.length >= maxFiles}
-                  title={files.length >= maxFiles ? `máximo de ${maxFiles} arquivos` : 'anexar arquivo'}
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  className="iris-action-btn h-9 w-9 flex items-center justify-center rounded-md"
-                  disabled={disabled}
-                  title="opções"
-                >
-                  <SlidersHorizontal className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {isThrottled && (
-                  <span className="text-xs tabular-nums" style={{ color: 'rgba(0,184,168,0.7)' }}>
-                    aguarde {cooldownSec}s
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="iris-send-btn h-9 w-9 flex items-center justify-center rounded-lg text-white flex-shrink-0"
-                  onClick={handleSend}
-                  disabled={!canSend}
-                  title={isThrottled ? `limite atingido — aguarde ${cooldownSec}s` : 'enviar mensagem'}
-                >
-                  <ArrowUp className="h-5 w-5" />
-                </button>
-              </div>
+          {/* barra de ações */}
+          <div className="flex items-center justify-between px-3 pb-3">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className="iris-action-btn h-9 w-9"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={disabled || files.length >= maxFiles}
+                title={files.length >= maxFiles ? `máximo de ${maxFiles} arquivos` : 'anexar arquivo'}
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                className="iris-action-btn h-9 w-9"
+                disabled={disabled}
+                title="opções"
+              >
+                <SlidersHorizontal className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* prévia de arquivos / conteúdo colado */}
-            {(files.length > 0 || pastedContent.length > 0) && (
-              <div className="iris-preview-strip overflow-x-auto p-3 rounded-b-2xl">
-                <div className="flex gap-3">
-                  {pastedContent.map((c) => (
-                    <PastedContentCard
-                      key={c.id}
-                      content={c}
-                      onRemove={(id) => setPastedContent((prev) => prev.filter((x) => x.id !== id))}
-                    />
-                  ))}
-                  {files.map((f) => (
-                    <FilePreviewCard key={f.id} file={f} onRemove={removeFile} />
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {isThrottled && (
+                <span className="iris-cooldown">aguarde {cooldownSec}s</span>
+              )}
+              <button
+                type="button"
+                className="iris-send-btn h-9 w-9 flex-shrink-0"
+                onClick={handleSend}
+                disabled={!canSend}
+                title={isThrottled ? `limite atingido — aguarde ${cooldownSec}s` : 'enviar mensagem'}
+              >
+                <ArrowUp className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
-          <p className="text-center text-xs mt-2" style={{ color: 'rgba(226,224,245,0.25)' }}>
-            liminai pode cometer erros. sempre verifique informações críticas.
-          </p>
+          {/* strip de prévia */}
+          {(files.length > 0 || pastedContent.length > 0) && (
+            <div className="iris-preview-strip overflow-x-auto p-3 rounded-b-2xl">
+              <div className="flex gap-3">
+                {pastedContent.map((c) => (
+                  <PastedContentCard
+                    key={c.id}
+                    content={c}
+                    onRemove={(id) => setPastedContent((prev) => prev.filter((x) => x.id !== id))}
+                  />
+                ))}
+                {files.map((f) => (
+                  <FilePreviewCard key={f.id} file={f} onRemove={removeFile} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          className="hidden"
-          accept={acceptedFileTypes?.join(',')}
-          onChange={(e) => { handleFileSelect(e.target.files); if (e.target) e.target.value = ''; }}
-        />
+        <p className="iris-hint">liminai pode cometer erros. sempre verifique informações críticas.</p>
       </div>
-    </>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        accept={acceptedFileTypes?.join(',')}
+        onChange={(e) => { handleFileSelect(e.target.files); if (e.target) e.target.value = ''; }}
+      />
+    </div>
   );
 }

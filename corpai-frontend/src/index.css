@@ -186,3 +186,168 @@ body {
 .transition-theme {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
+
+/* ─── ChatInput Iridescente ─────────────────────────────── */
+
+/* Container principal — modo escuro (padrão) */
+.iris-container {
+  background:
+    radial-gradient(ellipse 190% 65% at 8%  92%, rgba(144, 24, 112, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse 110% 190% at 92% 8%,  rgba(0, 120, 104, 0.14) 0%, transparent 50%),
+    radial-gradient(ellipse 130% 110% at 40% 45%, rgba(58, 20, 136, 0.17) 0%, transparent 55%),
+    var(--color-surface);
+  border: 1px solid rgba(0, 184, 168, 0.20);
+  transition: border-color 0.3s ease;
+}
+.iris-container:focus-within {
+  border-color: rgba(0, 184, 168, 0.38);
+}
+
+/* Container — modo claro */
+.light .iris-container {
+  background:
+    radial-gradient(ellipse 190% 65% at 8%  92%, rgba(144, 24, 112, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 110% 190% at 92% 8%,  rgba(0, 120, 104, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 130% 110% at 40% 45%, rgba(58, 20, 136, 0.07) 0%, transparent 55%),
+    var(--color-surface);
+  border: 1px solid rgba(0, 140, 128, 0.22);
+}
+.light .iris-container:focus-within {
+  border-color: rgba(0, 140, 128, 0.40);
+}
+
+/* Textarea dentro do container */
+.iris-container textarea {
+  color: var(--color-text);
+  caret-color: rgba(0, 184, 168, 0.9);
+  background: transparent;
+}
+.iris-container textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+/* Strip de preview (arquivos/paste) */
+.iris-preview-strip {
+  background:
+    radial-gradient(ellipse 200% 100% at 0% 100%, rgba(144, 24, 112, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 150% 200% at 100% 0%, rgba(0, 120, 104, 0.08) 0%, transparent 55%),
+    var(--color-bg);
+  border-top: 1px solid rgba(0, 184, 168, 0.13);
+}
+.light .iris-preview-strip {
+  background: var(--color-bg);
+  border-top: 1px solid rgba(0, 140, 128, 0.15);
+}
+
+/* Cards de arquivo/paste */
+.iris-card {
+  background:
+    radial-gradient(ellipse 180% 80%  at 0%   100%, rgba(144, 24, 112, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 130% 180% at 100% 0%,   rgba(0, 120, 104, 0.10) 0%, transparent 55%),
+    var(--color-surface-hover);
+  border: 1px solid rgba(0, 184, 168, 0.15);
+}
+.light .iris-card {
+  background: var(--color-surface-hover);
+  border: 1px solid rgba(0, 140, 128, 0.18);
+}
+
+/* Overlay degradê dos cards */
+.iris-card-overlay {
+  background: linear-gradient(to bottom, transparent 30%, var(--color-surface-hover));
+}
+
+/* Badge dentro dos cards */
+.iris-badge {
+  background: var(--color-surface);
+  border: 1px solid rgba(0, 184, 168, 0.22);
+  color: var(--color-text);
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.light .iris-badge {
+  border-color: rgba(0, 140, 128, 0.25);
+}
+
+/* Botão de ações (+ e sliders) */
+.iris-action-btn {
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.iris-action-btn:hover:not(:disabled) {
+  color: var(--color-text);
+  background: rgba(88, 40, 200, 0.10);
+}
+.light .iris-action-btn:hover:not(:disabled) {
+  background: rgba(0, 120, 104, 0.08);
+}
+.iris-action-btn:disabled {
+  opacity: 0.30;
+  cursor: not-allowed;
+}
+
+/* Botão enviar — iridescente em ambos os temas */
+.iris-send-btn {
+  background:
+    radial-gradient(ellipse 210% 80%  at 0%   100%, #c020a8 0%, transparent 48%),
+    radial-gradient(ellipse 160% 210% at 100% 0%,   #00b8a8 0%, transparent 48%),
+    radial-gradient(ellipse 155% 135% at 44%  42%,  #5828c8 0%, transparent 52%),
+    radial-gradient(ellipse 115% 105% at 76%  78%,  #8830d8 0%, transparent 44%),
+    radial-gradient(ellipse 95%  62%  at 60%  8%,   #009090 0%, transparent 42%),
+    #180848;
+  border: 1px solid rgba(0, 184, 168, 0.28);
+  box-shadow: none;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.2s;
+  cursor: pointer;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+.iris-send-btn:hover:not(:disabled) {
+  box-shadow: 0 0 18px rgba(0, 184, 168, 0.45), 0 0 6px rgba(192, 32, 160, 0.30);
+  border-color: rgba(0, 184, 168, 0.52);
+}
+.iris-send-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Drag overlay */
+.iris-drag-overlay {
+  background: rgba(58, 20, 136, 0.10);
+  border: 2px dashed rgba(0, 184, 168, 0.45);
+}
+.light .iris-drag-overlay {
+  background: rgba(0, 120, 104, 0.06);
+  border: 2px dashed rgba(0, 140, 128, 0.45);
+}
+
+/* Texto de cooldown */
+.iris-cooldown {
+  color: rgba(0, 184, 168, 0.80);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.light .iris-cooldown {
+  color: rgba(0, 120, 104, 0.85);
+}
+
+/* Footer hint */
+.iris-hint {
+  color: var(--color-text-muted);
+  opacity: 0.45;
+  font-size: 0.7rem;
+  text-align: center;
+  margin-top: 8px;
+}
