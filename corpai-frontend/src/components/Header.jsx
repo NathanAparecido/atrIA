@@ -7,8 +7,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
 const NEON = {
-  filter: 'drop-shadow(0 0 18px rgba(60,100,210,0.9)) drop-shadow(0 0 8px rgba(90,140,230,0.55))',
-  textShadow: '0 0 10px rgba(60,100,210,0.6)',
+  color: 'rgba(0,184,168,1)',
+  filter: 'drop-shadow(0 0 14px rgba(0,184,168,0.85)) drop-shadow(0 0 6px rgba(192,32,160,0.5))',
+  textShadow: '0 0 8px rgba(0,184,168,0.75)',
 };
 
 // Gradiente iridescente — mesmo do Login
@@ -68,7 +69,7 @@ export default function Header() {
 
         {/* nome */}
         <span className="text-base font-black tracking-tight font-['Orbitron']">
-          limin<span className="text-corpai-400" style={NEON}>ai</span>
+          limin<span style={NEON}>ai</span>
         </span>
       </button>
 

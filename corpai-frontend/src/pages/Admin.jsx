@@ -208,7 +208,7 @@ export default function Admin() {
                             <td className="px-4 py-3">
                               <span className={`px-2 py-1 rounded-md text-xs font-medium ${
                                 u.role === 'admin' ? 'bg-red-500/20 text-red-400' :
-                                u.role === 'lider_setor' ? 'bg-yellow-500/20 text-yellow-400' :
+                                u.role === 'lider_setor' ? 'bg-violet-500/20 text-violet-300' :
                                 'bg-dark-600/50 text-dark-300'
                               }`}>
                                 {u.role}
@@ -276,7 +276,7 @@ export default function Admin() {
                       )}
                     </div>
                     {health && (
-                      <p className={`text-sm mt-3 font-medium ${health.status === 'saudavel' ? 'text-green-400' : 'text-yellow-400'}`}>
+                      <p className={`text-sm mt-3 font-medium ${health.status === 'saudavel' ? 'text-green-400' : 'text-orange-400'}`}>
                         Status geral: {health.status === 'saudavel' ? '✅ Saudável' : '⚠️ Degradado'}
                       </p>
                     )}
