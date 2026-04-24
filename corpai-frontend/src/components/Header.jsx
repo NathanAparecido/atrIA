@@ -6,10 +6,19 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 
-const NEON = {
-  color: 'rgba(0,184,168,1)',
-  filter: 'drop-shadow(0 0 14px rgba(0,184,168,0.85)) drop-shadow(0 0 6px rgba(192,32,160,0.5))',
-  textShadow: '0 0 8px rgba(0,184,168,0.75)',
+const IRIS_TEXT = {
+  background: [
+    'radial-gradient(ellipse 190% 65% at 8% 92%,  #901870 0%, transparent 48%)',
+    'radial-gradient(ellipse 110% 190% at 92% 8%,  #007868 0%, transparent 48%)',
+    'radial-gradient(ellipse 130% 110% at 38% 42%, #3a1488 0%, transparent 52%)',
+    'radial-gradient(ellipse 85%  75%  at 78% 72%, #6020a0 0%, transparent 44%)',
+    'radial-gradient(ellipse 70%  50%  at 55% 15%, #007058 0%, transparent 40%)',
+    '#0c0632',
+  ].join(', '),
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
+  filter: 'drop-shadow(0 0 7px rgba(0,128,112,0.72)) drop-shadow(0 0 16px rgba(144,24,112,0.42))',
 };
 
 // Gradiente iridescente — mesmo do Login
@@ -69,7 +78,7 @@ export default function Header() {
 
         {/* nome */}
         <span className="text-base font-black tracking-tight font-['Orbitron']">
-          limin<span style={NEON}>ai</span>
+          limin<span style={IRIS_TEXT}>ai</span>
         </span>
       </button>
 
