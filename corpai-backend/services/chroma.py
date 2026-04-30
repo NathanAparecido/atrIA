@@ -193,6 +193,9 @@ class ChromaService:
                 docs[doc_id] = {
                     "document_id": doc_id,
                     "nome_arquivo": metadata.get("nome_arquivo", "desconhecido"),
+                    "titulo": metadata.get("titulo") or None,
+                    "descricao": metadata.get("descricao") or None,
+                    "tags": metadata.get("tags") or None,
                     "total_chunks": 0,
                     "criado_em": metadata.get("criado_em", ""),
                 }

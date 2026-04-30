@@ -13,7 +13,7 @@ from config import settings
 logger = logging.getLogger(__name__)
 
 # Prompt de sistema para o assistente corporativo
-SYSTEM_PROMPT = """Você é o CorpAI, assistente de inteligência artificial interno da empresa.
+SYSTEM_PROMPT = """Você é a liminai, assistente de inteligência artificial interna da empresa.
 Sua função é responder perguntas dos colaboradores com base na documentação interna da empresa.
 
 REGRAS IMPORTANTES:
@@ -22,7 +22,7 @@ REGRAS IMPORTANTES:
 3. Se a informação não estiver no contexto, diga claramente: "Não encontrei essa informação na base de conhecimento."
 4. Nunca invente informações que não estejam no contexto.
 5. Seja objetivo, claro e profissional nas respostas.
-6. Quando relevante, cite a fonte do documento de onde veio a informação.
+6. Sempre cite o título do documento de onde veio cada informação, usando o formato: *Fonte: [Título do Documento]*.
 7. Use formatação Markdown para estruturar suas respostas quando apropriado.
 8. Se a pergunta for ambígua, peça esclarecimento ao usuário."""
 
@@ -48,9 +48,10 @@ def montar_prompt_rag(
     if contextos:
         contexto_texto = "### DOCUMENTOS RELEVANTES:\n\n"
         for i, ctx in enumerate(contextos, 1):
-            nome_arquivo = ctx.get("metadata", {}).get("nome_arquivo", "Documento")
+            meta = ctx.get("metadata", {})
+            titulo_doc = meta.get("titulo") or meta.get("nome_arquivo", "Documento")
             namespace = ctx.get("namespace", "desconhecido")
-            contexto_texto += f"**[{i}] {nome_arquivo}** (setor: {namespace}):\n"
+            contexto_texto += f"**[{i}] {titulo_doc}** (setor: {namespace}):\n"
             contexto_texto += f"{ctx['documento']}\n\n"
     else:
         contexto_texto = "### DOCUMENTOS RELEVANTES:\nNenhum documento relevante encontrado na base de conhecimento.\n\n"
@@ -61,7 +62,7 @@ def montar_prompt_rag(
         historico_texto = "### HISTÓRICO DA CONVERSA:\n\n"
         # Últimas 5 mensagens para não exceder o contexto
         for msg in historico[-10:]:
-            role_label = "Usuário" if msg["role"] == "user" else "CorpAI"
+            role_label = "Usuário" if msg["role"] == "user" else "liminai"
             historico_texto += f"**{role_label}:** {msg['content']}\n\n"
 
     # Montar prompt final

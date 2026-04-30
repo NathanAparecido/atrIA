@@ -6,9 +6,9 @@ Formatos aceitos: PDF, DOCX, XLSX, TXT, MD
 
 import logging
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from pydantic import BaseModel
 
 from config import settings
@@ -28,6 +28,9 @@ EXTENSOES_PERMITIDAS = {".pdf", ".docx", ".xlsx", ".txt", ".md"}
 class DocumentoResponse(BaseModel):
     document_id: str
     nome_arquivo: str
+    titulo: Optional[str] = None
+    descricao: Optional[str] = None
+    tags: Optional[str] = None
     total_chunks: int
     criado_em: str
 
@@ -36,6 +39,7 @@ class UploadResponse(BaseModel):
     mensagem: str
     document_id: str
     nome_arquivo: str
+    titulo: Optional[str] = None
     total_chunks: int
 
 
@@ -117,6 +121,9 @@ async def extrair_texto(nome_arquivo: str, conteudo: bytes) -> str:
 )
 async def upload_documento(
     file: UploadFile = File(...),
+    titulo: Optional[str] = Form(None),
+    descricao: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
     current_user: TokenData = Depends(require_role(["lider_setor", "admin"])),
 ):
     """
@@ -188,10 +195,14 @@ async def upload_documento(
     from datetime import datetime
 
     ids = [f"{document_id}_chunk_{i}" for i in range(len(chunks))]
+    titulo_final = (titulo or "").strip() or nome
     metadatas = [
         {
             "document_id": document_id,
             "nome_arquivo": nome,
+            "titulo": titulo_final,
+            "descricao": (descricao or "").strip(),
+            "tags": (tags or "").strip(),
             "chunk_index": i,
             "total_chunks": len(chunks),
             "setor": current_user.setor,
@@ -233,6 +244,7 @@ async def upload_documento(
         mensagem="Documento processado e indexado com sucesso.",
         document_id=document_id,
         nome_arquivo=nome,
+        titulo=titulo_final,
         total_chunks=len(chunks),
     )
 
@@ -265,6 +277,9 @@ async def listar_documentos(
         DocumentoResponse(
             document_id=d["document_id"],
             nome_arquivo=d["nome_arquivo"],
+            titulo=d.get("titulo"),
+            descricao=d.get("descricao"),
+            tags=d.get("tags"),
             total_chunks=d["total_chunks"],
             criado_em=d.get("criado_em", ""),
         )
