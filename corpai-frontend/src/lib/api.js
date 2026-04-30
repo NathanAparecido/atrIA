@@ -183,10 +183,13 @@ export async function deletarConversa(conversationId) {
 }
 
 // ─── Documentos ───────────────────────────────────────────
-export async function uploadDocumento(file, onProgress) {
+export async function uploadDocumento(file, metadata = {}, onProgress) {
   const token = getToken();
   const formData = new FormData();
   formData.append('file', file);
+  if (metadata.titulo)   formData.append('titulo',   metadata.titulo);
+  if (metadata.descricao) formData.append('descricao', metadata.descricao);
+  if (metadata.tags)     formData.append('tags',     metadata.tags);
 
   const xhr = new XMLHttpRequest();
   
