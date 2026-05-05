@@ -15,6 +15,8 @@ export function Typewriter({
   stopAtLast = false,
   highlightFrom = -1,   // char index a partir do qual colorir (última palavra)
   highlightColor = "#0d00ff",
+  lastWordClassName = "",
+  highlightClassName = "",
 }) {
   const [displayText, setDisplayText]   = useState("")
   const [isDeleting, setIsDeleting]     = useState(false)
@@ -65,23 +67,27 @@ export function Typewriter({
     return () => clearInterval(id)
   }, [cursor])
 
-  // Renderiza com destaque + neon na última palavra (durante digitação e quando congelado)
+  // Renderiza com destaque na última palavra (durante digitação e quando congelado)
   const renderText = () => {
+    const wrap = (children) =>
+      isLastWord && lastWordClassName
+        ? <span className={lastWordClassName}>{children}</span>
+        : children
+
     if (isLastWord && highlightFrom >= 0 && displayText.length > highlightFrom) {
-      return (
+      return wrap(
         <>
           {displayText.substring(0, highlightFrom)}
-          <span style={{
-            color: highlightColor,
-            filter: 'drop-shadow(0 0 28px rgba(60,100,210,0.9)) drop-shadow(0 0 12px rgba(90,140,230,0.55))',
-            textShadow: '0 0 12px rgba(60,100,210,0.6)',
-          }}>
+          <span
+            className={highlightClassName}
+            style={highlightClassName ? undefined : { color: highlightColor }}
+          >
             {displayText.substring(highlightFrom)}
           </span>
         </>
       )
     }
-    return displayText
+    return wrap(displayText)
   }
 
   return (

@@ -12,8 +12,7 @@ function formatText(text, highlightColor) {
   if (pipeIndex === -1) return text;
   const before = text.slice(0, pipeIndex);
   const after = text.slice(pipeIndex + 1);
-  // Applied the login page neon style: drop-shadow and a subtle text-shadow for intensity
-  return `${before}<span style="color:${highlightColor};filter:drop-shadow(0 0 28px rgba(60,100,210,0.9)) drop-shadow(0 0 12px rgba(90,140,230,0.55));text-shadow:0 0 12px rgba(60,100,210,0.6)">${after}</span>`;
+  return `${before}<span style="color:${highlightColor}">${after}</span>`;
 }
 
 function plainText(text) {

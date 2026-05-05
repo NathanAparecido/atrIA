@@ -180,7 +180,6 @@ export default function Chat() {
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
-                    filter: 'drop-shadow(0 0 7px rgba(0,128,112,0.72)) drop-shadow(0 0 16px rgba(144,24,112,0.42))',
                   }}>ai</span>
                 </div>
 
