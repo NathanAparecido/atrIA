@@ -366,10 +366,10 @@ export function CinematicFooter() {
             liminai
           </div>
 
-          {/* Diagonal Sleek Marquee — borda neon (mesmo GlowCard do login/chat) */}
+          {/* Diagonal Sleek Marquee — apenas borda neon (sem fill interno) */}
           <div className="absolute top-12 left-0 w-full z-10 -rotate-2 scale-110">
-            <GlowCard customSize className="overflow-hidden">
-              <div className="overflow-hidden py-4 backdrop-blur-md">
+            <GlowCard customSize transparent className="overflow-hidden">
+              <div className="overflow-hidden py-4">
                 <div className="flex w-max animate-footer-scroll-marquee text-xs md:text-sm font-bold tracking-[0.3em] uppercase" style={{ color: 'var(--muted-foreground)' }}>
                   <MarqueeItem />
                   <MarqueeItem />

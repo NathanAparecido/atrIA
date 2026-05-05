@@ -81,6 +81,7 @@ export function GlowCard({
   customSize = false,
   width,
   height,
+  transparent = false,
 }) {
   const cardRef = useRef(null);
 
@@ -127,7 +128,7 @@ export function GlowCard({
     '--backdrop': 'color-mix(in oklch, var(--background) 88%, hsl(260 30% 10%))',
     '--backup-border': 'color-mix(in oklch, hsl(280 75% 52%) 20%, transparent)',
 
-    backgroundImage: `radial-gradient(
+    backgroundImage: transparent ? 'none' : `radial-gradient(
       var(--spotlight-size) var(--spotlight-size) at
       calc(var(--x, 0) * 1px)
       calc(var(--y, 0) * 1px),
@@ -139,7 +140,7 @@ export function GlowCard({
       ),
       transparent
     )`,
-    backgroundColor: 'var(--backdrop)',
+    backgroundColor: transparent ? 'transparent' : 'var(--backdrop)',
     backgroundSize: 'calc(100% + (2 * var(--border-size))) calc(100% + (2 * var(--border-size)))',
     backgroundPosition: '50% 50%',
     backgroundAttachment: 'fixed',

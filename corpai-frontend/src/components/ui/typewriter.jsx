@@ -67,7 +67,20 @@ export function Typewriter({
     return () => clearInterval(id)
   }, [cursor])
 
-  // Renderiza com destaque na última palavra (durante digitação e quando congelado)
+  // Cursor — herda a cor do contexto onde está renderizado (dentro do highlight,
+  // pega o gradiente iridescente; fora, herda a cor do texto base).
+  const cursorEl = cursor && !(frozen && stopAtLast) && (
+    <span
+      className="ml-[0.05em] transition-opacity duration-75"
+      style={{ opacity: showCursor ? 1 : 0 }}
+    >
+      {cursorChar}
+    </span>
+  )
+
+  // Renderiza com destaque na última palavra (durante digitação e quando congelado).
+  // Cursor entra DENTRO do span do highlight quando o texto já passou de highlightFrom,
+  // pra herdar a paleta iridescente em vez de aparecer como linha branca.
   const renderText = () => {
     const wrap = (children) =>
       isLastWord && lastWordClassName
@@ -83,24 +96,22 @@ export function Typewriter({
             style={highlightClassName ? undefined : { color: highlightColor }}
           >
             {displayText.substring(highlightFrom)}
+            {cursorEl}
           </span>
         </>
       )
     }
-    return wrap(displayText)
+    return (
+      <>
+        {wrap(displayText)}
+        {cursorEl}
+      </>
+    )
   }
 
   return (
     <span className="inline-block">
       {renderText()}
-      {cursor && !(frozen && stopAtLast) && (
-        <span
-          className="ml-[0.05em] transition-opacity duration-75"
-          style={{ opacity: showCursor ? 1 : 0 }}
-        >
-          {cursorChar}
-        </span>
-      )}
     </span>
   )
 }
