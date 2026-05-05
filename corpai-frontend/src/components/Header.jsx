@@ -8,12 +8,12 @@ import ThemeToggle from './ThemeToggle';
 
 const IRIS_TEXT = {
   background: [
-    'radial-gradient(ellipse 190% 65% at 8% 92%,  #901870 0%, transparent 48%)',
-    'radial-gradient(ellipse 110% 190% at 92% 8%,  #007868 0%, transparent 48%)',
-    'radial-gradient(ellipse 130% 110% at 38% 42%, #3a1488 0%, transparent 52%)',
-    'radial-gradient(ellipse 85%  75%  at 78% 72%, #6020a0 0%, transparent 44%)',
-    'radial-gradient(ellipse 70%  50%  at 55% 15%, #007058 0%, transparent 40%)',
-    '#0c0632',
+    'radial-gradient(ellipse 190% 65% at 8% 92%,  #c020a8 0%, transparent 48%)',
+    'radial-gradient(ellipse 110% 190% at 92% 8%,  #00b8a8 0%, transparent 48%)',
+    'radial-gradient(ellipse 130% 110% at 38% 42%, #5828c8 0%, transparent 52%)',
+    'radial-gradient(ellipse 85%  75%  at 78% 72%, #5828c8 0%, transparent 44%)',
+    'radial-gradient(ellipse 70%  50%  at 55% 15%, #00b8a8 0%, transparent 40%)',
+    '#180848',
   ].join(', '),
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',

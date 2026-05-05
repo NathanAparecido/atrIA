@@ -93,7 +93,7 @@ export function Typewriter({
   return (
     <span className="inline-block">
       {renderText()}
-      {cursor && (
+      {cursor && !(frozen && stopAtLast) && (
         <span
           className="ml-[0.05em] transition-opacity duration-75"
           style={{ opacity: showCursor ? 1 : 0 }}

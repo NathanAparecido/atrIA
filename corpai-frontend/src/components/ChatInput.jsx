@@ -20,6 +20,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { GlowCard } from '@/components/magicui/GlowCard';
 import { cn } from '@/lib/utils';
 
 // ── Paleta iridescente (mesma do Login) ─────────────────────────────────────
@@ -437,13 +438,11 @@ export default function ChatInput({
           </div>
         )}
 
-        {/* container principal */}
+        {/* container principal — neon glow do login */}
+        <GlowCard customSize className="w-full">
         <div
-          className="rounded-2xl shadow-xl flex flex-col transition-all duration-200"
+          className="flex flex-col transition-all duration-200"
           style={{
-            backgroundImage: IRIS.containerBg,
-            backgroundColor: 'var(--color-surface)',
-            border: `1px solid ${focused ? IRIS.containerBorderFocus : IRIS.containerBorder}`,
             minHeight: '150px',
           }}
         >
@@ -540,8 +539,7 @@ export default function ChatInput({
             <div
               className="overflow-x-auto p-3 rounded-b-2xl"
               style={{
-                backgroundImage: IRIS.stripBg,
-                backgroundColor: 'var(--color-bg)',
+                backgroundColor: 'transparent',
                 borderTop: `1px solid ${IRIS.cardBorder}`,
               }}
             >
@@ -560,6 +558,7 @@ export default function ChatInput({
             </div>
           )}
         </div>
+        </GlowCard>
 
         <p className="text-center text-xs mt-2" style={{ color: 'var(--color-text-muted)', opacity: 0.4 }}>
           liminai pode cometer erros. sempre verifique informações críticas.
