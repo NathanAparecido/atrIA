@@ -2,7 +2,11 @@ import { useEffect, useRef } from 'react';
 
 /**
  * GlowCard — iridescent metallic border glow that follows the pointer.
- * Blue-dominant palette that sweeps through violet → cyan on mouse move.
+ * Diagonal hue mapping mirrors iris-text/button gradient positions:
+ *   bottom-left  → magenta (#c020a8 ≈ hue 312°)
+ *   center       → purple  (#5828c8 ≈ hue 259°)
+ *   top-right    → teal    (#00b8a8 ≈ hue 174°)
+ * No yellow / no orange — sweep is constrained to button hue range.
  */
 
 const GLOW_STYLES = `
@@ -95,12 +99,18 @@ export function GlowCard({
   }, []);
 
   const inlineStyles = {
-    // Iridescent: teal (180°) → blue → violet → magenta/pink (330°) — no yellow, no orange
-    '--base': 180,
-    '--spread': 150,
-    '--hue': 'calc(var(--base) + (var(--xp, 0) * var(--spread, 0)))',
-    '--saturation': 85,
-    '--lightness': 58,
+    // Diagonal mapping (matches iris-text/button color positions):
+    //   diag = ((xp - yp) + 1) / 2
+    //   hue  = base + diag * spread
+    //   bottom-left  (xp=0, yp=1) → diag=0   → 312 (magenta)
+    //   top-right    (xp=1, yp=0) → diag=1   → 174 (teal)
+    //   center / off-diagonal     → diag=0.5 → 243 (purple)
+    '--base': 312,
+    '--spread': -138,
+    '--diag': 'calc((var(--xp, 0.5) - var(--yp, 0.5) + 1) / 2)',
+    '--hue': 'calc(var(--base) + var(--diag) * var(--spread))',
+    '--saturation': 80,
+    '--lightness': 55,
 
     '--radius': 16,
     '--border': 1.5,

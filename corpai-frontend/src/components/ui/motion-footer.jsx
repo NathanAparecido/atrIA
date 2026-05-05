@@ -7,6 +7,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
 import { Particles } from "../magicui/Particles";
+import { GlowCard } from "../magicui/GlowCard";
 import { Typewriter } from "./typewriter";
 
 // Register ScrollTrigger safely for React
@@ -365,12 +366,16 @@ export function CinematicFooter() {
             liminai
           </div>
 
-          {/* Diagonal Sleek Marquee */}
-          <div className="absolute top-12 left-0 w-full overflow-hidden border-y py-4 z-10 -rotate-2 scale-110 shadow-2xl backdrop-blur-md" style={{ borderColor: 'var(--border)', backgroundColor: 'color-mix(in oklch, var(--background) 60%, transparent)' }}>
-            <div className="flex w-max animate-footer-scroll-marquee text-xs md:text-sm font-bold tracking-[0.3em] uppercase" style={{ color: 'var(--muted-foreground)' }}>
-              <MarqueeItem />
-              <MarqueeItem />
-            </div>
+          {/* Diagonal Sleek Marquee — borda neon (mesmo GlowCard do login/chat) */}
+          <div className="absolute top-12 left-0 w-full z-10 -rotate-2 scale-110">
+            <GlowCard customSize className="overflow-hidden">
+              <div className="overflow-hidden py-4 backdrop-blur-md">
+                <div className="flex w-max animate-footer-scroll-marquee text-xs md:text-sm font-bold tracking-[0.3em] uppercase" style={{ color: 'var(--muted-foreground)' }}>
+                  <MarqueeItem />
+                  <MarqueeItem />
+                </div>
+              </div>
+            </GlowCard>
           </div>
 
           {/* Main Center Content */}
