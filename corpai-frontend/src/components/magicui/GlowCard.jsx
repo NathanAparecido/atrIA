@@ -144,7 +144,10 @@ export function GlowCard({
     backgroundSize: 'calc(100% + (2 * var(--border-size))) calc(100% + (2 * var(--border-size)))',
     backgroundPosition: '50% 50%',
     backgroundAttachment: 'fixed',
-    border: 'var(--border-size) solid var(--backup-border)',
+    // mantém o tamanho da border-box (necessário p/ a máscara do ::before) mas sem cor visível
+    border: transparent
+      ? 'var(--border-size) solid transparent'
+      : 'var(--border-size) solid var(--backup-border)',
     position: 'relative',
     touchAction: 'none',
     ...(width  !== undefined ? { width:  typeof width  === 'number' ? `${width}px`  : width  } : {}),
@@ -158,7 +161,7 @@ export function GlowCard({
         ref={cardRef}
         data-glow
         style={inlineStyles}
-        className={`rounded-2xl relative shadow-[0_1rem_3rem_-1rem_hsl(210_60%_8%)] backdrop-blur-sm ${className}`}
+        className={`rounded-2xl relative ${transparent ? '' : 'shadow-[0_1rem_3rem_-1rem_hsl(210_60%_8%)] backdrop-blur-sm'} ${className}`}
       >
         {/* Diffuse outer bloom layer */}
         <div data-glow />

@@ -67,9 +67,10 @@ export function Typewriter({
     return () => clearInterval(id)
   }, [cursor])
 
-  // Cursor — herda a cor do contexto onde está renderizado (dentro do highlight,
-  // pega o gradiente iridescente; fora, herda a cor do texto base).
-  const cursorEl = cursor && !(frozen && stopAtLast) && (
+  // Cursor — pisca permanentemente (também depois do freeze, pra preservar o
+  // efeito de digitação). Renderizado dentro do span do highlight quando está
+  // na zona da "ai", herdando o gradiente iridescente.
+  const cursorEl = cursor && (
     <span
       className="ml-[0.05em] transition-opacity duration-75"
       style={{ opacity: showCursor ? 1 : 0 }}
