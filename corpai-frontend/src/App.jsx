@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Chat from './pages/Chat';
 import Documents from './pages/Documents';
 import Admin from './pages/Admin';
+import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function AppRoutes() {
@@ -59,6 +60,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requiredRoles={['admin', 'lider_setor']}>
             <Admin />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/perfil"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />

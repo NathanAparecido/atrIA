@@ -2,9 +2,12 @@
  * liminai — Header
  */
 
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import FallbackAvatar from './magicui/FallbackAvatar';
+import { getProfilePic } from '../lib/profilePic';
 
 const IRIS_TEXT = {
   background: [
@@ -32,6 +35,15 @@ export default function Header() {
   const { user, logout, canUpload, isAdmin, isLiderSetor } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
+  const [pfp, setPfp] = useState(null);
+
+  useEffect(() => {
+    if (!user?.username) return;
+    const refresh = () => setPfp(getProfilePic(user.username));
+    refresh();
+    window.addEventListener('liminai:pfp-change', refresh);
+    return () => window.removeEventListener('liminai:pfp-change', refresh);
+  }, [user?.username]);
 
   async function handleLogout() {
     await logout();
@@ -107,14 +119,31 @@ export default function Header() {
       <div className="flex items-center gap-2">
         <ThemeToggle />
 
-        <div className="hidden sm:flex flex-col items-end">
-          <span className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>
-            {firstName}
-          </span>
-          <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-            {setorDisplay ? `${setorDisplay} · ` : ''}{user?.role}
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={() => navigate('/perfil')}
+          className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-lg hover:bg-white/5 transition-colors"
+          title="editar perfil"
+        >
+          <div className="hidden sm:flex flex-col items-end">
+            <span className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>
+              {firstName}
+            </span>
+            <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+              {setorDisplay ? `${setorDisplay} · ` : ''}{user?.role}
+            </span>
+          </div>
+
+          <div
+            className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center"
+            style={{ border: '1.5px solid rgba(0,184,168,0.35)' }}
+          >
+            {pfp
+              ? <img src={pfp} alt={firstName} className="w-full h-full object-cover" />
+              : <FallbackAvatar name={user?.nome_completo || user?.username || 'liminai'} size={32} animated />
+            }
+          </div>
+        </button>
 
         <button
           onClick={handleLogout}
