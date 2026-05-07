@@ -167,7 +167,7 @@ export default function Documents() {
                   {setoresDisponiveis.length === 0 ? (
                     <option value={user?.setor || ''}>{setorLabel[user?.setor] || user?.setor || 'global'}</option>
                   ) : setoresDisponiveis.map(s => (
-                    <option key={s} value={s}>{setorLabel[s] || s}</option>
+                    <option key={s.nome} value={s.nome}>{setorLabel[s.nome] || s.nome}</option>
                   ))}
                 </select>
               </div>
