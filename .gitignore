@@ -41,3 +41,4 @@ nginx/data/
 zabbix/data/
 zabbix/db_data/
 zabbix/web_data/
+.claude/settings.local.json
