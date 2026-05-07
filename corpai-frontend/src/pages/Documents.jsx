@@ -267,8 +267,8 @@ export default function Documents() {
                   title="Gerência de acessos"
                   description={`Veja quem do setor ${setorAtivoLabel} pode consultar os documentos indexados.`}
                   action="abrir"
-                  gradientFrom="#e040a8"
-                  gradientTo="#c020a8"
+                  gradientFrom="#c020a8"
+                  gradientTo="#5828c8"
                   onClick={() => setView('acessos')}
                 />
                 <SkewCard
@@ -284,7 +284,7 @@ export default function Documents() {
                   description="Como indexar PDFs, escrever boas descrições e usar tags pra orientar o modelo."
                   action="ler"
                   gradientFrom="#5828c8"
-                  gradientTo="#3a1488"
+                  gradientTo="#c020a8"
                   onClick={() => setView('tutorial')}
                 />
               </div>

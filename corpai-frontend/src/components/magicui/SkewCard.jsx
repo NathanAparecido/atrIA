@@ -38,15 +38,15 @@ export default function SkewCard({
         style={{ background: gradient }}
       />
 
-      {/* Conteúdo */}
+      {/* Conteúdo — fundo/borda usam tokens do tema (legível em dark e light) */}
       <div
         className="relative z-10 left-0 px-8 py-5 rounded-lg shadow-lg transition-all duration-500
                    group-hover:left-[-20px] group-hover:px-8 group-hover:py-12"
         style={{
-          background: 'rgba(8, 4, 32, 0.55)',
+          background: 'color-mix(in oklab, var(--color-surface) 92%, transparent)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          border: '1px solid var(--color-border)',
           color: 'var(--color-text)',
           marginTop: '40px',
         }}
