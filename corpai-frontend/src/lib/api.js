@@ -183,13 +183,14 @@ export async function deletarConversa(conversationId) {
 }
 
 // ─── Documentos ───────────────────────────────────────────
-export async function uploadDocumento(file, metadata = {}, onProgress) {
+export async function uploadDocumento(file, metadata = {}, onProgress, setor) {
   const token = getToken();
   const formData = new FormData();
   formData.append('file', file);
   if (metadata.titulo)   formData.append('titulo',   metadata.titulo);
   if (metadata.descricao) formData.append('descricao', metadata.descricao);
   if (metadata.tags)     formData.append('tags',     metadata.tags);
+  if (setor)             formData.append('setor',    setor);
 
   const xhr = new XMLHttpRequest();
   
@@ -220,8 +221,9 @@ export async function uploadDocumento(file, metadata = {}, onProgress) {
   });
 }
 
-export async function listarDocumentos() {
-  const resp = await request('/documents/');
+export async function listarDocumentos(setor) {
+  const url = setor ? `/documents/?setor=${encodeURIComponent(setor)}` : '/documents/';
+  const resp = await request(url);
   if (!resp.ok) throw new Error('Erro ao listar documentos');
   return resp.json();
 }
