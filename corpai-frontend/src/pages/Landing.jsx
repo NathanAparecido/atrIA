@@ -11,6 +11,7 @@ import { CinematicFooter } from '@/components/ui/motion-footer';
 import { GooeyText } from '@/components/ui/gooey-text';
 import { Particles } from '../components/magicui/Particles';
 import ThemeToggle from '../components/ThemeToggle';
+import Navbar from '../components/Navbar';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -61,6 +62,9 @@ export default function Landing() {
 
   return (
     <div className="relative w-full min-h-screen font-sans selection:bg-white/20 overflow-x-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
+
+      {/* Navbar fixa no topo */}
+      <Navbar />
 
       {/* ── Seção 1: CTA — visível ao abrir o site ── */}
       <CinematicFooter />

@@ -367,8 +367,9 @@ export function CinematicFooter() {
           </div>
 
           {/* Diagonal Sleek Marquee — apenas borda neon (sem fill interno).
-              overflow-hidden vai no INTERIOR pra não clipar o ::before do GlowCard. */}
-          <div className="absolute top-12 left-0 w-full z-10 -rotate-2 scale-110">
+              overflow-hidden vai no INTERIOR pra não clipar o ::before do GlowCard.
+              top-28 dá espaço pra navbar fixa que vive na Landing. */}
+          <div className="absolute top-28 left-0 w-full z-10 -rotate-2 scale-110">
             <GlowCard customSize transparent>
               <div className="overflow-hidden rounded-2xl py-4">
                 <div className="flex w-max animate-footer-scroll-marquee text-xs md:text-sm font-bold tracking-[0.3em] uppercase" style={{ color: 'var(--muted-foreground)' }}>
