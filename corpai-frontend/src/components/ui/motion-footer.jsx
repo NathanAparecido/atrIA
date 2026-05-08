@@ -19,7 +19,7 @@ if (typeof window !== "undefined") {
 // 1. THEME-ADAPTIVE INLINE STYLES
 // -------------------------------------------------------------------------
 const STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@1,500;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@1,500;1,700&family=Space+Grotesk:wght@400;500;700&display=swap');
 
 .cinematic-footer-wrapper {
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -384,7 +384,7 @@ export function CinematicFooter() {
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-8 mt-20 w-full max-w-6xl mx-auto">
             <h2
               ref={headingRef}
-              className="text-4xl md:text-7xl lg:text-8xl font-black footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
+              className="text-4xl md:text-7xl lg:text-8xl font-['Space_Grotesk'] font-medium footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
             >
               <Typewriter
                 words={["venha inovar conosco", "liminai"]}
@@ -394,8 +394,8 @@ export function CinematicFooter() {
                 highlightFrom={5}
                 highlightColor="#3a5878"
                 cursorChar="|"
-                lastWordClassName="footer-liminai-word font-['Orbitron'] tracking-tighter"
-                highlightClassName="footer-iris-text font-['Orbitron']"
+                lastWordClassName="footer-liminai-word font-['Orbitron'] font-black tracking-tighter"
+                highlightClassName="footer-iris-text font-['Orbitron'] font-black"
               />
             </h2>
 
