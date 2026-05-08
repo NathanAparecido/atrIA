@@ -52,12 +52,29 @@
 }
 
 body {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
   text-transform: lowercase;
   background-color: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Botões e labels — Space Grotesk Medium */
+button,
+[role="button"],
+label {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 500;
+}
+
+/* Campos de digitação — Geist Mono Medium */
+input,
+textarea,
+select {
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  font-weight: 500;
 }
 
 /* ─── Scrollbar Customizada ─────────────────────────────── */

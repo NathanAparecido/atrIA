@@ -154,12 +154,6 @@ const STYLES = `
   background-clip: text;
 }
 
-/* Reseta o gradiente metálico do h2 para o "limin" sólido como no login */
-.footer-liminai-word {
-  background: none;
-  -webkit-text-fill-color: var(--color-text, var(--foreground));
-  filter: none;
-}
 `;
 
 // -------------------------------------------------------------------------
@@ -384,7 +378,7 @@ export function CinematicFooter() {
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-8 mt-20 w-full max-w-6xl mx-auto">
             <h2
               ref={headingRef}
-              className="text-4xl md:text-7xl lg:text-8xl font-['Space_Grotesk'] font-medium footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
+              className="text-4xl md:text-7xl lg:text-8xl font-['Space_Grotesk'] font-bold footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
             >
               <Typewriter
                 words={["venha inovar conosco", "liminai"]}
@@ -394,7 +388,7 @@ export function CinematicFooter() {
                 highlightFrom={5}
                 highlightColor="#3a5878"
                 cursorChar="|"
-                lastWordClassName="footer-liminai-word font-['Orbitron'] font-black tracking-tighter"
+                lastWordClassName="font-['Orbitron'] font-black tracking-tighter"
                 highlightClassName="footer-iris-text font-['Orbitron'] font-black"
               />
             </h2>
