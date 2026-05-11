@@ -19,10 +19,8 @@ if (typeof window !== "undefined") {
 // 1. THEME-ADAPTIVE INLINE STYLES
 // -------------------------------------------------------------------------
 const STYLES = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@1,500;1,700&family=Space+Grotesk:wght@400;500;700&display=swap');
-
 .cinematic-footer-wrapper {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Manrope', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 
   /* Dynamic Variables using standard shadcn/tailwind v4 tokens */
@@ -131,13 +129,6 @@ const STYLES = `
   -webkit-text-fill-color: transparent;
   background-clip: text;
   filter: drop-shadow(0px 0px 20px color-mix(in oklch, var(--foreground) 15%, transparent));
-}
-
-.footer-elegant-serif {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 500;
-  letter-spacing: -0.02em;
 }
 
 /* "liminai" da máquina de escrever — mesma fonte/cores do login, sem neon */
@@ -378,7 +369,7 @@ export function CinematicFooter() {
           <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-8 mt-20 w-full max-w-6xl mx-auto">
             <h2
               ref={headingRef}
-              className="text-4xl md:text-7xl lg:text-8xl font-['Space_Grotesk'] font-bold footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
+              className="text-4xl md:text-7xl lg:text-8xl font-sans font-extrabold footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
             >
               <Typewriter
                 words={["venha inovar conosco", "liminai"]}
