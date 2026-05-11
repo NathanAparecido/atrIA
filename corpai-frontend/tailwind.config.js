@@ -39,6 +39,8 @@ export default {
         sans: ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
         display: ['Orbitron', 'sans-serif'],
+        plex: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
+        satoshi: ['Satoshi', 'Manrope', 'system-ui', 'sans-serif'],
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

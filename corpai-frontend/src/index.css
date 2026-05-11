@@ -68,11 +68,11 @@ label {
   font-weight: 600;
 }
 
-/* Campos de digitação — JetBrains Mono (vibe terminal/técnica) */
+/* Campos de digitação e selects — IBM Plex Sans (técnica, profissional, legível) */
 input,
 textarea,
 select {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
   font-weight: 400;
 }
 
