@@ -318,15 +318,46 @@ const AREAS = [
   { id:"code",   label:"Código",             selector:".prev-code",  fallback:"monospace",   defaultFont:"JetBrains Mono", defaultWeight:400, defaultSize:13 },
 ];
 
+const SHARED_GROUP = "📁 Fontes Compartilhadas (uploads)";
+
 const state = {};
 const loadedFonts = new Set();
+const sharedFonts = new Set();
 let optionsHTML = '';
 
-/* ── Build options HTML ── */
-for (const [cat, fonts] of Object.entries(FONTS)) {
-  optionsHTML += `<optgroup label="${cat}">`;
-  for (const f of fonts) optionsHTML += `<option value="${f}">${f}</option>`;
-  optionsHTML += '</optgroup>';
+function prettyName(filename) {
+  return filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function loadSharedFonts() {
+  try {
+    const res = await fetch('/api/fonts');
+    if (!res.ok) return;
+    const files = await res.json();
+    if (!Array.isArray(files) || files.length === 0) return;
+    FONTS[SHARED_GROUP] = [];
+    for (const file of files) {
+      const name = prettyName(file);
+      const css = `@font-face{font-family:'${name}';src:url('/fonts/${encodeURIComponent(file)}');font-display:swap;}`;
+      const style = document.createElement('style');
+      style.textContent = css;
+      document.head.appendChild(style);
+      FONTS[SHARED_GROUP].push(name);
+      loadedFonts.add(name);
+      sharedFonts.add(name);
+    }
+  } catch (e) {
+    console.warn('Falha ao buscar fontes compartilhadas:', e);
+  }
+}
+
+function buildOptionsHTML() {
+  optionsHTML = '';
+  for (const [cat, fonts] of Object.entries(FONTS)) {
+    optionsHTML += `<optgroup label="${cat}">`;
+    for (const f of fonts) optionsHTML += `<option value="${f}">${f}</option>`;
+    optionsHTML += '</optgroup>';
+  }
 }
 
 /* ── Render controls into containers ── */
@@ -360,7 +391,10 @@ function renderControls(containerId, areaIds) {
   container.innerHTML = html;
 }
 
-function init() {
+async function init() {
+  await loadSharedFonts();
+  buildOptionsHTML();
+
   // Initialize state
   for (const area of AREAS) {
     state[area.id] = { font: area.defaultFont, weight: area.defaultWeight, size: area.defaultSize };
@@ -426,6 +460,8 @@ function applyArea(areaId) {
 function loadFontAsync(name) {
   return new Promise(resolve => {
     if (loadedFonts.has(name)) { resolve(); return; }
+    // Fontes compartilhadas já estão injetadas via @font-face; não precisam de <link>
+    if (sharedFonts.has(name)) { loadedFonts.add(name); resolve(); return; }
     const bar = document.getElementById('loadingBar');
     bar.textContent = `carregando ${name}...`;
     bar.style.display = 'block';
@@ -472,41 +508,58 @@ function sendEmail() {
 /* ── Light/Dark toggle ── */
 document.getElementById('modeToggle').addEventListener('click', () => document.body.classList.toggle('light'));
 
-/* ── Custom font upload ── */
+/* ── Upload de fonte → servidor (persistente, compartilhado) ── */
 document.getElementById('fontFileInput').addEventListener('change', async (e) => {
   const files = e.target.files;
   if (!files.length) return;
   const bar = document.getElementById('loadingBar');
-  for (const file of files) {
-    const displayName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c=>c.toUpperCase()) + ' (custom)';
-    bar.textContent = `carregando ${file.name}...`;
-    bar.style.display = 'block';
-    try {
-      const buffer = await file.arrayBuffer();
-      const fontFace = new FontFace(displayName, buffer);
-      await fontFace.load();
-      document.fonts.add(fontFace);
-      loadedFonts.add(displayName);
-      
-      // Inject into selects in all cards
+
+  const formData = new FormData();
+  for (const file of files) formData.append('fonts', file);
+
+  bar.textContent = `enviando ${files.length} fonte(s) para o servidor...`;
+  bar.style.display = 'block';
+
+  try {
+    const res = await fetch('/api/fonts/upload', { method: 'POST', body: formData });
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({ error: 'Falha desconhecida' }));
+      throw new Error(errBody.error || `HTTP ${res.status}`);
+    }
+    const { uploaded } = await res.json();
+    if (!uploaded || uploaded.length === 0) throw new Error('Nenhum arquivo aceito.');
+
+    for (const filename of uploaded) {
+      const name = prettyName(filename);
+      if (loadedFonts.has(name)) continue;
+      const css = `@font-face{font-family:'${name}';src:url('/fonts/${encodeURIComponent(filename)}');font-display:swap;}`;
+      const style = document.createElement('style');
+      style.textContent = css;
+      document.head.appendChild(style);
+      loadedFonts.add(name);
+      sharedFonts.add(name);
+      if (!FONTS[SHARED_GROUP]) FONTS[SHARED_GROUP] = [];
+      if (!FONTS[SHARED_GROUP].includes(name)) FONTS[SHARED_GROUP].push(name);
+
       document.querySelectorAll('.area-sel[data-prop="font"]').forEach(sel => {
-        let grp = sel.querySelector('optgroup[label="📁 Custom Upload"]');
+        let grp = sel.querySelector(`optgroup[label="${SHARED_GROUP}"]`);
         if (!grp) {
           grp = document.createElement('optgroup');
-          grp.label = '📁 Custom Upload';
+          grp.label = SHARED_GROUP;
           sel.insertBefore(grp, sel.firstChild);
         }
         const opt = document.createElement('option');
-        opt.value = displayName; opt.textContent = displayName;
+        opt.value = name; opt.textContent = name;
         grp.appendChild(opt);
       });
-      alert(`Fonte '${displayName}' carregada! Agora você pode selecioná-la nos menus "Fonte".`);
-    } catch(err) {
-      alert(`Erro: ${err.message}`);
     }
+    alert(`${uploaded.length} fonte(s) salva(s) no servidor! Agora todos os visitantes podem usá-las.`);
+  } catch (err) {
+    alert(`Erro no upload: ${err.message}`);
+  } finally {
+    bar.style.display = 'none';
+    e.target.value = '';
   }
-  bar.style.display = 'none';
-  e.target.value = '';
 });
 
 // Boot it up

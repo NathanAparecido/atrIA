@@ -1,12 +1,14 @@
-version: '3.8'
-
+# Stack TOTALMENTE INDEPENDENTE do corpai/liminai:
+# - Sem postgres, sem redis, sem ollama, sem corpai-net
+# - Docker Compose cria uma rede default isolada apenas para este projeto
+# - Fontes uploadadas persistem em ./font-preview-data/fonts no host
 services:
   font-preview:
-    image: nginx:alpine
+    build: ./font-preview-backend
     container_name: font_preview_site
     ports:
-      - "8080:80"  # O site ficará acessível na porta 8080
+      - "8080:80"
     volumes:
-      # Mapeia o arquivo HTML diretamente para substituir o index principal do Nginx
-      - ./font-preview.html:/usr/share/nginx/html/index.html:ro
+      - ./font-preview.html:/app/public/index.html:ro
+      - ./font-preview-data/fonts:/data/fonts
     restart: unless-stopped

@@ -42,3 +42,6 @@ zabbix/data/
 zabbix/db_data/
 zabbix/web_data/
 .claude/settings.local.json
+
+# Font preview — fontes uploadadas pelos visitantes (não vão ao repo)
+corpai-frontend/font-preview-data/
