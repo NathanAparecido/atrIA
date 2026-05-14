@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  font-preview:
+    image: nginx:alpine
+    container_name: font_preview_site
+    ports:
+      - "8080:80"  # O site ficará acessível na porta 8080
+    volumes:
+      # Mapeia o arquivo HTML diretamente para substituir o index principal do Nginx
+      - ./font-preview.html:/usr/share/nginx/html/index.html:ro
+    restart: unless-stopped

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>liminai — Font Preview & Concurso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens ── */
+:root{
+  --bg:#020617;--sf:#0f172a;--sh:#1e293b;--bd:#1e293b;
+  --tx:#f1f5f9;--tm:#94a3b8;
+  --ac:rgba(0,184,168,.9);--ab:rgba(0,184,168,.12);
+  --user-bg:rgba(88,40,200,.08);--user-bd:rgba(88,40,200,.2);--user-label:rgba(168,130,255,.8);
+  --grad:radial-gradient(ellipse 190% 65% at 8% 92%,#c020a8 0%,transparent 48%),radial-gradient(ellipse 110% 190% at 92% 8%,#00b8a8 0%,transparent 48%),radial-gradient(ellipse 130% 110% at 38% 42%,#5828c8 0%,transparent 52%),#180848;
+  --ctrl-bg:var(--sf);
+  --switch-track:#334155;
+  --switch-knob:#f1f5f9;
+}
+body.light{
+  --bg:#f1f5f9;--sf:#ffffff;--sh:#e2e8f0;--bd:#cbd5e1;
+  --tx:#0f172a;--tm:#64748b;
+  --ac:rgba(0,140,130,.95);--ab:rgba(0,140,130,.08);
+  --user-bg:rgba(88,40,200,.06);--user-bd:rgba(88,40,200,.15);--user-label:rgba(100,60,180,.75);
+  --ctrl-bg:#f8fafc;
+  --switch-track:#94a3b8;
+  --switch-knob:#fff;
+}
+
+/* ── Reset ── */
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;transition:background .4s,color .4s}
+
+/* ── Header ── */
+.hdr{position:sticky;top:0;z-index:50;backdrop-filter:blur(18px);background:rgba(2,6,23,.88);border-bottom:1px solid var(--bd);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;transition:background .4s,border-color .4s}
+body.light .hdr{background:rgba(255,255,255,.92)}
+.hdr h1{font-family:Orbitron;font-weight:900;font-size:17px;letter-spacing:-.03em;white-space:nowrap}
+.hdr h1 span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-right{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+
+/* ── Mode toggle ── */
+.mode-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:var(--tm);transition:color .3s}
+.mode-toggle .track{width:40px;height:22px;border-radius:12px;background:var(--switch-track);position:relative;transition:background .3s;flex-shrink:0}
+.mode-toggle .knob{width:16px;height:16px;border-radius:50%;background:var(--switch-knob);position:absolute;top:3px;left:3px;transition:transform .3s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+body.light .mode-toggle .knob{transform:translateX(18px)}
+.mode-toggle svg{width:15px;height:15px}
+
+/* ── Upload ── */
+.upload-btn{display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1px dashed rgba(0,184,168,.35);background:rgba(0,184,168,.04);color:var(--ac);font-size:11px;font-weight:600;cursor:pointer;transition:all .25s;font-family:Inter,sans-serif;white-space:nowrap}
+.upload-btn:hover{background:rgba(0,184,168,.1);border-color:rgba(0,184,168,.5)}
+.upload-btn svg{width:14px;height:14px;flex-shrink:0}
+
+/* ── Controls inside cards ── */
+.area-card{border-radius:10px;border:1px solid rgba(0,184,168,.15);background:rgba(0,184,168,.03);padding:12px;margin-bottom:12px;transition:border-color .3s,background .4s}
+.area-card:hover{border-color:rgba(0,184,168,.3);background:rgba(0,184,168,.06)}
+.area-card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ac);margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.area-card-title .dot{width:6px;height:6px;border-radius:50%;background:var(--ac);flex-shrink:0}
+.area-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.area-row:last-child{margin-bottom:0}
+.area-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--tm);width:45px;flex-shrink:0}
+.area-sel{flex:1;padding:6px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:11px;font-family:Inter,sans-serif;outline:none;transition:border-color .3s,background .4s,color .4s;min-width:0;cursor:pointer}
+.area-sel:focus{border-color:rgba(0,184,168,.45)}
+.area-range{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:var(--sh);outline:none;cursor:pointer;transition:background .4s}
+.area-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ac);cursor:pointer;border:2px solid var(--bg);transition:border-color .4s}
+.area-range::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--ac);cursor:pointer;border:2px solid var(--bg)}
+.area-val{font-size:10px;font-weight:700;color:var(--tm);width:32px;text-align:right;flex-shrink:0;font-variant-numeric:tabular-nums}
+
+/* ── Layout & Cards ── */
+.wrap{max-width:1100px;margin:0 auto;padding:24px 24px 80px}
+.stitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:var(--ac);margin:32px 0 16px;padding-bottom:8px;border-bottom:1px solid rgba(0,184,168,.15)}
+.stitle:first-child{margin-top:0}
+.card{border-radius:16px;border:1px solid var(--bd);background:var(--sf);overflow:hidden;margin-bottom:20px;transition:border-color .3s,background .4s;display:flex;flex-direction:column}
+.card:hover{border-color:rgba(0,184,168,.25)}
+.card-h{padding:12px 16px;border-bottom:1px solid var(--bd);font-size:11px;font-weight:600;color:var(--tm);background:rgba(0,184,168,.04);transition:background .4s,border-color .4s}
+
+.card-body-flex{display:flex;flex-direction:column}
+.preview-pane{padding:24px;flex:1;overflow-x:auto}
+.controls-pane{padding:18px;background:var(--ctrl-bg);border-top:1px solid var(--bd);transition:background .4s,border-color .4s}
+@media(min-width: 768px){
+  .card-body-flex{flex-direction:row}
+  .controls-pane{width:320px;border-top:none;border-left:1px solid var(--bd);flex-shrink:0}
+}
+.controls-header{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.controls-header svg{width:14px;height:14px;color:rgba(0,184,168,.8)}
+
+/* ── UI Elements Preview Styles ── */
+.login-box{max-width:340px;margin:0 auto;border-radius:14px;border:1px solid var(--bd);overflow:hidden;transition:border-color .4s}
+.login-top{padding:24px;text-align:center}
+.login-logo{font-family:Orbitron;font-weight:900;font-size:32px;letter-spacing:-.04em;margin-bottom:8px}
+.login-logo span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-form{padding:0 24px 24px}
+
+.bubble{border-radius:14px;padding:14px 16px;border:1px solid var(--bd);margin-bottom:12px;line-height:1.7;transition:background .4s,border-color .4s}
+.bubble.user{background:var(--user-bg);border-color:var(--user-bd);border-bottom-right-radius:4px;margin-left:40px}
+.bubble.ai{background:var(--bg);border-bottom-left-radius:4px;margin-right:40px}
+.bubble-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.bubble-label.u-label{color:var(--user-label)}
+.bubble-label.a-label{color:var(--ac)}
+.avatar{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.avatar.ai-av{background:var(--grad);border:1px solid rgba(0,184,168,.25)}
+.avatar.ai-av span{font-family:Orbitron;font-weight:900;color:#fff;font-size:8px}
+.avatar.u-av{background:rgba(88,40,200,.15);border:1px solid rgba(88,40,200,.3);color:var(--user-label);font-weight:700;font-size:9px}
+
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--tm);margin-bottom:5px}
+.fi{width:100%;padding:9px 13px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);outline:none;transition:border-color .3s,background .4s,color .4s}
+.fi:focus{border-color:rgba(0,184,168,.45)}
+
+.btn-i{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:8px;border:1px solid rgba(0,184,168,.28);color:#fff;cursor:pointer;background:var(--grad);transition:box-shadow .3s}
+.btn-i:hover{box-shadow:0 0 16px rgba(0,184,168,.4),0 0 6px rgba(192,32,160,.2)}
+.btn-s{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tm);cursor:pointer;transition:background .4s,border-color .4s,color .4s}
+
+.code{border-radius:8px;padding:14px;background:var(--bg);border:1px solid var(--bd);line-height:1.6;color:#e2e8f0;overflow-x:auto;transition:background .4s,border-color .4s}
+body.light .code{color:#334155}
+.ci{padding:2px 6px;border-radius:4px;background:var(--sh);transition:background .4s}
+
+.nav-s{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.nav-s span{padding:6px 12px;border-radius:8px;color:var(--tm);cursor:pointer;transition:background .3s,color .3s}
+.nav-s span.ac{background:var(--ab);color:var(--ac)}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;background:rgba(0,184,168,.1);color:rgba(0,184,168,.8);margin:2px}
+
+.loading{display:none;color:var(--ac);font-size:12px;text-align:center;padding:6px;background:var(--sf);border-bottom:1px solid var(--bd)}
+
+/* ── Email floating button ── */
+.submit-btn{position:fixed;bottom:24px;right:24px;background:var(--grad);color:#fff;border:none;padding:12px 24px;border-radius:999px;font-family:Inter,sans-serif;font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(0,184,168,.3);display:flex;align-items:center;gap:8px;z-index:100;transition:transform .2s,box-shadow .2s;border:1px solid rgba(0,184,168,.4)}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,184,168,.5)}
+.submit-btn svg{width:16px;height:16px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <h1>limin<span>ai</span> — font preview</h1>
+  <div class="hdr-right">
+    <div class="mode-toggle" id="modeToggle" title="Alternar modo">
+      <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <div class="track"><div class="knob"></div></div>
+      <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </div>
+    <label class="upload-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      upload fonte (.ttf)
+      <input type="file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2" multiple hidden />
+    </label>
+  </div>
+</div>
+<div id="loadingBar" class="loading">carregando fonte...</div>
+
+<!-- ── PREVIEW & CONTROLS ── -->
+<div class="wrap">
+
+<!-- LOGIN -->
+<div class="stitle">1 · tela de login</div>
+<div class="card">
+  <div class="card-h"><span>login preview</span></div>
+  <div class="card-body-flex">
+    <div class="preview-pane">
+      <div class="login-box">
+        <div class="login-top" style="background:var(--bg)">
+          <div class="login-logo">limin<span>ai</span></div>
+        </div>
+        <div class="login-form" style="background:var(--sf)">
+          <div class="fg"><label class="fl prev-label">usuário</label><input class="fi prev-input" value="joao.silva" /></div>
+          <div class="fg"><label class="fl prev-label">senha</label><input class="fi prev-input" type="password" value="12345678" /></div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button class="btn-i prev-btn" style="width:100%">entrar</button>
+            <button class="btn-s prev-btn" style="width:100%">cadastre-se aqui</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="controls-pane">
+      <div class="controls-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Fontes desta Área</div>
+      <div id="ctrl-login"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div class="stitle">2 · chat — mensagem e resposta</div>
+<div class="card">
+  <div class="card-h"><span>chat preview</span></div>
+  <div class="card-body-flex">
+    <div class="preview-pane">
+      <div class="bubble user">
+        <div class="bubble-label u-label"><div class="avatar u-av">J</div> você</div>
+        <p class="prev-user">como funciona o processo de escalação no turno noturno? preciso saber o SLA de resposta para incidentes P1 e quais canais são usados para notificação do líder.</p>
+      </div>
+      <div class="bubble ai">
+        <div class="bubble-label a-label"><div class="avatar ai-av"><span>L</span></div> liminai</div>
+        <p class="prev-ai">O processo de escalação no turno noturno segue o fluxo abaixo:</p><br>
+        <p class="prev-ai"><strong>1. Detecção do incidente:</strong> O alerta aciona o webhook que envia notificação via Telegram e e-mail para o líder de plantão.</p><br>
+        <p class="prev-ai"><strong>2. SLA de resposta:</strong></p>
+        <ul class="prev-ai" style="margin-left:20px;margin-top:4px">
+          <li><strong>P1 (crítico):</strong> 15 minutos para primeira resposta</li>
+          <li><strong>P3 (médio):</strong> 2 horas</li>
+        </ul><br>
+        <p class="prev-ai">Caso o SLA não seja cumprido, escale automaticamente via <code class="ci prev-code">/api/escalation/override</code>.</p>
+      </div>
+    </div>
+    <div class="controls-pane">
+      <div class="controls-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Fontes desta Área</div>
+      <div id="ctrl-chat"></div>
+    </div>
+  </div>
+</div>
+
+<!-- UI ELEMENTS -->
+<div class="stitle">3 · elementos de UI</div>
+<div class="card">
+  <div class="card-h"><span>ui preview</span></div>
+  <div class="card-body-flex">
+    <div class="preview-pane">
+      <div class="nav-s"><span class="ac prev-label">chat</span><span class="prev-label">documentos</span><span class="prev-label">admin</span></div>
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn-i prev-btn">indexar documento</button>
+        <button class="btn-s prev-btn">cancelar</button>
+      </div>
+      <div style="margin-bottom:16px">
+        <h2 class="prev-body" style="font-weight:700;margin-bottom:4px">Documentos</h2>
+        <p class="prev-body" style="color:var(--tm)">Base de conhecimento do setor <span style="color:var(--ac);font-weight:500">NOC</span></p>
+      </div>
+      <div><span class="tag prev-label">escalação</span><span class="tag prev-label">noc</span><span class="tag prev-label">plantão</span></div>
+    </div>
+    <div class="controls-pane">
+      <div class="controls-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Fontes desta Área</div>
+      <div id="ctrl-ui"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="stitle">4 · formulário</div>
+<div class="card">
+  <div class="card-h"><span>form preview</span></div>
+  <div class="card-body-flex">
+    <div class="preview-pane">
+      <div class="fg"><label class="fl prev-label">título <span style="color:var(--ac)">*</span></label><input class="fi prev-input" value="Procedimento de Escalação NOC" /></div>
+      <div class="fg"><label class="fl prev-label">descrição</label><textarea class="fi prev-input" style="resize:none;height:64px">Documento que descreve o fluxo para incidentes de turno.</textarea></div>
+      <div style="display:flex;gap:8px"><button class="btn-s prev-btn">cancelar</button><button class="btn-i prev-btn">salvar</button></div>
+    </div>
+    <div class="controls-pane">
+      <div class="controls-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Fontes desta Área</div>
+      <div id="ctrl-form"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CODE -->
+<div class="stitle">5 · blocos de código</div>
+<div class="card">
+  <div class="card-h"><span>code preview</span></div>
+  <div class="card-body-flex">
+    <div class="preview-pane">
+      <p class="prev-body" style="margin-bottom:12px">Execute <code class="ci prev-code">docker compose up -d</code>. Verifique com <code class="ci prev-code">curl localhost:8000/health</code>.</p>
+      <div class="code prev-code"><span style="color:#94a3b8"># Reiniciar serviço</span>
+docker compose restart rag-worker
+
+<span style="color:#94a3b8"># Logs e saúde</span>
+curl -s http://localhost:8000/health | jq .</div>
+    </div>
+    <div class="controls-pane">
+      <div class="controls-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Fontes desta Área</div>
+      <div id="ctrl-code"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<button class="submit-btn" onclick="sendEmail()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+  Enviar minhas escolhas
+</button>
+
+<script>
+/* ── Font catalogue ── */
+const FONTS = {
+  "⚡ Sci-Fi / Display": [
+    "Audiowide","Electrolize","Michroma","Rajdhani","Oxanium","Tomorrow","Chakra Petch",
+    "Share Tech","Quantico","Jura","Play","Teko","Exo","Exo 2","Bai Jamjuree",
+    "Russo One","Aldrich","Syncopate","Saira","Saira Condensed"
+  ],
+  "◆ Geometric Sans": [
+    "Inter","Space Grotesk","Outfit","Sora","Urbanist","DM Sans","Plus Jakarta Sans",
+    "Poppins","Montserrat","Raleway","Quicksand","Comfortaa","Josefin Sans","Dosis",
+    "Prompt","Lexend","Albert Sans","Figtree","Onest","Bricolage Grotesque",
+    "Gabarito","Schibsted Grotesk","Be Vietnam Pro","Instrument Sans","Wix Madefor Display"
+  ],
+  "● Technical Sans": [
+    "Roboto","Open Sans","Lato","Source Sans 3","Noto Sans","Work Sans","Barlow",
+    "Fira Sans","PT Sans","Nunito Sans","Rubik","Karla","Mulish","Manrope",
+    "Heebo","Assistant","Cairo","Kanit","Catamaran","Archivo","Encode Sans",
+    "Libre Franklin","Titillium Web","Overpass","Signika Negative"
+  ],
+  "○ Modern Rounded": [
+    "Atkinson Hyperlegible","Readex Pro","Abel","Ubuntu","Red Hat Display",
+    "Red Hat Text","Sarabun","Cabin","M PLUS 1","Varela Round"
+  ],
+  "▪ Monospace / Code": [
+    "Space Mono","Share Tech Mono","Roboto Mono","IBM Plex Mono","JetBrains Mono",
+    "Fira Code","Inconsolata","Red Hat Mono","Overpass Mono","Source Code Pro",
+    "Ubuntu Mono","DM Mono","Azeret Mono","Martian Mono","Major Mono Display",
+    "Anonymous Pro","Cousine","Victor Mono","Syne Mono","Silkscreen"
+  ]
+};
+
+const AREAS = [
+  { id:"body",   label:"Geral / Body",      selector:".prev-body",  fallback:"sans-serif",  defaultFont:"Inter",          defaultWeight:400, defaultSize:14 },
+  { id:"btn",    label:"Botões",             selector:".prev-btn",   fallback:"sans-serif",  defaultFont:"Inter",          defaultWeight:700, defaultSize:14 },
+  { id:"user",   label:"Msg Usuário",        selector:".prev-user",  fallback:"sans-serif",  defaultFont:"Inter",          defaultWeight:400, defaultSize:14 },
+  { id:"ai",     label:"Resposta IA",        selector:".prev-ai",    fallback:"sans-serif",  defaultFont:"Inter",          defaultWeight:400, defaultSize:14 },
+  { id:"label",  label:"Labels / Tags",      selector:".prev-label", fallback:"sans-serif",  defaultFont:"Inter",          defaultWeight:600, defaultSize:12 },
+  { id:"input",  label:"Inputs",             selector:".prev-input", fallback:"sans-serif",  defaultFont:"Inter",          defaultWeight:400, defaultSize:14 },
+  { id:"code",   label:"Código",             selector:".prev-code",  fallback:"monospace",   defaultFont:"JetBrains Mono", defaultWeight:400, defaultSize:13 },
+];
+
+const state = {};
+const loadedFonts = new Set();
+let optionsHTML = '';
+
+/* ── Build options HTML ── */
+for (const [cat, fonts] of Object.entries(FONTS)) {
+  optionsHTML += `<optgroup label="${cat}">`;
+  for (const f of fonts) optionsHTML += `<option value="${f}">${f}</option>`;
+  optionsHTML += '</optgroup>';
+}
+
+/* ── Render controls into containers ── */
+function renderControls(containerId, areaIds) {
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const weightOpts = [300,400,500,600,700,800,900].map(w => `<option value="${w}">${w}</option>`).join('');
+
+  let html = '';
+  areaIds.forEach(areaId => {
+    const area = AREAS.find(a => a.id === areaId);
+    html += `
+      <div class="area-card">
+        <div class="area-card-title"><span class="dot"></span>${area.label}</div>
+        <div class="area-row">
+          <span class="area-lbl">Fonte</span>
+          <select class="area-sel" data-area="${area.id}" data-prop="font">${optionsHTML}</select>
+        </div>
+        <div class="area-row">
+          <span class="area-lbl">Peso</span>
+          <select class="area-sel" data-area="${area.id}" data-prop="weight">${weightOpts}</select>
+        </div>
+        <div class="area-row">
+          <span class="area-lbl">Tam.</span>
+          <input type="range" class="area-range" data-area="${area.id}" data-prop="size" min="9" max="28" value="${area.defaultSize}" />
+          <span class="area-val" data-val="${area.id}">${area.defaultSize}px</span>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function init() {
+  // Initialize state
+  for (const area of AREAS) {
+    state[area.id] = { font: area.defaultFont, weight: area.defaultWeight, size: area.defaultSize };
+  }
+
+  // Render control blocks per card
+  renderControls('ctrl-login', ['label', 'input', 'btn']);
+  renderControls('ctrl-chat',  ['user', 'ai', 'code']);
+  renderControls('ctrl-ui',    ['body', 'label', 'btn']);
+  renderControls('ctrl-form',  ['label', 'input', 'btn']);
+  renderControls('ctrl-code',  ['body', 'code']);
+
+  // Sync inputs with initial state implicitly and apply
+  for (const area of AREAS) {
+    syncInputs(area.id);
+    loadFontAsync(state[area.id].font).then(() => applyArea(area.id));
+  }
+}
+
+/* ── DOM Events for dynamic bindings ── */
+document.addEventListener('change', async (e) => {
+  if (e.target.matches('.area-sel')) {
+    const { area, prop } = e.target.dataset;
+    if (prop === 'font') {
+      state[area].font = e.target.value;
+      syncInputs(area); // updates any other selects for this area in other cards
+      await loadFontAsync(e.target.value);
+      applyArea(area);
+    } else if (prop === 'weight') {
+      state[area].weight = e.target.value;
+      syncInputs(area);
+      applyArea(area);
+    }
+  }
+});
+document.addEventListener('input', (e) => {
+  if (e.target.matches('.area-range')) {
+    const area = e.target.dataset.area;
+    state[area].size = e.target.value;
+    syncInputs(area);
+    applyArea(area);
+  }
+});
+
+function syncInputs(areaId) {
+  const s = state[areaId];
+  document.querySelectorAll(`.area-sel[data-area="${areaId}"][data-prop="font"]`).forEach(el => el.value = s.font);
+  document.querySelectorAll(`.area-sel[data-area="${areaId}"][data-prop="weight"]`).forEach(el => el.value = s.weight);
+  document.querySelectorAll(`.area-range[data-area="${areaId}"]`).forEach(el => el.value = s.size);
+  document.querySelectorAll(`.area-val[data-val="${areaId}"]`).forEach(el => el.textContent = s.size + 'px');
+}
+
+function applyArea(areaId) {
+  const a = AREAS.find(x => x.id === areaId);
+  const s = state[areaId];
+  document.querySelectorAll(a.selector).forEach(el => {
+    el.style.fontFamily = `'${s.font}', ${a.fallback}`;
+    el.style.fontWeight = s.weight;
+    if(s.size) el.style.fontSize = s.size + 'px';
+  });
+}
+
+function loadFontAsync(name) {
+  return new Promise(resolve => {
+    if (loadedFonts.has(name)) { resolve(); return; }
+    const bar = document.getElementById('loadingBar');
+    bar.textContent = `carregando ${name}...`;
+    bar.style.display = 'block';
+    
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${name.replace(/ /g,'+')}:wght@300;400;500;600;700;800;900&display=swap`;
+    link.onload = () => { loadedFonts.add(name); bar.style.display = 'none'; resolve(); };
+    link.onerror = () => { loadedFonts.add(name); bar.style.display = 'none'; resolve(); };
+    document.head.appendChild(link);
+  });
+}
+
+/* ── Email Submission ── */
+function sendEmail() {
+  const nome = prompt("Para registrar suas escolhas de fontes no concurso, digite seu nome:");
+  if (!nome) return; // User cancelled
+  
+  let bodyStr = `Submissão de Fontes - ${nome}\n`;
+  bodyStr += `------------------------------------\n\n`;
+  
+  for (const a of AREAS) {
+    const s = state[a.id];
+    bodyStr += `[${a.label.toUpperCase()}]\n`;
+    bodyStr += `Fonte:     ${s.font}\n`;
+    bodyStr += `Peso:      ${s.weight}\n`;
+    bodyStr += `Tamanho:   ${s.size}px\n\n`;
+  }
+  
+  bodyStr += `------------------------------------\nEnviado via Ferramenta de Preview`;
+  
+  const subject = `Submissão de Fontes: ${nome}`;
+  const mailtoLink = `mailto:antoniob8531@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyStr)}`;
+  
+  // Create an invisible link and click it to open user's email client
+  const a = document.createElement('a');
+  a.href = mailtoLink;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/* ── Light/Dark toggle ── */
+document.getElementById('modeToggle').addEventListener('click', () => document.body.classList.toggle('light'));
+
+/* ── Custom font upload ── */
+document.getElementById('fontFileInput').addEventListener('change', async (e) => {
+  const files = e.target.files;
+  if (!files.length) return;
+  const bar = document.getElementById('loadingBar');
+  for (const file of files) {
+    const displayName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c=>c.toUpperCase()) + ' (custom)';
+    bar.textContent = `carregando ${file.name}...`;
+    bar.style.display = 'block';
+    try {
+      const buffer = await file.arrayBuffer();
+      const fontFace = new FontFace(displayName, buffer);
+      await fontFace.load();
+      document.fonts.add(fontFace);
+      loadedFonts.add(displayName);
+      
+      // Inject into selects in all cards
+      document.querySelectorAll('.area-sel[data-prop="font"]').forEach(sel => {
+        let grp = sel.querySelector('optgroup[label="📁 Custom Upload"]');
+        if (!grp) {
+          grp = document.createElement('optgroup');
+          grp.label = '📁 Custom Upload';
+          sel.insertBefore(grp, sel.firstChild);
+        }
+        const opt = document.createElement('option');
+        opt.value = displayName; opt.textContent = displayName;
+        grp.appendChild(opt);
+      });
+      alert(`Fonte '${displayName}' carregada! Agora você pode selecioná-la nos menus "Fonte".`);
+    } catch(err) {
+      alert(`Erro: ${err.message}`);
+    }
+  }
+  bar.style.display = 'none';
+  e.target.value = '';
+});
+
+// Boot it up
+init();
+</script>
+</body>
+</html>
