@@ -475,34 +475,31 @@ function loadFontAsync(name) {
   });
 }
 
-/* ── Email Submission ── */
-function sendEmail() {
+/* ── Submissão (envia escolhas para o servidor) ── */
+async function sendEmail() {
   const nome = prompt("Para registrar suas escolhas de fontes no concurso, digite seu nome:");
-  if (!nome) return; // User cancelled
-  
-  let bodyStr = `Submissão de Fontes - ${nome}\n`;
-  bodyStr += `------------------------------------\n\n`;
-  
+  if (!nome || !nome.trim()) return;
+
+  const choices = {};
   for (const a of AREAS) {
     const s = state[a.id];
-    bodyStr += `[${a.label.toUpperCase()}]\n`;
-    bodyStr += `Fonte:     ${s.font}\n`;
-    bodyStr += `Peso:      ${s.weight}\n`;
-    bodyStr += `Tamanho:   ${s.size}px\n\n`;
+    choices[a.label] = { font: s.font, weight: s.weight, size: s.size };
   }
-  
-  bodyStr += `------------------------------------\nEnviado via Ferramenta de Preview`;
-  
-  const subject = `Submissão de Fontes: ${nome}`;
-  const mailtoLink = `mailto:antoniob8531@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyStr)}`;
-  
-  // Create an invisible link and click it to open user's email client
-  const a = document.createElement('a');
-  a.href = mailtoLink;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+
+  try {
+    const res = await fetch('/api/submissions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: nome.trim(), choices }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Falha desconhecida' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    alert(`Obrigado, ${nome.trim()}! Suas escolhas foram registradas.`);
+  } catch (err) {
+    alert(`Erro ao enviar: ${err.message}`);
+  }
 }
 
 /* ── Light/Dark toggle ── */

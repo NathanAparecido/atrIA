@@ -1,19 +1,26 @@
 # Stack do font-preview:
 # - Backend Node próprio (sem postgres, sem redis, sem ollama)
 # - Conecta à rede externa 'corpai-net' SÓ para que o Nginx Proxy Manager
-#   (container corpai-nginx, também em corpai-net) possa fazer reverse proxy
+#   (container corpai-nginx, também em corpai-net) faça reverse proxy
 #   por nome de host (font_preview_site:80).
 # - O container NÃO usa nenhum serviço do liminai; o uso da rede é apenas
 #   roteamento de pacotes do NPM, não acoplamento de dados/estado.
+#
+# Credenciais da página /respostas:
+#   defina FONT_PREVIEW_ADMIN_USER e FONT_PREVIEW_ADMIN_PASSWORD
+#   (ex.: export FONT_PREVIEW_ADMIN_PASSWORD='senha-forte-aqui' antes do up)
 services:
   font-preview:
     build: ./font-preview-backend
     container_name: font_preview_site
     ports:
       - "8080:80"   # acesso direto no host (útil pra testes)
+    environment:
+      ADMIN_USER: ${FONT_PREVIEW_ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${FONT_PREVIEW_ADMIN_PASSWORD:-changeme}
     volumes:
       - ./font-preview.html:/app/public/index.html:ro
-      - ./font-preview-data/fonts:/data/fonts
+      - ./font-preview-data:/data
     restart: unless-stopped
     networks:
       - corpai-net
