@@ -277,6 +277,24 @@ curl -s http://localhost:8000/health | jq .</div>
 </button>
 
 <script>
+/* ── Bloqueio quando aberto localmente (file://) ──
+   Este arquivo só funciona servido pelo backend (n8n.netwise.com.br).
+   Abrir o HTML direto do disco não envia respostas pra lugar nenhum. */
+if (window.location.protocol === 'file:') {
+  document.title = 'Use o servidor — Font Preview';
+  document.body.innerHTML = `
+    <div style="position:fixed;inset:0;background:#020617;color:#f1f5f9;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;padding:24px;z-index:99999">
+      <div style="max-width:520px;text-align:center;background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:40px 32px">
+        <h1 style="font-size:22px;font-weight:900;letter-spacing:-.02em;margin-bottom:14px;background:radial-gradient(ellipse 190% 65% at 8% 92%,#c020a8 0%,transparent 48%),radial-gradient(ellipse 110% 190% at 92% 8%,#00b8a8 0%,transparent 48%),radial-gradient(ellipse 130% 110% at 38% 42%,#5828c8 0%,transparent 52%),#180848;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Use o servidor</h1>
+        <p style="color:#94a3b8;line-height:1.6;margin-bottom:24px;font-size:14px">Este arquivo só funciona quando servido pelo backend.<br>Abrir direto do PC <strong style="color:#f1f5f9">não envia respostas</strong>.</p>
+        <a href="https://n8n.netwise.com.br/" style="display:inline-block;padding:12px 22px;background:rgba(0,184,168,.12);color:rgba(0,184,168,.95);border:1px solid rgba(0,184,168,.45);border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;letter-spacing:.02em">Abrir site oficial → n8n.netwise.com.br</a>
+        <p style="margin-top:24px;font-size:11px;color:#475569">file:// bloqueado por segurança</p>
+      </div>
+    </div>
+  `;
+  throw new Error('Abertura local bloqueada — acesse https://n8n.netwise.com.br/');
+}
+
 /* ── Font catalogue ── */
 const FONTS = {
   "⚡ Sci-Fi / Display": [
