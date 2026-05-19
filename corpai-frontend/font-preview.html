@@ -331,7 +331,10 @@ function prettyName(filename) {
 
 async function loadSharedFonts() {
   try {
-    const res = await fetch('/api/fonts');
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch('/api/fonts', { signal: ctrl.signal });
+    clearTimeout(timer);
     if (!res.ok) return;
     const files = await res.json();
     if (!Array.isArray(files) || files.length === 0) return;
@@ -392,13 +395,13 @@ function renderControls(containerId, areaIds) {
 }
 
 async function init() {
-  await loadSharedFonts();
-  buildOptionsHTML();
-
-  // Initialize state
+  // Initialize state PRIMEIRO — para o site funcionar mesmo se a API falhar
   for (const area of AREAS) {
     state[area.id] = { font: area.defaultFont, weight: area.defaultWeight, size: area.defaultSize };
   }
+
+  await loadSharedFonts();
+  buildOptionsHTML();
 
   // Render control blocks per card
   renderControls('ctrl-login', ['label', 'input', 'btn']);
