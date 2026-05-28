@@ -1,9 +1,21 @@
 /**
- * liminai — Navbar magnification (estilo Antigravity dock)
- *  - Pill flutuante de tamanho fixo (não morpha).
- *  - Cada item escala em função da distância do cursor (proximity scaling).
- *  - transform: scale() acelerado por GPU — sem reflow, não empurra vizinhos.
- *  - Submenus abrem como dropdown flutuante DESTACADO da pill.
+ * liminai — Navbar magnification (Antigravity dock, refinado)
+ *
+ * Física da magnificação:
+ *  - Decay GAUSSIANO (não-linear): scale(d) = 1 + MAX_BOOST · e^(-d²/2σ²)
+ *      No centro:        ~1.80x
+ *      A 1·σ do cursor:  ~1.49x  (vizinho imediato)
+ *      A 2·σ do cursor:  ~1.11x  (vizinho distante)
+ *      A 3·σ do cursor:  ~1.01x  (efetivamente neutro)
+ *  - Spring de ESCALA com damping baixo → leve overshoot elástico.
+ *  - Spring de TRANSLAÇÃO crítico → push lateral sem bambolear.
+ *  - GAP DINÂMICO: cada item ganha translateX via tanh assinado, criando
+ *    espaço para o vizinho magnificado sem reflow (puro GPU).
+ *  - Dissipação na SAÍDA do cursor: tween levemente longo (~0.55s) com
+ *    ease-out expo para sensação de inércia.
+ *  - Frame loop: Framer Motion já encadeia tudo em requestAnimationFrame.
+ *  - transform-origin: center bottom — crescimento "brota" da base da pill.
+ *  - will-change: transform — força camada GPU dedicada por item.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -14,6 +26,7 @@ import {
   useMotionValue,
   useTransform,
   useSpring,
+  animate,
 } from 'framer-motion';
 import { Menu, X, ChevronDown, Sparkles, Layers, Compass, GraduationCap } from 'lucide-react';
 
@@ -54,17 +67,28 @@ const MENU = [
 const SCROLL_THRESHOLD = 24;
 const HOVER_CLOSE_DELAY = 140;
 
-// Magnification — ajuste fino aqui:
-const MOUSE_FAR = 99999;                // sentinel "cursor longe"
-const MAGNIFY_MAX = 1.28;               // escala do item sob o cursor
-const MAGNIFY_RADIUS = 140;             // px: alcance do efeito
-const MAGNIFY_SPRING = { stiffness: 320, damping: 22, mass: 0.45 };
+// === Magnification tuning — ajuste fino aqui =================================
+const MOUSE_OFF = -99999;                  // sentinel "cursor fora da nav"
+const MAX_BOOST = 0.8;                     // pico de escala = 1 + 0.8 = 1.80x
+const SIGMA = 90;                          // px: σ do decay gaussiano
+const MAX_PUSH = 36;                       // px: translação lateral máxima (gap dinâmico)
+const RETURN_DURATION = 0.55;              // s: dissipação na saída (inércia)
+const RETURN_EASE = [0.16, 1, 0.3, 1];     // expo-out (sem overshoot na volta)
+
+// Spring de ESCALA — damping baixo gera overshoot elástico (~10%).
+// Equivale à sensação de cubic-bezier(0.175, 0.885, 0.32, 1.275).
+const SCALE_SPRING = { stiffness: 380, damping: 18, mass: 0.7 };
+
+// Spring de TRANSLAÇÃO — crítico, sem oscilação lateral.
+const PUSH_SPRING = { stiffness: 380, damping: 24, mass: 0.6 };
+// ============================================================================
 
 function MagnifyItem({ mouseX, children }) {
   const ref = useRef(null);
   const center = useMotionValue(0);
 
-  // Cacheia o centro X do item; reatualiza em resize/scroll para manter preciso.
+  // Cacheia o centro X "real" do item (antes de qualquer transform).
+  // ResizeObserver + listeners cobrem mudanças de layout/scroll.
   useEffect(() => {
     function update() {
       if (!ref.current) return;
@@ -83,21 +107,34 @@ function MagnifyItem({ mouseX, children }) {
     };
   }, [center]);
 
-  const distance = useTransform([mouseX, center], ([mx, c]) =>
-    Math.abs(mx - c)
-  );
-  const scale = useTransform(
-    distance,
-    [0, MAGNIFY_RADIUS],
-    [MAGNIFY_MAX, 1],
-    { clamp: true }
-  );
-  const smoothScale = useSpring(scale, MAGNIFY_SPRING);
+  // Distância ASSINADA cursor→item (positiva = item está à direita do cursor).
+  const signed = useTransform([mouseX, center], ([mx, c]) => c - mx);
+
+  // Escala não-linear via gaussiana.
+  // d=0 → 1+MAX_BOOST; |d|=σ → 1+MAX_BOOST·0.607; |d|=2σ → 1+MAX_BOOST·0.135.
+  const scale = useTransform(signed, (d) => {
+    const g = Math.exp(-(d * d) / (2 * SIGMA * SIGMA));
+    return 1 + MAX_BOOST * g;
+  });
+
+  // Push lateral — S-curve saturando: zero no centro, máximo nas extremidades.
+  // tanh é simétrico, suave e GPU-cheap. Cria o "gap dinâmico".
+  const tx = useTransform(signed, (d) => {
+    return Math.sign(d) * MAX_PUSH * Math.tanh(Math.abs(d) / (SIGMA * 1.4));
+  });
+
+  const sScale = useSpring(scale, SCALE_SPRING);
+  const sTx = useSpring(tx, PUSH_SPRING);
 
   return (
     <motion.div
       ref={ref}
-      style={{ scale: smoothScale, transformOrigin: '50% 50%' }}
+      style={{
+        scale: sScale,
+        x: sTx,
+        transformOrigin: '50% 100%',  // center bottom — cresce a partir da base
+        willChange: 'transform',
+      }}
       className="inline-flex"
     >
       {children}
@@ -112,7 +149,7 @@ export default function Navbar() {
   const navRef = useRef(null);
   const closeTimer = useRef(null);
   const navigate = useNavigate();
-  const mouseX = useMotionValue(MOUSE_FAR);
+  const mouseX = useMotionValue(MOUSE_OFF);
 
   const activeItem = openMenu ? MENU.find((m) => m.title === openMenu) : null;
   const hasPanel = Boolean(activeItem?.items);
@@ -165,9 +202,17 @@ export default function Navbar() {
     <div className="fixed top-3 left-0 right-0 z-50 px-4 pointer-events-none">
       <div ref={navRef} className="max-w-xl mx-auto pointer-events-auto relative">
         <nav
-          onMouseMove={(e) => mouseX.set(e.clientX)}
+          onMouseMove={(e) => {
+            mouseX.stop();
+            mouseX.set(e.clientX);
+          }}
           onMouseLeave={() => {
-            mouseX.set(MOUSE_FAR);
+            // Dissipação com inércia: tween levemente longo, ease-out expo.
+            // Os springs por item amaciam a chegada em scale=1 naturalmente.
+            animate(mouseX, MOUSE_OFF, {
+              duration: RETURN_DURATION,
+              ease: RETURN_EASE,
+            });
             closeOnLeave();
           }}
           onMouseEnter={cancelClose}
@@ -186,8 +231,8 @@ export default function Navbar() {
             transition: 'background 220ms ease, box-shadow 220ms ease',
           }}
         >
-          <div className="px-3 h-14 flex items-center justify-between gap-3">
-            <ul className="hidden lg:flex items-center gap-2">
+          <div className="px-4 h-14 flex items-center justify-between gap-3">
+            <ul className="hidden lg:flex items-center gap-5">
               {MENU.map((item) => (
                 <li
                   key={item.title}
