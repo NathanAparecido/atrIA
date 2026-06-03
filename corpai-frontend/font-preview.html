@@ -127,6 +127,16 @@ body.light .code{color:#334155}
 .submit-btn{position:fixed;bottom:24px;right:24px;background:var(--grad);color:#fff;border:none;padding:12px 24px;border-radius:999px;font-family:Inter,sans-serif;font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 4px 16px rgba(0,184,168,.3);display:flex;align-items:center;gap:8px;z-index:100;transition:transform .2s,box-shadow .2s;border:1px solid rgba(0,184,168,.4)}
 .submit-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,184,168,.5)}
 .submit-btn svg{width:16px;height:16px}
+
+/* ── Preview banner (visualizando submissão de colaborador) ── */
+.preview-banner{position:sticky;top:48px;z-index:49;background:linear-gradient(90deg,rgba(192,32,168,.18),rgba(88,40,200,.18));border-bottom:1px solid rgba(192,32,168,.4);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--tx);backdrop-filter:blur(14px)}
+body.light .preview-banner{background:linear-gradient(90deg,rgba(192,32,168,.12),rgba(88,40,200,.12))}
+.preview-banner-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.preview-banner-left svg{width:16px;height:16px;color:rgba(192,32,168,.95);flex-shrink:0}
+.preview-banner-left .tag-label{color:rgba(192,32,168,.95);font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:10px;white-space:nowrap}
+.preview-name{font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.preview-banner-btn{padding:6px 12px;border-radius:7px;border:1px solid rgba(192,32,168,.45);background:rgba(192,32,168,.12);color:rgba(192,32,168,.95);font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .2s;font-family:Inter,sans-serif;white-space:nowrap}
+.preview-banner-btn:hover{background:rgba(192,32,168,.22)}
 </style>
 </head>
 <body>
@@ -148,6 +158,16 @@ body.light .code{color:#334155}
   </div>
 </div>
 <div id="loadingBar" class="loading">carregando fonte...</div>
+
+<!-- ── PREVIEW BANNER (visualizando submissão) ── -->
+<div id="previewBanner" class="preview-banner" style="display:none">
+  <div class="preview-banner-left">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    <span class="tag-label">Visualizando escolhas de:</span>
+    <span class="preview-name" id="previewName">—</span>
+  </div>
+  <a class="preview-banner-btn" href="./">Voltar aos defaults</a>
+</div>
 
 <!-- ── PREVIEW & CONTROLS ── -->
 <div class="wrap">
@@ -337,11 +357,26 @@ const AREAS = [
 ];
 
 const SHARED_GROUP = "📁 Fontes Compartilhadas (uploads)";
+const PREVIEW_GROUP = "🔍 Fontes do preview";
 
 const state = {};
 const loadedFonts = new Set();
 const sharedFonts = new Set();
 let optionsHTML = '';
+
+/* ── Decodifica payload de preview da URL (vindo de /respostas) ── */
+function readPreviewFromURL() {
+  try {
+    const p = new URLSearchParams(window.location.search).get('preview');
+    if (!p) return null;
+    const payload = JSON.parse(atob(decodeURIComponent(p)));
+    if (!payload || typeof payload !== 'object') return null;
+    return payload;
+  } catch (e) {
+    console.warn('Falha ao decodificar preview:', e);
+    return null;
+  }
+}
 
 function prettyName(filename) {
   return filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -418,7 +453,43 @@ async function init() {
     state[area.id] = { font: area.defaultFont, weight: area.defaultWeight, size: area.defaultSize };
   }
 
+  // Aplica preview vindo de /respostas (?preview=base64)
+  const preview = readPreviewFromURL();
+  if (preview) {
+    const banner = document.getElementById('previewBanner');
+    const nameEl = document.getElementById('previewName');
+    if (banner && nameEl) {
+      nameEl.textContent = preview.name || 'sem nome';
+      banner.style.display = '';
+    }
+    if (preview.choices && typeof preview.choices === 'object') {
+      for (const area of AREAS) {
+        const c = preview.choices[area.label];
+        if (!c) continue;
+        if (c.font)   state[area.id].font   = String(c.font);
+        if (c.weight) state[area.id].weight = c.weight;
+        if (c.size)   state[area.id].size   = Number(c.size) || area.defaultSize;
+      }
+    }
+  }
+
   await loadSharedFonts();
+
+  // Se o preview trouxe uma fonte que não está no catálogo, adiciona um grupo
+  // "do preview" pra que ela apareça no <select> e o usuário consiga trocar dali
+  if (preview && preview.choices) {
+    const known = new Set();
+    for (const list of Object.values(FONTS)) for (const f of list) known.add(f);
+    for (const area of AREAS) {
+      const f = state[area.id].font;
+      if (f && !known.has(f)) {
+        if (!FONTS[PREVIEW_GROUP]) FONTS[PREVIEW_GROUP] = [];
+        if (!FONTS[PREVIEW_GROUP].includes(f)) FONTS[PREVIEW_GROUP].push(f);
+        known.add(f);
+      }
+    }
+  }
+
   buildOptionsHTML();
 
   // Render control blocks per card

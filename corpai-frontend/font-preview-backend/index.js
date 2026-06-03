@@ -154,6 +154,10 @@ app.get('/respostas', basicAuth, (_req, res) => {
         <span class="val">${escapeHtml(v.font || '-')} · ${escapeHtml(String(v.weight || '-'))} · ${escapeHtml(String(v.size || '-'))}px</span>
       </div>
     `).join('');
+    const previewPayload = Buffer
+      .from(JSON.stringify({ name: r.name, choices: r.choices || {} }))
+      .toString('base64');
+    const previewUrl = `/?preview=${encodeURIComponent(previewPayload)}`;
     return `
       <article class="card">
         <header>
@@ -161,6 +165,12 @@ app.get('/respostas', basicAuth, (_req, res) => {
           <time>${escapeHtml(ts)}</time>
         </header>
         <div class="choices">${choices}</div>
+        <div class="actions-row">
+          <a class="btn-preview" href="${previewUrl}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Visualizar no site
+          </a>
+        </div>
       </article>
     `;
   }).join('');
@@ -192,6 +202,10 @@ h1{font-family:Orbitron;font-weight:900;font-size:24px;letter-spacing:-.03em;bac
 .ch{display:flex;gap:10px;font-size:12px;padding:4px 0;align-items:baseline}
 .lbl{color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:10px;width:115px;flex-shrink:0}
 .val{color:#f1f5f9;font-variant-numeric:tabular-nums}
+.actions-row{display:flex;gap:8px;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid #1e293b}
+.btn-preview{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;border:1px solid rgba(192,32,168,.4);background:rgba(192,32,168,.1);color:rgba(192,32,168,.95);text-decoration:none;font-size:11px;font-weight:600;transition:background .2s}
+.btn-preview:hover{background:rgba(192,32,168,.2)}
+.btn-preview svg{width:13px;height:13px}
 </style>
 </head>
 <body>
