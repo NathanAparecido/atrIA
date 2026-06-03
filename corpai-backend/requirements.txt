@@ -19,3 +19,7 @@ python-docx==1.1.2
 openpyxl==3.1.5
 sse-starlette==2.2.1
 alembic==1.14.1
+PyYAML==6.0.2          # parse de front-matter YAML no upload de .md
+
+# Testes (somente dev) — não embarcado em produção
+pytest==8.3.4

@@ -67,11 +67,43 @@ class ChromaService:
             extra={"namespace": namespace, "total_chunks": len(documents)},
         )
 
+    def _buscar_em_namespace(
+        self,
+        namespace: str,
+        query_embedding: List[float],
+        n_results: int,
+        where: Optional[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """Executa a busca vetorial em uma única collection, com filtro opcional."""
+        resultados: List[Dict[str, Any]] = []
+        collection = self._get_collection(namespace)
+        if collection.count() == 0:
+            return resultados
+
+        kwargs: Dict[str, Any] = {
+            "query_embeddings": [query_embedding],
+            "n_results": min(n_results, collection.count()),
+            "include": ["documents", "metadatas", "distances"],
+        }
+        if where:
+            kwargs["where"] = where
+
+        results = collection.query(**kwargs)
+        for i, doc in enumerate(results["documents"][0]):
+            resultados.append({
+                "documento": doc,
+                "metadata": results["metadatas"][0][i],
+                "distancia": results["distances"][0][i],
+                "namespace": namespace,
+            })
+        return resultados
+
     def query(
         self,
         namespace: str,
         query_embedding: List[float],
         n_results: int = 5,
+        where: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Busca vetorial no namespace do setor + namespace global.
@@ -81,6 +113,9 @@ class ChromaService:
             namespace: Namespace do setor do usuário
             query_embedding: Vetor de embedding da query
             n_results: Número de resultados por namespace
+            where: Cláusula de filtro de metadado do Chroma (opcional). Aplicada
+                igualmente aos dois namespaces. Use `montar_filtro_busca` para
+                construí-la (exclusão de vencidos + filtros opcionais).
 
         Returns:
             Lista combinada de resultados relevantes
@@ -89,20 +124,9 @@ class ChromaService:
 
         # Buscar no namespace do setor
         try:
-            collection_setor = self._get_collection(namespace)
-            if collection_setor.count() > 0:
-                results_setor = collection_setor.query(
-                    query_embeddings=[query_embedding],
-                    n_results=min(n_results, collection_setor.count()),
-                    include=["documents", "metadatas", "distances"],
-                )
-                for i, doc in enumerate(results_setor["documents"][0]):
-                    resultados.append({
-                        "documento": doc,
-                        "metadata": results_setor["metadatas"][0][i],
-                        "distancia": results_setor["distances"][0][i],
-                        "namespace": namespace,
-                    })
+            resultados.extend(
+                self._buscar_em_namespace(namespace, query_embedding, n_results, where)
+            )
         except Exception as e:
             logger.warning(
                 "Erro ao buscar no namespace do setor.",
@@ -112,20 +136,9 @@ class ChromaService:
         # Buscar no namespace global (sempre incluído)
         if namespace != "global":
             try:
-                collection_global = self._get_collection("global")
-                if collection_global.count() > 0:
-                    results_global = collection_global.query(
-                        query_embeddings=[query_embedding],
-                        n_results=min(n_results, collection_global.count()),
-                        include=["documents", "metadatas", "distances"],
-                    )
-                    for i, doc in enumerate(results_global["documents"][0]):
-                        resultados.append({
-                            "documento": doc,
-                            "metadata": results_global["metadatas"][0][i],
-                            "distancia": results_global["distances"][0][i],
-                            "namespace": "global",
-                        })
+                resultados.extend(
+                    self._buscar_em_namespace("global", query_embedding, n_results, where)
+                )
             except Exception as e:
                 logger.warning(
                     "Erro ao buscar no namespace global.",

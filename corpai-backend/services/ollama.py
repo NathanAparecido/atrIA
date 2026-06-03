@@ -4,6 +4,7 @@ Chamadas ao LLM (qwen2.5:72b) e ao modelo de embedding (nomic-embed-text).
 Comunicação via httpx async client — nunca expõe Ollama externamente.
 """
 
+import asyncio
 import logging
 from typing import AsyncGenerator, List
 
@@ -54,17 +55,72 @@ class OllamaService:
         """
         Gera embeddings em lote para múltiplos textos.
 
+        Estratégia: envia sub-lotes de `EMBED_BATCH_SIZE` ao endpoint /api/embed
+        do Ollama com um array de inputs (uma requisição por sub-lote). Se o
+        servidor não suportar input em array (versões antigas), cai para
+        concorrência limitada por `asyncio.Semaphore` — teto baixo de propósito,
+        pois o ambiente é CPU-only e não deve disparar dezenas de requisições
+        simultâneas.
+
         Args:
             texts: Lista de textos
 
         Returns:
-            Lista de vetores de embedding
+            Lista de vetores de embedding, na mesma ordem de `texts`
         """
-        embeddings = []
-        for text in texts:
-            emb = await self.generate_embedding(text)
-            embeddings.append(emb)
+        if not texts:
+            return []
+
+        try:
+            return await self._embed_array(texts)
+        except Exception as e:
+            # Fallback: array de inputs indisponível/instável neste Ollama.
+            logger.warning(
+                "Embedding em batch via array falhou; usando concorrência limitada.",
+                extra={"erro": str(e), "total_textos": len(texts)},
+            )
+            return await self._embed_concurrent(texts)
+
+    async def _embed_array(self, texts: List[str]) -> List[List[float]]:
+        """
+        Caminho preferencial: array de inputs no /api/embed, em sub-lotes.
+        Levanta exceção se a resposta não vier alinhada com os inputs.
+        """
+        batch_size = max(1, settings.EMBED_BATCH_SIZE)
+        embeddings: List[List[float]] = []
+
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            for inicio in range(0, len(texts), batch_size):
+                sub_lote = texts[inicio:inicio + batch_size]
+                response = await client.post(
+                    f"{self.base_url}/api/embed",
+                    json={"model": self.embed_model, "input": sub_lote},
+                )
+                response.raise_for_status()
+                data = response.json()
+                vetores = data.get("embeddings", [])
+
+                if len(vetores) != len(sub_lote):
+                    raise ValueError(
+                        "Resposta do Ollama não alinha embeddings com inputs "
+                        f"(esperado {len(sub_lote)}, recebido {len(vetores)})."
+                    )
+                embeddings.extend(vetores)
+
         return embeddings
+
+    async def _embed_concurrent(self, texts: List[str]) -> List[List[float]]:
+        """
+        Fallback: uma requisição por texto, com concorrência limitada por
+        Semaphore (teto `EMBED_CONCURRENCY`). Preserva a ordem de `texts`.
+        """
+        semaforo = asyncio.Semaphore(max(1, settings.EMBED_CONCURRENCY))
+
+        async def _um(text: str) -> List[float]:
+            async with semaforo:
+                return await self.generate_embedding(text)
+
+        return await asyncio.gather(*(_um(t) for t in texts))
 
     async def generate_response(
         self, prompt: str, system_prompt: str = "", stream: bool = True

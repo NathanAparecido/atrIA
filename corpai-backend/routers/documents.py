@@ -5,9 +5,12 @@ Formatos aceitos: PDF, DOCX, XLSX, TXT, MD
 """
 
 import logging
+import re
 import uuid
-from typing import List, Dict, Any, Optional
+from datetime import date, datetime
+from typing import List, Dict, Any, Optional, Tuple
 
+import yaml
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from pydantic import BaseModel
 
@@ -15,13 +18,71 @@ from config import settings
 from middleware.auth import get_current_user, require_role, TokenData
 from services.chroma import chroma_service
 from services.ollama import ollama_service
-from services.rag import chunkear_texto
+from services.rag import chunkear_texto, data_para_ordinal
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Extensões permitidas
 EXTENSOES_PERMITIDAS = {".pdf", ".docx", ".xlsx", ".txt", ".md"}
+
+# Front-matter YAML delimitado por --- no topo do arquivo.
+_FRONT_MATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
+
+
+def separar_front_matter(texto: str) -> Tuple[Dict[str, Any], str]:
+    """
+    Separa o front-matter YAML (entre `---`) do corpo do documento.
+
+    Retorna `({}, texto)` quando não há front-matter válido — documento sem
+    front-matter continua aceito normalmente.
+    """
+    if not texto.startswith("---"):
+        return {}, texto
+
+    m = _FRONT_MATTER_RE.match(texto)
+    if not m:
+        return {}, texto
+
+    try:
+        dados = yaml.safe_load(m.group(1)) or {}
+    except yaml.YAMLError:
+        return {}, texto
+
+    if not isinstance(dados, dict):
+        return {}, texto
+
+    return dados, texto[m.end():]
+
+
+def _fm_str(fm: Dict[str, Any], chave: str) -> str:
+    """Lê um campo do front-matter como string limpa ('' se ausente/nulo)."""
+    valor = fm.get(chave)
+    return str(valor).strip() if valor is not None else ""
+
+
+def normalizar_data(valor: Any) -> str:
+    """
+    Normaliza uma data para ISO ordenável `YYYY-MM-DD`.
+
+    Aceita `date`/`datetime` (como o PyYAML já entrega) ou string em formatos
+    comuns. Retorna '' quando ausente ou não reconhecível.
+    """
+    if valor is None or valor == "":
+        return ""
+    if isinstance(valor, datetime):
+        return valor.date().isoformat()
+    if isinstance(valor, date):
+        return valor.isoformat()
+
+    s = str(valor).strip()
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(s, fmt).date().isoformat()
+        except ValueError:
+            continue
+    # Já vem em ISO com hora? Mantém só a parte da data.
+    return s[:10] if re.match(r"^\d{4}-\d{2}-\d{2}", s) else ""
 
 
 # ─── Schemas ─────────────────────────────────────────────────
@@ -168,8 +229,14 @@ async def upload_documento(
             detail="Não foi possível extrair texto do documento.",
         )
 
+    # Front-matter (apenas para .md); o corpo segue para o chunking.
+    front_matter: Dict[str, Any] = {}
+    corpo = texto
+    if extensao == ".md":
+        front_matter, corpo = separar_front_matter(texto)
+
     # Chunkear
-    chunks = chunkear_texto(texto)
+    chunks = chunkear_texto(corpo)
 
     if not chunks:
         raise HTTPException(
@@ -192,29 +259,56 @@ async def upload_documento(
 
     # Armazenar no ChromaDB
     document_id = str(uuid.uuid4())
-    from datetime import datetime
+
+    # Setor: front-matter prevalece sobre o setor do JWT, se válido.
+    setor_fm = _fm_str(front_matter, "setor")
+    if setor_fm and setor_fm in settings.SETORES_VALIDOS:
+        setor_efetivo = setor_fm
+    else:
+        if setor_fm:
+            logger.warning(
+                "Setor do front-matter inválido; usando o setor do usuário.",
+                extra={"setor_fm": setor_fm, "setor_usuario": current_user.setor},
+            )
+        setor_efetivo = current_user.setor
+
+    # Título: front-matter > formulário > nome do arquivo.
+    titulo_final = _fm_str(front_matter, "titulo") or (titulo or "").strip() or nome
+
+    # Datas em ISO ordenável + ordinal inteiro para o filtro de vencimento.
+    revisado_em = normalizar_data(front_matter.get("revisado_em"))
+    valido_ate = normalizar_data(front_matter.get("valido_ate"))
 
     ids = [f"{document_id}_chunk_{i}" for i in range(len(chunks))]
-    titulo_final = (titulo or "").strip() or nome
+    metadata_base = {
+        "document_id": document_id,
+        "nome_arquivo": nome,
+        "titulo": titulo_final,
+        "descricao": (descricao or "").strip(),
+        "tags": (tags or "").strip(),
+        "total_chunks": len(chunks),
+        "setor": setor_efetivo,
+        "sistema": _fm_str(front_matter, "sistema"),
+        "tipo": _fm_str(front_matter, "tipo"),
+        "criticidade": _fm_str(front_matter, "criticidade"),
+        "responsavel": _fm_str(front_matter, "responsavel"),
+        "versao": _fm_str(front_matter, "versao"),
+        "revisado_em": revisado_em,
+        "valido_ate": valido_ate,
+        # Ordinal YYYYMMDD para filtro de range no Chroma (string não suporta).
+        # Sem valido_ate => sentinela 99991231 (nunca vence, sempre elegível).
+        "valido_ate_ord": data_para_ordinal(valido_ate),
+        "usuario": current_user.username,
+        "criado_em": datetime.utcnow().isoformat(),
+    }
     metadatas = [
-        {
-            "document_id": document_id,
-            "nome_arquivo": nome,
-            "titulo": titulo_final,
-            "descricao": (descricao or "").strip(),
-            "tags": (tags or "").strip(),
-            "chunk_index": i,
-            "total_chunks": len(chunks),
-            "setor": current_user.setor,
-            "usuario": current_user.username,
-            "criado_em": datetime.utcnow().isoformat(),
-        }
+        {**metadata_base, "chunk_index": i}
         for i in range(len(chunks))
     ]
 
     try:
         chroma_service.add_documents(
-            namespace=current_user.setor,
+            namespace=setor_efetivo,
             documents=chunks,
             embeddings=embeddings,
             metadatas=metadatas,
@@ -235,7 +329,7 @@ async def upload_documento(
         extra={
             "document_id": document_id,
             "arquivo": nome,
-            "setor": current_user.setor,
+            "setor": setor_efetivo,
             "chunks": len(chunks),
         },
     )

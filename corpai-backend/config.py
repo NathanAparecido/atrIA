@@ -94,6 +94,12 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP: int = 64
     RAG_TOP_K: int = 5
 
+    # Embedding em batch (CPU-only): tamanho do sub-lote enviado ao Ollama
+    # por requisição e teto de concorrência do fallback. Mantidos baixos
+    # de propósito — não dispare dezenas de requisições simultâneas.
+    EMBED_BATCH_SIZE: int = 16
+    EMBED_CONCURRENCY: int = 4
+
     class Config:
         env_file = ".env"
         case_sensitive = True
