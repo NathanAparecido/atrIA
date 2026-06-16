@@ -18,6 +18,7 @@
  */
 
 import LiminaiOrb from '../LiminaiOrb';
+import Wordmark from '../Wordmark';
 
 const TEAL    = '#00b8a8';
 const PURPLE  = '#5828c8';
@@ -79,9 +80,7 @@ export function NewChatMock() {
         {/* topo: orb + wordmark (sem glow) */}
         <div className="flex items-center gap-1.5">
           <LiminaiOrb size={14} glow={false} />
-          <span className="font-['Orbitron'] font-black text-[10px] tracking-tight text-white/85">
-            limin<span style={{ color: TEAL }}>ai</span>
-          </span>
+          <Wordmark className="text-[10px] text-white/85" />
         </div>
 
         {/* botão nova conversa */}
