@@ -47,6 +47,9 @@ class Message(Base):
     )
     role = Column(String(20), nullable=False)  # "user" ou "assistant"
     content = Column(Text, nullable=False)
+    # JSON serializado das imagens anexadas à resposta (p/ re-render do histórico).
+    # Lista de {image_id, nome_arquivo, descricao}. Null quando não há imagens.
+    images = Column(Text, nullable=True)
     criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relacionamento com conversa

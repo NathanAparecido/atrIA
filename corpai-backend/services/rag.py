@@ -10,6 +10,7 @@ from typing import AsyncGenerator, List, Dict, Any, Optional
 
 from services.chroma import chroma_service
 from services.ollama import ollama_service
+from services.prompts import DEFAULT_SYSTEM_PROMPT
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -85,21 +86,9 @@ def montar_filtro_busca(
     return {"$and": condicoes}
 
 
-# Prompt de sistema para o assistente corporativo
-SYSTEM_PROMPT = """Você é a liminai, assistente de inteligência artificial interna da empresa.
-Sua função é responder perguntas dos colaboradores com base na documentação interna da empresa.
-
-REGRAS IMPORTANTES:
-1. Responda SEMPRE em português brasileiro (PT-BR).
-2. Use APENAS as informações do contexto fornecido para responder.
-3. Se a informação não estiver no contexto, diga claramente: "Não encontrei essa informação na base de conhecimento."
-4. Nunca invente informações que não estejam no contexto.
-5. Seja objetivo, claro e profissional nas respostas.
-6. Cite a fonte do documento apenas se o usuário solicitar explicitamente (ex: "de onde veio isso?", "qual a fonte?"). No formato: *Fonte: [Título do Documento]*.
-7. Use formatação Markdown para estruturar suas respostas quando apropriado.
-8. Se a pergunta for ambígua, peça esclarecimento ao usuário.
-9. Se um documento usado na resposta estiver marcado como "[ATENÇÃO: revisão vencida]" ou "[ATENÇÃO: revisão próxima do vencimento]", avise o usuário ao final da resposta, informando a data da última revisão (revisado_em). Ex: "⚠️ Esta informação foi revisada pela última vez em DD/MM/AAAA e pode estar desatualizada."
-10. Se o documento usado for do tipo "procedimento", responda em passos numerados, executáveis e na ordem correta."""
+# Prompt de sistema built-in. O texto canônico vive em services/prompts.py
+# (fonte única, usada como fallback e como "restaurar padrão" na UI).
+SYSTEM_PROMPT = DEFAULT_SYSTEM_PROMPT
 
 
 def montar_prompt_rag(
@@ -174,12 +163,33 @@ Com base nos documentos relevantes acima, responda a pergunta do usuário de for
     return prompt
 
 
+def coletar_image_ids(contextos: List[Dict[str, Any]]) -> List[str]:
+    """
+    Coleta os IDs de imagem dos contextos recuperados, deduplicando e limitando
+    a `RAG_MAX_IMAGES`. Duas origens:
+      - chunks de imagem (`metadata.type == "image"`) → `metadata.image_id`;
+      - chunks de texto que referenciam imagens → `metadata.image_ids` (CSV).
+    Preserva a ordem de relevância (os contextos já vêm ordenados por distância).
+    """
+    ids: List[str] = []
+    for ctx in contextos:
+        meta = ctx.get("metadata", {}) or {}
+        if meta.get("type") == "image" and meta.get("image_id"):
+            ids.append(str(meta["image_id"]))
+        csv = meta.get("image_ids")
+        if csv:
+            ids.extend(x for x in str(csv).split(",") if x)
+    # Dedup preservando ordem + teto.
+    return list(dict.fromkeys(ids))[: settings.RAG_MAX_IMAGES]
+
+
 async def executar_pipeline_rag(
     query: str,
     setor: str,
     historico: List[Dict[str, str]] = None,
     filtros: Optional[Dict[str, str]] = None,
-) -> AsyncGenerator[str, None]:
+    system_prompt: Optional[str] = None,
+) -> AsyncGenerator[Dict[str, Any], None]:
     """
     Executa o pipeline RAG completo com streaming.
 
@@ -194,11 +204,15 @@ async def executar_pipeline_rag(
         historico: Histórico de mensagens da conversa
         filtros: Filtros opcionais de metadado (`setor`, `tipo`, `sistema`).
             A exclusão de documentos vencidos é sempre aplicada.
+        system_prompt: Prompt de sistema a usar. Se None, usa o built-in
+            (`DEFAULT_SYSTEM_PROMPT`). O caller (chat) resolve o prompt efetivo
+            por setor no banco e passa aqui.
 
     Yields:
         Chunks de texto da resposta
     """
     filtros = filtros or {}
+    system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
     logger.info(
         "Iniciando pipeline RAG.",
         extra={"setor": setor, "query_length": len(query)},
@@ -209,7 +223,7 @@ async def executar_pipeline_rag(
         query_embedding = await ollama_service.generate_embedding(query)
     except Exception as e:
         logger.error("Erro ao gerar embedding da query.", extra={"erro": str(e)})
-        yield "Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente."
+        yield {"kind": "text", "data": "Desculpe, ocorreu um erro ao processar sua pergunta. Tente novamente."}
         return
 
     # 2. Buscar documentos relevantes no ChromaDB (exclui vencidos por padrão)
@@ -232,20 +246,30 @@ async def executar_pipeline_rag(
         )
         contextos = []
 
+    # 2b. Imagens recuperáveis: emite os IDs ANTES do texto. O caller (chat)
+    # resolve para registros, re-autoriza e anexa à resposta.
+    image_ids = coletar_image_ids(contextos)
+    if image_ids:
+        yield {"kind": "image_ids", "data": image_ids}
+
     # 3. Montar prompt com contexto
     prompt = montar_prompt_rag(query, contextos, historico)
 
     # 4. Gerar resposta com streaming
     try:
-        async for chunk in ollama_service.generate_response(
+        async for item in ollama_service.generate_response(
             prompt=prompt,
-            system_prompt=SYSTEM_PROMPT,
+            system_prompt=system_prompt,
             stream=True,
         ):
-            yield chunk
+            if item["type"] == "text":
+                yield {"kind": "text", "data": item["content"]}
+            elif item["type"] == "usage":
+                # Repassa o consumo de tokens para o caller (chat) persistir.
+                yield {"kind": "usage", "data": item}
     except Exception as e:
         logger.error("Erro ao gerar resposta do LLM.", extra={"erro": str(e)})
-        yield "\n\nDesculpe, ocorreu um erro ao gerar a resposta. Tente novamente."
+        yield {"kind": "text", "data": "\n\nDesculpe, ocorreu um erro ao gerar a resposta. Tente novamente."}
 
 
 def _dividir_em_secoes(texto: str) -> List[Dict[str, str]]:

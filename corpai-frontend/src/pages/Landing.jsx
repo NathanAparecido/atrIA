@@ -1,6 +1,30 @@
 /**
  * Liminai — Página Inicial (Landing)
- * Scroll para revelar o CinematicFooter com sign in.
+ *
+ * Estrutura (inspirada em antigravity.google):
+ *  - Hero FIXO (CinematicFooter): typewriter "venha inovar conosco → liminai"
+ *    com cursor BRANCO (cursorColor passado no motion-footer), marquee e cta.
+ *  - Ao rolar, TUDO muda: um véu escuro cobre o hero gradualmente (scrub)
+ *    enquanto as seções de conteúdo (LandingSections) deslizam por cima com
+ *    fundo sólido e cantos arredondados — efeito de "cortina".
+ *  - A navbar morpha de barra larga transparente → pill fosca (no Navbar).
+ *
+ * NOTA TÉCNICA: o escurecimento é feito com um OVERLAY fixo, e não com
+ * transform/filter no wrapper do hero — transform em um ancestral viraria
+ * o containing block do footer position:fixed e quebraria o efeito cortina.
+ *
+ * FIX (jitter com página parada): a partir do lenis 1.2, `autoRaf` é TRUE
+ * por padrão. Como também adicionávamos `lenis.raf()` ao gsap.ticker, o
+ * Lenis era avançado DUAS vezes por frame com bases de tempo diferentes
+ * (performance.now interno vs. tempo do ticker do GSAP). O lerp oscilava
+ * e a página "respirava"/tremia sozinha mesmo sem scroll, com os scrubs
+ * do ScrollTrigger amplificando o efeito. Correções:
+ *  1. autoRaf: false — o gsap.ticker passa a ser o ÚNICO loop.
+ *  2. gsap.ticker.remove() no cleanup — antes o callback vazava (com o
+ *     StrictMode do React 18 o efeito monta 2x e acumulava tickers
+ *     apontando para instâncias destruídas do Lenis).
+ *  3. lagSmoothing restaurado no cleanup — lagSmoothing(0) é GLOBAL e
+ *     vazava para as outras páginas (Chat, Login etc).
  */
 
 import { useRef, useEffect } from 'react';
@@ -8,115 +32,89 @@ import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { CinematicFooter } from '@/components/ui/motion-footer';
-import { GooeyText } from '@/components/ui/gooey-text';
-import { Particles } from '../components/magicui/Particles';
+import LandingSections from '../components/landing/LandingSections';
 import ThemeToggle from '../components/ThemeToggle';
 import Navbar from '../components/Navbar';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Landing() {
-  const scrollRef = useRef(0);
-  const heroRef   = useRef(null);
+  const dimRef = useRef(null);
 
-  // ── Lenis smooth scroll + GSAP ticker ────────────────────────────────────
+  // ── Lenis smooth scroll + GSAP ticker (loop ÚNICO) ───────────────────────
   useEffect(() => {
-    const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
-
-    lenis.on('scroll', ({ progress }) => {
-      scrollRef.current = progress;
+    const lenis = new Lenis({
+      lerp: 0.08,
+      smoothWheel: true,
+      autoRaf: false, // CRÍTICO: desliga o rAF interno; o gsap.ticker assume
     });
 
-    gsap.ticker.add((time) => lenis.raf(time * 1000));
+    // Lenis + ScrollTrigger precisam se conhecer para os scrubs ficarem suaves
+    lenis.on('scroll', ScrollTrigger.update);
+
+    // Referência nomeada para conseguir remover no cleanup
+    const tickerCallback = (time) => {
+      lenis.raf(time * 1000); // gsap.ticker entrega segundos; lenis espera ms
+    };
+
+    gsap.ticker.add(tickerCallback);
     gsap.ticker.lagSmoothing(0);
 
     return () => {
+      gsap.ticker.remove(tickerCallback);   // sem isso o callback vaza entre mounts
+      gsap.ticker.lagSmoothing(500, 33);    // restaura o default global do GSAP
       lenis.destroy();
     };
   }, []);
 
-  // ── Hero entrance animation ───────────────────────────────────────────────
+  // ── Véu sobre o hero: escurece conforme o conteúdo cobre a tela ──────────
   useEffect(() => {
-    if (!heroRef.current) return;
+    if (!dimRef.current) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        heroRef.current,
-        { opacity: 0, scale: 0.96 },
+        dimRef.current,
+        { opacity: 0 },
         {
-          opacity: 1,
-          scale: 1,
-          ease: 'power2.out',
+          opacity: 0.6,
+          ease: 'none',
           scrollTrigger: {
-            trigger: heroRef.current,
-            start: 'top 85%',
-            end: 'top 30%',
-            scrub: 1.2,
+            start: 0,
+            end: () => window.innerHeight, // primeira viewport de scroll
+            scrub: 0.8,
           },
         }
       );
-    }, heroRef);
+    });
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <div className="relative w-full min-h-screen font-sans selection:bg-white/20 overflow-x-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
-
-      {/* Navbar fixa no topo */}
+    <div
+      className="relative w-full min-h-screen font-sans selection:bg-white/20 overflow-x-hidden"
+      style={{ backgroundColor: 'var(--color-bg)' }}
+    >
+      {/* Navbar fixa — morpha de barra larga → pill fosca no scroll */}
       <Navbar />
 
-      {/* ── Seção 1: CTA — visível ao abrir o site ── */}
+      {/* Theme Toggle (fixo, fora do hero) */}
+      <div className="fixed bottom-5 right-5 z-40">
+        <ThemeToggle />
+      </div>
+
+      {/* ── Seção 1: Hero pinado (typewriter liminai, cursor branco) ── */}
       <CinematicFooter />
 
-      {/* ── Seção 2: Hero — revelado no scroll ── */}
-      <main
-        ref={heroRef}
-        className="relative z-10 w-full min-h-[120vh] flex flex-col items-center justify-center border-b rounded-b-3xl shadow-md"
-        style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)', opacity: 0 }}
-      >
+      {/* Véu de escurecimento do hero — entre o hero (fixed) e as seções */}
+      <div
+        ref={dimRef}
+        className="fixed inset-0 z-[5] pointer-events-none"
+        style={{ background: '#000', opacity: 0 }}
+      />
 
-        <Particles
-          className="absolute inset-0 z-[1] pointer-events-none"
-          quantity={150}
-          ease={80}
-          colors={["#e040a8", "#7030c0", "#00c8b8", "#c040d0", "#3060d0", "#30c880"]}
-          refresh
-        />
-
-        {/* Theme Toggle */}
-        <div className="absolute top-4 right-4 z-20">
-          <ThemeToggle />
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center justify-center">
-          {/* Neon glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[200px] md:w-[700px] md:h-[280px] rounded-full blur-[100px] opacity-25 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse, #3a5878 0%, transparent 70%)' }}
-          />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[120px] md:w-[500px] md:h-[180px] rounded-full blur-[60px] opacity-15 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse, #4a4878 0%, transparent 70%)' }}
-          />
-
-          {/* GooeyText morphing: futuro → é → liminai */}
-          <GooeyText
-            texts={["futuro", "é", "limin|ai"]}
-            morphTime={2}
-            cooldownTime={0.8}
-            highlightColor="#3a5878"
-            className="h-32 md:h-48 w-[90vw] max-w-4xl flex items-center justify-center"
-            textClassName="font-['Orbitron'] font-black text-7xl md:text-9xl lg:text-[10rem]"
-          />
-
-          {/* Scroll indicator */}
-          <div className="mt-20 flex flex-col items-center">
-            <div className="w-[1px] h-32 bg-gradient-to-b from-[var(--color-text-muted)] to-transparent" />
-            <p className="text-[var(--color-text-muted)] text-xs tracking-widest uppercase mt-4 animate-pulse">
-              scroll
-            </p>
-          </div>
-        </div>
-      </main>
+      {/* ── Seções 2+: conteúdo desliza por cima do hero ── */}
+      <LandingSections />
     </div>
   );
 }

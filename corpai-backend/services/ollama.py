@@ -124,23 +124,24 @@ class OllamaService:
 
     async def generate_response(
         self, prompt: str, system_prompt: str = "", stream: bool = True
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[dict, None]:
         """
         Gera resposta do LLM via streaming.
 
-        Args:
-            prompt: Prompt do usuário com contexto RAG
-            system_prompt: Prompt de sistema
-            stream: Se True, retorna como generator (SSE)
+        Yields dicts tipados:
+          - {"type": "text", "content": str}            -> pedaço de texto
+          - {"type": "usage", "model": str,             -> emitido UMA vez, no fim
+             "prompt_tokens": int, "completion_tokens": int,
+             "total_duration_ns": int}
 
-        Yields:
-            Chunks de texto da resposta
+        Os contadores de token são os REAIS do Ollama (`prompt_eval_count` e
+        `eval_count`), presentes apenas no chunk com `done: true`.
         """
-        messages = []
+        import json
 
+        messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
-
         messages.append({"role": "user", "content": prompt})
 
         async with httpx.AsyncClient(timeout=300.0) as client:
@@ -155,25 +156,32 @@ class OllamaService:
                         "temperature": 0.7,
                         "top_p": 0.9,
                         "num_ctx": 8192,
+                        "num_predict": settings.LLM_MAX_OUTPUT_TOKENS,
                     },
                 },
             ) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
-                    if line:
-                        import json
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
 
-                        try:
-                            data = json.loads(line)
-                            content = data.get("message", {}).get("content", "")
-                            if content:
-                                yield content
+                    content = data.get("message", {}).get("content", "")
+                    if content:
+                        yield {"type": "text", "content": content}
 
-                            # Verificar se é a última mensagem
-                            if data.get("done", False):
-                                break
-                        except json.JSONDecodeError:
-                            continue
+                    if data.get("done", False):
+                        yield {
+                            "type": "usage",
+                            "model": data.get("model", self.model),
+                            "prompt_tokens": int(data.get("prompt_eval_count", 0) or 0),
+                            "completion_tokens": int(data.get("eval_count", 0) or 0),
+                            "total_duration_ns": int(data.get("total_duration", 0) or 0),
+                        }
+                        break
 
     async def generate_response_sync(
         self, prompt: str, system_prompt: str = ""
@@ -189,8 +197,9 @@ class OllamaService:
             Texto completo da resposta
         """
         full_response = ""
-        async for chunk in self.generate_response(prompt, system_prompt, stream=True):
-            full_response += chunk
+        async for item in self.generate_response(prompt, system_prompt, stream=True):
+            if item["type"] == "text":
+                full_response += item["content"]
         return full_response
 
     async def health_check(self) -> bool:

@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import Header from '../components/Header';
+import AppSidebar from '../components/AppSidebar';
 import FallbackAvatar from '../components/magicui/FallbackAvatar';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfilePic, setProfilePic, clearProfilePic } from '../lib/profilePic';
@@ -62,9 +62,9 @@ export default function Profile() {
   const displayName = user?.nome_completo || user?.username || 'usuário';
 
   return (
-    <div className="h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 overflow-y-auto p-6" style={{ background: 'var(--color-bg)' }}>
+    <div className="h-screen flex overflow-hidden">
+      <AppSidebar />
+      <main className="flex-1 overflow-y-auto min-w-0 p-6" style={{ background: 'var(--color-bg)' }}>
         <div className="max-w-2xl mx-auto space-y-6">
 
           <div>

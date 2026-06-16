@@ -5,6 +5,12 @@ import { useEffect, useState } from "react"
  * Com stopAtLast=true, congela na última palavra sem apagar.
  * highlightFrom define a partir de qual índice de char aplicar highlightColor
  * (só na última palavra, quando congelada).
+ *
+ * cursorColor: quando definido, o cursor deixa de herdar o gradiente do
+ * highlight (background-clip: text) e é pintado com cor sólida.
+ * -webkit-text-fill-color precisa ser sobrescrito porque o pai
+ * (.footer-text-glow / .footer-iris-text) seta transparent e a propriedade
+ * é herdada — sem isso a cor sólida nunca aparece.
  */
 export function Typewriter({
   words,
@@ -12,6 +18,7 @@ export function Typewriter({
   delayBetweenWords = 1800,
   cursor = true,
   cursorChar = "|",
+  cursorColor = null,   // ex.: "#ffffff" — null mantém o comportamento antigo (herda gradiente)
   stopAtLast = false,
   highlightFrom = -1,   // char index a partir do qual colorir (última palavra)
   highlightColor = "#0d00ff",
@@ -67,21 +74,28 @@ export function Typewriter({
     return () => clearInterval(id)
   }, [cursor])
 
-  // Cursor — pisca permanentemente (também depois do freeze, pra preservar o
-  // efeito de digitação). Renderizado dentro do span do highlight quando está
-  // na zona da "ai", herdando o gradiente iridescente.
+  // Cursor — pisca permanentemente (também depois do freeze).
+  // Com cursorColor: cor sólida, sobrescrevendo o text-fill transparente
+  // herdado dos wrappers com background-clip: text.
+  // Sem cursorColor: comportamento antigo (herda gradiente do span pai).
   const cursorEl = cursor && (
     <span
       className="ml-[0.05em] transition-opacity duration-75"
-      style={{ opacity: showCursor ? 1 : 0 }}
+      style={{
+        opacity: showCursor ? 1 : 0,
+        ...(cursorColor
+          ? { color: cursorColor, WebkitTextFillColor: cursorColor }
+          : {}),
+      }}
     >
       {cursorChar}
     </span>
   )
 
   // Renderiza com destaque na última palavra (durante digitação e quando congelado).
-  // Cursor entra DENTRO do span do highlight quando o texto já passou de highlightFrom,
-  // pra herdar a paleta iridescente em vez de aparecer como linha branca.
+  // O cursor continua DENTRO do span do highlight para manter o espaçamento
+  // colado ao último caractere — a cor sólida (quando cursorColor é passado)
+  // vence o gradiente via -webkit-text-fill-color no próprio cursor.
   const renderText = () => {
     const wrap = (children) =>
       isLastWord && lastWordClassName

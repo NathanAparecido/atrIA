@@ -103,7 +103,7 @@ Cada setor tem um namespace isolado no ChromaDB:
 | Role | Permissões |
 |------|-----------|
 | `colaborador` | Chat (base do setor + global) |
-| `lider_setor` | Chat + upload de documentos no próprio setor |
+| `gerente` | Chat + upload de documentos no próprio setor |
 | `admin` | Acesso total a todos os setores, usuários e configurações |
 
 ## Arquitetura

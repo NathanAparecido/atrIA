@@ -1,170 +1,97 @@
 /**
- * liminai — Navbar magnification (Antigravity dock, refinado)
+ * liminai — Navbar (fiel ao antigravity.google)
  *
- * Física da magnificação:
- *  - Decay GAUSSIANO (não-linear): scale(d) = 1 + MAX_BOOST · e^(-d²/2σ²)
- *      No centro:        ~1.80x
- *      A 1·σ do cursor:  ~1.49x  (vizinho imediato)
- *      A 2·σ do cursor:  ~1.11x  (vizinho distante)
- *      A 3·σ do cursor:  ~1.01x  (efetivamente neutro)
- *  - Spring de ESCALA com damping baixo → leve overshoot elástico.
- *  - Spring de TRANSLAÇÃO crítico → push lateral sem bambolear.
- *  - GAP DINÂMICO: cada item ganha translateX via tanh assinado, criando
- *    espaço para o vizinho magnificado sem reflow (puro GPU).
- *  - Dissipação na SAÍDA do cursor: tween levemente longo (~0.55s) com
- *    ease-out expo para sensação de inércia.
- *  - Frame loop: Framer Motion já encadeia tudo em requestAnimationFrame.
- *  - transform-origin: center bottom — crescimento "brota" da base da pill.
- *  - will-change: transform — força camada GPU dedicada por item.
+ * Comportamento:
+ *  - Barra COLADA no topo (top: 0), largura total, sem pill flutuante.
+ *  - HIDE ON SCROLL: rolar para baixo esconde a barra (translateY(-100%));
+ *    rolar para cima a traz de volta. Com o mega-menu aberto, não esconde.
+ *  - Fundo: transparente no topo absoluto da página; sólido (var(--color-bg))
+ *    com borda inferior assim que há scroll ou quando o menu está aberto.
+ *  - MEGA-MENU estilo Antigravity: painel de LARGURA TOTAL acoplado à barra
+ *    (mesmo fundo, sem gap), com coluna esquerda (título + botão) e lista de
+ *    itens à direita com cabeçalho de seção. O item ativo da barra ganha uma
+ *    pill de fundo com chevron rotacionado (como na screenshot).
+ *  - Véu escurecendo o conteúdo atrás quando o menu está aberto.
  */
 
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import Wordmark from './Wordmark';
 import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useTransform,
-  useSpring,
-  animate,
-} from 'framer-motion';
-import { Menu, X, ChevronDown, Sparkles, Layers, Compass, GraduationCap } from 'lucide-react';
+  Menu, X, ChevronDown, Sparkles, Layers, Compass,
+  GraduationCap, ShieldCheck, LogIn,
+} from 'lucide-react';
 
 const MENU = [
   { title: 'Produto', url: '/' },
   {
     title: 'Casos de uso',
+    heading: 'Veja o liminai aplicado à sua operação',
+    overviewLabel: 'Ver visão geral',
+    overviewUrl: '/',
+    sectionLabel: 'Casos de uso',
     items: [
-      {
-        title: 'Em breve',
-        description: 'Estamos preparando exemplos de aplicação por setor.',
-        icon: <Sparkles className="size-5 shrink-0" />,
-      },
-      {
-        title: 'NOC & operações',
-        description: 'Pesquise procedimentos e escalações em linguagem natural.',
-        icon: <Layers className="size-5 shrink-0" />,
-      },
+      { title: 'NOC & operações', icon: <Layers className="size-4 shrink-0" /> },
+      { title: 'Em breve — mais setores', icon: <Sparkles className="size-4 shrink-0" /> },
     ],
   },
   {
     title: 'Recursos',
+    heading: 'Tudo para indexar, perguntar e operar',
+    overviewLabel: 'Ver visão geral',
+    overviewUrl: '/',
+    sectionLabel: 'Recursos',
     items: [
-      {
-        title: 'Documentação',
-        description: 'Como indexar PDFs e tirar mais do RAG por setor.',
-        icon: <GraduationCap className="size-5 shrink-0" />,
-      },
-      {
-        title: 'Status',
-        description: 'Saúde dos serviços e janelas de manutenção.',
-        icon: <Compass className="size-5 shrink-0" />,
-      },
+      { title: 'Documentação', icon: <GraduationCap className="size-4 shrink-0" /> },
+      { title: 'Status dos serviços', icon: <Compass className="size-4 shrink-0" /> },
     ],
   },
+  { title: 'Segurança', anchor: '#seguranca', icon: <ShieldCheck className="size-3.5" /> },
 ];
 
-const SCROLL_THRESHOLD = 24;
 const HOVER_CLOSE_DELAY = 140;
-
-// === Magnification tuning — ajuste fino aqui =================================
-const MOUSE_OFF = -99999;                  // sentinel "cursor fora da nav"
-const MAX_BOOST = 0.8;                     // pico de escala = 1 + 0.8 = 1.80x
-const SIGMA = 90;                          // px: σ do decay gaussiano
-const MAX_PUSH = 36;                       // px: translação lateral máxima (gap dinâmico)
-const RETURN_DURATION = 0.55;              // s: dissipação na saída (inércia)
-const RETURN_EASE = [0.16, 1, 0.3, 1];     // expo-out (sem overshoot na volta)
-
-// Spring de ESCALA — damping baixo gera overshoot elástico (~10%).
-// Equivale à sensação de cubic-bezier(0.175, 0.885, 0.32, 1.275).
-const SCALE_SPRING = { stiffness: 380, damping: 18, mass: 0.7 };
-
-// Spring de TRANSLAÇÃO — crítico, sem oscilação lateral.
-const PUSH_SPRING = { stiffness: 380, damping: 24, mass: 0.6 };
-// ============================================================================
-
-function MagnifyItem({ mouseX, children }) {
-  const ref = useRef(null);
-  const center = useMotionValue(0);
-
-  // Cacheia o centro X "real" do item (antes de qualquer transform).
-  // ResizeObserver + listeners cobrem mudanças de layout/scroll.
-  useEffect(() => {
-    function update() {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      center.set(rect.left + rect.width / 2);
-    }
-    update();
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, { passive: true });
-    const obs = new ResizeObserver(update);
-    if (ref.current) obs.observe(ref.current);
-    return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update);
-      obs.disconnect();
-    };
-  }, [center]);
-
-  // Distância ASSINADA cursor→item (positiva = item está à direita do cursor).
-  const signed = useTransform([mouseX, center], ([mx, c]) => c - mx);
-
-  // Escala não-linear via gaussiana.
-  // d=0 → 1+MAX_BOOST; |d|=σ → 1+MAX_BOOST·0.607; |d|=2σ → 1+MAX_BOOST·0.135.
-  const scale = useTransform(signed, (d) => {
-    const g = Math.exp(-(d * d) / (2 * SIGMA * SIGMA));
-    return 1 + MAX_BOOST * g;
-  });
-
-  // Push lateral — S-curve saturando: zero no centro, máximo nas extremidades.
-  // tanh é simétrico, suave e GPU-cheap. Cria o "gap dinâmico".
-  const tx = useTransform(signed, (d) => {
-    return Math.sign(d) * MAX_PUSH * Math.tanh(Math.abs(d) / (SIGMA * 1.4));
-  });
-
-  const sScale = useSpring(scale, SCALE_SPRING);
-  const sTx = useSpring(tx, PUSH_SPRING);
-
-  return (
-    <motion.div
-      ref={ref}
-      style={{
-        scale: sScale,
-        x: sTx,
-        transformOrigin: '50% 100%',  // center bottom — cresce a partir da base
-        willChange: 'transform',
-      }}
-      className="inline-flex"
-    >
-      {children}
-    </motion.div>
-  );
-}
+const HIDE_AFTER = 80; // px de scroll antes de permitir esconder
 
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const navRef = useRef(null);
   const closeTimer = useRef(null);
+  const lastY = useRef(0);
+  const openMenuRef = useRef(null);
   const navigate = useNavigate();
-  const mouseX = useMotionValue(MOUSE_OFF);
 
+  openMenuRef.current = openMenu;
   const activeItem = openMenu ? MENU.find((m) => m.title === openMenu) : null;
   const hasPanel = Boolean(activeItem?.items);
 
-  // Glass on scroll
+  // ── Hide on scroll down / reveal on scroll up ─────────────────────────────
   useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > SCROLL_THRESHOLD);
+      const y = window.scrollY;
+      setScrolled(y > 8);
+
+      const goingDown = y > lastY.current;
+      if (openMenuRef.current) {
+        // com mega-menu aberto a barra não esconde; scroll fecha o menu
+        if (Math.abs(y - lastY.current) > 4) setOpenMenu(null);
+        setHidden(false);
+      } else if (goingDown && y > HIDE_AFTER) {
+        setHidden(true);
+      } else if (!goingDown) {
+        setHidden(false);
+      }
+      lastY.current = y;
     }
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Click-outside fecha o submenu
+  // Click-outside fecha o mega-menu
   useEffect(() => {
     function handle(e) {
       if (navRef.current && !navRef.current.contains(e.target)) {
@@ -193,67 +120,94 @@ export default function Navbar() {
   }
 
   function go(item) {
-    if (item.url) navigate(item.url);
+    if (item.anchor) {
+      document.querySelector(item.anchor)?.scrollIntoView({ behavior: 'smooth' });
+    } else if (item.url) {
+      navigate(item.url);
+    }
     setOpenMenu(null);
     setMobileOpen(false);
   }
 
+  const solidBg = scrolled || hasPanel || mobileOpen;
+
   return (
-    <div className="fixed top-3 left-0 right-0 z-50 px-4 pointer-events-none">
-      <div ref={navRef} className="max-w-xl mx-auto pointer-events-auto relative">
+    <>
+      {/* Véu sobre a página quando o mega-menu está aberto (como na referência) */}
+      <AnimatePresence>
+        {hasPanel && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40"
+            style={{ background: 'rgba(0,0,0,0.45)' }}
+            onMouseEnter={closeOnLeave}
+          />
+        )}
+      </AnimatePresence>
+
+      <header
+        ref={navRef}
+        className="fixed top-0 left-0 right-0 z-50"
+        style={{
+          textTransform: 'none',
+          transform: hidden ? 'translateY(-100%)' : 'translateY(0)',
+          transition: 'transform 360ms cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+        onMouseLeave={closeOnLeave}
+        onMouseEnter={cancelClose}
+      >
+        {/* ── Barra ── */}
         <nav
-          onMouseMove={(e) => {
-            mouseX.stop();
-            mouseX.set(e.clientX);
-          }}
-          onMouseLeave={() => {
-            // Dissipação com inércia: tween levemente longo, ease-out expo.
-            // Os springs por item amaciam a chegada em scale=1 naturalmente.
-            animate(mouseX, MOUSE_OFF, {
-              duration: RETURN_DURATION,
-              ease: RETURN_EASE,
-            });
-            closeOnLeave();
-          }}
-          onMouseEnter={cancelClose}
-          className="rounded-full"
           style={{
-            background: scrolled
-              ? 'color-mix(in srgb, var(--color-surface) 90%, transparent)'
-              : 'color-mix(in srgb, var(--color-bg) 55%, transparent)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            border:
-              '1px solid color-mix(in srgb, var(--color-border) 70%, transparent)',
-            boxShadow: scrolled
-              ? '0 10px 28px rgba(0,0,0,0.28)'
-              : '0 4px 16px rgba(0,0,0,0.12)',
-            transition: 'background 220ms ease, box-shadow 220ms ease',
+            background: solidBg ? 'var(--color-bg)' : 'transparent',
+            borderBottom: solidBg && !hasPanel
+              ? '1px solid var(--color-border)'
+              : '1px solid transparent',
+            transition: 'background 240ms ease, border-color 240ms ease',
           }}
         >
-          <div className="px-4 h-14 flex items-center justify-between gap-3">
-            <ul className="hidden lg:flex items-center gap-5">
-              {MENU.map((item) => (
-                <li
-                  key={item.title}
-                  className="relative"
-                  onMouseEnter={() => openOnHover(item.items ? item.title : null)}
-                >
-                  <MagnifyItem mouseX={mouseX}>
+          <div className="max-w-7xl mx-auto px-5 h-16 flex items-center gap-8">
+            {/* Wordmark (esquerda) */}
+            <button
+              type="button"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                navigate('/');
+              }}
+              className="flex items-center gap-2 select-none shrink-0"
+              aria-label="liminai — início"
+            >
+              <Wordmark className="text-xl tracking-tighter leading-none text-[var(--color-text)]" />
+            </button>
+
+            {/* Links (logo após o wordmark, como na referência) */}
+            <ul className="hidden lg:flex items-center gap-1">
+              {MENU.map((item) => {
+                const isOpen = openMenu === item.title;
+                return (
+                  <li
+                    key={item.title}
+                    onMouseEnter={() => openOnHover(item.items ? item.title : null)}
+                  >
                     {item.items ? (
                       <button
                         type="button"
-                        onClick={() =>
-                          setOpenMenu(openMenu === item.title ? null : item.title)
-                        }
-                        className="px-3 py-2 text-sm rounded-full flex items-center gap-1.5 transition-colors"
-                        style={{ color: 'var(--color-text)' }}
-                        aria-expanded={openMenu === item.title}
+                        onClick={() => setOpenMenu(isOpen ? null : item.title)}
+                        className="px-4 py-2 text-sm rounded-full flex items-center gap-1.5 transition-colors"
+                        style={{
+                          color: 'var(--color-text)',
+                          // pill de fundo no item ATIVO — como "Products" na screenshot
+                          background: isOpen ? 'var(--color-surface-hover)' : 'transparent',
+                        }}
+                        aria-expanded={isOpen}
                       >
                         <span>{item.title}</span>
                         <ChevronDown
                           className={`size-3.5 transition-transform duration-300 ease-out ${
-                            openMenu === item.title ? 'rotate-180' : ''
+                            isOpen ? 'rotate-180' : ''
                           }`}
                         />
                       </button>
@@ -261,16 +215,30 @@ export default function Navbar() {
                       <button
                         type="button"
                         onClick={() => go(item)}
-                        className="px-3 py-2 text-sm rounded-full transition-colors"
+                        className="px-4 py-2 text-sm rounded-full flex items-center gap-1.5 transition-colors hover:bg-white/5"
                         style={{ color: 'var(--color-text)' }}
                       >
+                        {item.icon}
                         {item.title}
                       </button>
                     )}
-                  </MagnifyItem>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
+
+            {/* CTA (direita) — equivalente ao "Download" */}
+            <div className="hidden lg:flex items-center ml-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="flex items-center gap-2 rounded-full font-semibold text-sm px-5 py-2.5 transition-transform duration-200 hover:scale-[1.04] active:scale-[0.98]"
+                style={{ background: 'var(--color-text)', color: 'var(--color-bg)' }}
+              >
+                <LogIn className="size-4" />
+                Entrar
+              </button>
+            </div>
 
             {/* Mobile toggle */}
             <button
@@ -285,66 +253,82 @@ export default function Navbar() {
           </div>
         </nav>
 
-        {/* Submenu flutuante DESTACADO da pill (não morpha a barra) */}
+        {/* ── Mega-menu de largura total, acoplado à barra ── */}
         <AnimatePresence>
           {hasPanel && (
             <motion.div
               key={`panel-${activeItem.title}`}
-              initial={{ opacity: 0, y: -6, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.98 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              onMouseEnter={cancelClose}
-              onMouseLeave={closeOnLeave}
-              className="hidden lg:block absolute top-full left-1/2 -translate-x-1/2 mt-3 w-[520px] rounded-2xl overflow-hidden"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="hidden lg:block overflow-hidden"
               style={{
-                background:
-                  'color-mix(in srgb, var(--color-surface) 95%, transparent)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border:
-                  '1px solid color-mix(in srgb, var(--color-border) 70%, transparent)',
-                boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+                background: 'var(--color-bg)',
+                borderBottom: '1px solid var(--color-border)',
+                boxShadow: '0 32px 80px rgba(0,0,0,0.45)',
               }}
             >
-              <div className="p-3 grid grid-cols-2 gap-2">
-                {activeItem.items.map((sub) => (
-                  <button
-                    key={sub.title}
-                    type="button"
-                    onClick={() => go(sub)}
-                    className="group flex gap-3 items-start text-left rounded-lg p-3 transition-colors hover:bg-white/5"
-                    style={{ color: 'var(--color-text)' }}
+              <div className="max-w-7xl mx-auto px-5 py-12 grid grid-cols-[1fr_1px_1.2fr] gap-12 items-start">
+                {/* Coluna esquerda: título grande + botão pill */}
+                <div>
+                  <h3
+                    className="text-2xl md:text-3xl tracking-tight max-w-sm leading-snug"
+                    style={{
+                      color: 'var(--color-text)',
+                      fontFamily: "'Source Serif 4', Georgia, serif",
+                      fontWeight: 400,
+                      textTransform: 'none',
+                    }}
                   >
-                    <div
-                      className="mt-0.5 shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-105"
-                      style={{
-                        background: 'rgba(0,184,168,0.10)',
-                        color: 'rgba(0,184,168,0.85)',
-                        border: '1px solid rgba(0,184,168,0.20)',
-                      }}
-                    >
-                      {sub.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold">{sub.title}</div>
-                      {sub.description && (
-                        <p
-                          className="text-xs mt-0.5"
-                          style={{ color: 'var(--color-text-muted)' }}
-                        >
-                          {sub.description}
-                        </p>
-                      )}
-                    </div>
+                    {activeItem.heading}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => go({ url: activeItem.overviewUrl })}
+                    className="mt-7 inline-flex items-center rounded-full text-sm font-semibold px-5 py-2.5 transition-colors"
+                    style={{
+                      background: 'var(--color-surface-hover)',
+                      color: 'var(--color-text)',
+                    }}
+                  >
+                    {activeItem.overviewLabel}
                   </button>
-                ))}
+                </div>
+
+                {/* Divisor vertical (como na referência) */}
+                <div className="h-full w-px" style={{ background: 'var(--color-border)' }} />
+
+                {/* Coluna direita: cabeçalho de seção + lista simples icon+label */}
+                <div>
+                  <p
+                    className="text-sm mb-4"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    {activeItem.sectionLabel}
+                  </p>
+                  <ul className="space-y-1">
+                    {activeItem.items.map((sub) => (
+                      <li key={sub.title}>
+                        <button
+                          type="button"
+                          onClick={() => go(sub)}
+                          className="w-full flex items-center gap-3 text-left rounded-lg px-3 py-2.5 text-base font-medium transition-colors hover:bg-white/5"
+                          style={{ color: 'var(--color-text)' }}
+                        >
+                          <span style={{ color: 'var(--color-text-muted)' }}>{sub.icon}</span>
+                          {sub.title}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Mobile drawer */}
+        {/* ── Mobile drawer ── */}
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
@@ -352,17 +336,13 @@ export default function Navbar() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:hidden mt-2 overflow-hidden rounded-2xl"
+              className="lg:hidden overflow-hidden"
               style={{
-                background:
-                  'color-mix(in srgb, var(--color-surface) 96%, transparent)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border:
-                  '1px solid color-mix(in srgb, var(--color-border) 80%, transparent)',
+                background: 'var(--color-bg)',
+                borderBottom: '1px solid var(--color-border)',
               }}
             >
-              <ul className="py-3 px-4 space-y-1">
+              <ul className="py-3 px-5 space-y-1">
                 {MENU.map((item) => (
                   <li key={item.title}>
                     {item.items ? (
@@ -377,23 +357,11 @@ export default function Navbar() {
                               key={sub.title}
                               type="button"
                               onClick={() => go(sub)}
-                              className="w-full flex gap-3 items-start text-left rounded-md p-2 hover:bg-white/5 transition-colors"
+                              className="w-full flex items-center gap-3 text-left rounded-md p-2 text-sm font-medium hover:bg-white/5 transition-colors"
                               style={{ color: 'var(--color-text)' }}
                             >
-                              <div className="shrink-0" style={{ color: 'rgba(0,184,168,0.85)' }}>
-                                {sub.icon}
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium">{sub.title}</div>
-                                {sub.description && (
-                                  <p
-                                    className="text-xs mt-0.5"
-                                    style={{ color: 'var(--color-text-muted)' }}
-                                  >
-                                    {sub.description}
-                                  </p>
-                                )}
-                              </div>
+                              <span style={{ color: 'var(--color-text-muted)' }}>{sub.icon}</span>
+                              {sub.title}
                             </button>
                           ))}
                         </div>
@@ -410,11 +378,22 @@ export default function Navbar() {
                     )}
                   </li>
                 ))}
+                <li className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setMobileOpen(false); navigate('/login'); }}
+                    className="w-full flex items-center justify-center gap-2 rounded-full font-semibold text-sm py-2.5"
+                    style={{ background: 'var(--color-text)', color: 'var(--color-bg)' }}
+                  >
+                    <LogIn className="size-4" />
+                    Entrar
+                  </button>
+                </li>
               </ul>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
+      </header>
+    </>
   );
 }

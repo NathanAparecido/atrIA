@@ -17,6 +17,10 @@ services:
       - "127.0.0.1:11434:11434"   # bind SOMENTE em localhost
     volumes:
       - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_NUM_PARALLEL: 1      # CPU-only / 72B: 1. Com GPU boa, 2–4.
+      OLLAMA_MAX_QUEUE: 16        # fila máx; acima disso a Ollama recusa
+      OLLAMA_KEEP_ALIVE: 30m      # mantém o modelo na memória (evita recarga)
 #    deploy:
 #      resources:
 #        reservations:

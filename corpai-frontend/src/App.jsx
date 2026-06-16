@@ -50,7 +50,7 @@ function AppRoutes() {
       <Route
         path="/documentos"
         element={
-          <ProtectedRoute requiredRoles={['lider_setor', 'admin']}>
+          <ProtectedRoute requiredRoles={['gerente', 'admin']}>
             <Documents />
           </ProtectedRoute>
         }
@@ -58,7 +58,7 @@ function AppRoutes() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute requiredRoles={['admin', 'lider_setor']}>
+          <ProtectedRoute requiredRoles={['admin', 'gerente']}>
             <Admin />
           </ProtectedRoute>
         }

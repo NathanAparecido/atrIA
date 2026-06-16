@@ -107,7 +107,7 @@ export async function getMe() {
 }
 
 // ─── Chat ─────────────────────────────────────────────────
-export async function enviarMensagem(mensagem, conversationId, onChunk, onDone) {
+export async function enviarMensagem(mensagem, conversationId, onChunk, onDone, onImages) {
   const token = getToken();
   const body = { mensagem };
   if (conversationId) body.conversation_id = conversationId;
@@ -145,6 +145,8 @@ export async function enviarMensagem(mensagem, conversationId, onChunk, onDone) 
           
           if (data.type === 'info') {
             convId = data.conversation_id;
+          } else if (data.type === 'images') {
+            onImages?.(data.images);
           } else if (data.type === 'chunk') {
             onChunk(data.content);
           } else if (data.type === 'done') {
@@ -236,6 +238,90 @@ export async function deletarDocumento(documentId) {
   return resp.json();
 }
 
+// Redige um .md a partir de texto livre — o LLM responde via SSE streaming.
+// onChunk(texto) é chamado a cada pedaço; onDone() ao final.
+export async function redigirDocumento(texto, tipo, onChunk, onDone) {
+  const token = getToken();
+  const response = await fetch(`${API_BASE}/documents/redigir`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ texto, tipo: tipo || null }),
+  });
+
+  if (!response.ok) {
+    let detail = 'Erro ao gerar o documento';
+    try { const err = await response.json(); detail = err.detail || detail; } catch { /* sem corpo */ }
+    throw new Error(detail);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? ''; // mantém a última linha (possivelmente incompleta)
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        if (data.type === 'chunk' || data.type === 'error') onChunk(data.content);
+        else if (data.type === 'done') onDone?.();
+      } catch { /* ignora linhas inválidas */ }
+    }
+  }
+}
+
+// ─── Imagens da base ──────────────────────────────────────
+export async function uploadImage(file, descricao, documentId) {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('descricao', descricao);
+  if (documentId) formData.append('document_id', documentId);
+
+  const resp = await fetch(`${API_BASE}/images/upload`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData,
+  });
+  if (!resp.ok) {
+    let detail = 'Erro ao subir a imagem';
+    try { const err = await resp.json(); detail = err.detail || detail; } catch { /* sem corpo */ }
+    throw new Error(detail);
+  }
+  return resp.json();
+}
+
+export async function listImages() {
+  const resp = await request('/images');
+  if (!resp.ok) throw new Error('Erro ao listar imagens');
+  return resp.json();
+}
+
+export async function deleteImage(imageId) {
+  const resp = await request(`/images/${imageId}`, { method: 'DELETE' });
+  if (!resp.ok) throw new Error('Erro ao deletar imagem');
+  return resp.json();
+}
+
+// As imagens não são públicas — `<img src>` direto não manda o Bearer. Busca o
+// blob autenticado e devolve um objectURL (quem chama deve revogar no unmount).
+export async function fetchImageBlob(imageId) {
+  const resp = await request(`/images/${imageId}`);
+  if (!resp.ok) throw new Error('Erro ao carregar imagem');
+  const blob = await resp.blob();
+  return URL.createObjectURL(blob);
+}
+
 // ─── Usuários (Admin) ─────────────────────────────────────
 export async function listarUsuarios() {
   const resp = await request('/users/');
@@ -281,6 +367,53 @@ export async function deletarUsuario(userId) {
 export async function listarSetores() {
   const resp = await request('/users/setores');
   if (!resp.ok) throw new Error('Erro ao listar setores');
+  return resp.json();
+}
+
+// ─── Prompts (Admin) ──────────────────────────────────────
+export async function obterPrompts() {
+  const resp = await request('/prompts/');
+  if (!resp.ok) throw new Error('Erro ao carregar prompts');
+  return resp.json();
+}
+
+// setor = '__default__' para o padrão global, ou o nome do setor.
+// conteudo vazio limpa (reverte ao padrão/built-in).
+export async function salvarPrompt(setor, conteudo) {
+  const resp = await request('/prompts/', {
+    method: 'PUT',
+    body: JSON.stringify({ setor, conteudo }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json();
+    throw new Error(err.detail || 'Erro ao salvar prompt');
+  }
+  return resp.json();
+}
+
+// ─── Uso / Consumo de tokens (admin) ──────────────────────
+function _qsUso(params) {
+  const p = Object.entries(params)
+    .filter(([, v]) => v)
+    .map(([k, v]) => `${k}=${encodeURIComponent(v)}`);
+  return p.length ? `?${p.join('&')}` : '';
+}
+
+export async function usoResumo(desde, ate) {
+  const resp = await request(`/usage/summary${_qsUso({ desde, ate })}`);
+  if (!resp.ok) throw new Error('Erro ao obter resumo de uso');
+  return resp.json();
+}
+
+export async function usoPorSetor(desde, ate) {
+  const resp = await request(`/usage/by-setor${_qsUso({ desde, ate })}`);
+  if (!resp.ok) throw new Error('Erro ao obter uso por setor');
+  return resp.json();
+}
+
+export async function usoPorUsuario(desde, ate) {
+  const resp = await request(`/usage/by-user${_qsUso({ desde, ate })}`);
+  if (!resp.ok) throw new Error('Erro ao obter uso por usuário');
   return resp.json();
 }
 

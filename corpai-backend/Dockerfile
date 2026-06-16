@@ -28,6 +28,10 @@ COPY . .
 # Alterar proprietário para usuário não-root
 RUN chown -R corpai:corpai /app
 
+# Diretório das imagens da base (volume montado aqui). Criado e com dono `corpai`
+# ANTES do volume — um volume nomeado novo herda a permissão do mountpoint.
+RUN mkdir -p /data/images && chown -R corpai:corpai /data
+
 # Executar como usuário não-root
 USER corpai
 

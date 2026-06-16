@@ -20,6 +20,7 @@ openpyxl==3.1.5
 sse-starlette==2.2.1
 alembic==1.14.1
 PyYAML==6.0.2          # parse de front-matter YAML no upload de .md
+Pillow==11.1.0         # validação (magic bytes) e re-encode de imagens (remove EXIF/GPS)
 
 # Testes (somente dev) — não embarcado em produção
 pytest==8.3.4

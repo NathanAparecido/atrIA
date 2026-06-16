@@ -20,7 +20,7 @@ if (typeof window !== "undefined") {
 // -------------------------------------------------------------------------
 const STYLES = `
 .cinematic-footer-wrapper {
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-body, 'Atkinson Hyperlegible Next', system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
 
   /* Dynamic Variables using standard shadcn/tailwind v4 tokens */
@@ -372,13 +372,14 @@ export function CinematicFooter() {
               className="text-4xl md:text-7xl lg:text-8xl font-sans font-extrabold footer-text-glow tracking-tighter mb-12 text-center leading-tight px-4"
             >
               <Typewriter
-                words={["venha inovar conosco", "liminai"]}
+                words={["Venha inovar conosco", "liminai"]}
                 speed={85}
                 delayBetweenWords={2000}
                 stopAtLast={true}
                 highlightFrom={5}
                 highlightColor="#3a5878"
                 cursorChar="|"
+                cursorColor="#ffffff"
                 lastWordClassName="font-['Orbitron'] font-black tracking-tighter"
                 highlightClassName="footer-iris-text font-['Orbitron'] font-black"
               />

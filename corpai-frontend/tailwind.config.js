@@ -36,11 +36,18 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
+        // corpo/UI — Atkinson Hyperlegible Next (Manrope vira fallback de transição)
+        sans: ['Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', 'Manrope', 'system-ui', 'sans-serif'],
+        // títulos de componentes/cards
+        title: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        // display editorial grande
+        serif: ['Source Serif 4', 'Georgia', 'serif'],
+        // labels técnicos / eyebrows / numeração
+        monoui: ['Martian Mono', 'JetBrains Mono', 'monospace'],
+        // código de verdade (chat, markdown)
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        // marca — uso exclusivo do wordmark
         display: ['Orbitron', 'sans-serif'],
-        plex: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
-        satoshi: ['Satoshi', 'Manrope', 'system-ui', 'sans-serif'],
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

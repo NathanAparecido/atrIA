@@ -47,8 +47,8 @@ export function AuthProvider({ children }) {
   }
 
   const isAdmin = user?.role === 'admin';
-  const isLiderSetor = user?.role === 'lider_setor';
-  const canUpload = isAdmin || isLiderSetor;
+  const isGerente = user?.role === 'gerente';
+  const canUpload = isAdmin || isGerente;
 
   return (
     <AuthContext.Provider value={{
@@ -57,7 +57,7 @@ export function AuthProvider({ children }) {
       login,
       logout,
       isAdmin,
-      isLiderSetor,
+      isGerente,
       canUpload,
       isAuthenticated: !!user,
     }}>

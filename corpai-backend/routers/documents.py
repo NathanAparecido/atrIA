@@ -4,7 +4,9 @@ Upload, listagem e deleção de documentos por namespace.
 Formatos aceitos: PDF, DOCX, XLSX, TXT, MD
 """
 
+import json
 import logging
+import os
 import re
 import uuid
 from datetime import date, datetime
@@ -12,13 +14,38 @@ from typing import List, Dict, Any, Optional, Tuple
 
 import yaml
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
 from middleware.auth import get_current_user, require_role, TokenData
+from models.image import Image
 from services.chroma import chroma_service
 from services.ollama import ollama_service
+from services.prompts import construir_prompt_redacao
 from services.rag import chunkear_texto, data_para_ordinal
+
+# Referência de imagem Markdown: ![alt](caminho/arquivo.png). Captura o caminho;
+# o match com a base de imagens é por nome de arquivo (basename).
+_MD_IMG_RE = re.compile(r"!\[[^\]]*\]\(\s*([^)\s]+)")
+
+
+def _refs_imagem(texto: str) -> List[str]:
+    """Nomes de arquivo (basename) das imagens referenciadas em um trecho .md."""
+    return [os.path.basename(m) for m in _MD_IMG_RE.findall(texto)]
+
+
+# ─── Dependência do banco (mesmo padrão de chat.py) ──────────
+async def get_db():
+    from main import async_session
+
+    async with async_session() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -102,6 +129,14 @@ class UploadResponse(BaseModel):
     nome_arquivo: str
     titulo: Optional[str] = None
     total_chunks: int
+    # Imagens referenciadas no .md (![](x.png)) que ainda não existem na base do
+    # setor — avisa a líder do que falta subir para o vínculo fechar.
+    imagens_nao_encontradas: List[str] = []
+
+
+class RedigirRequest(BaseModel):
+    texto: str
+    tipo: Optional[str] = None  # procedimento | escalacao | faq | politica | referencia
 
 
 # ─── Funções de extração de texto ────────────────────────────
@@ -185,7 +220,8 @@ async def upload_documento(
     titulo: Optional[str] = Form(None),
     descricao: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
-    current_user: TokenData = Depends(require_role(["lider_setor", "admin"])),
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(require_role(["gerente", "admin"])),
 ):
     """
     Faz upload de um documento, extrai texto, chunkeia,
@@ -301,10 +337,30 @@ async def upload_documento(
         "usuario": current_user.username,
         "criado_em": datetime.utcnow().isoformat(),
     }
-    metadatas = [
-        {**metadata_base, "chunk_index": i}
-        for i in range(len(chunks))
-    ]
+    # Vínculo com imagens já subidas: para cada referência ![](arquivo.png) no
+    # corpo, casar por nome_arquivo no setor e gravar `image_ids` (CSV) no
+    # metadata dos chunks que contêm a referência — a IA passa a anexar a imagem
+    # quando AQUELE trecho é recuperado (vínculo por chunk, não por documento).
+    refs_corpo = set(_refs_imagem(corpo))
+    mapa_imagens: Dict[str, str] = {}
+    if refs_corpo:
+        result_img = await db.execute(
+            select(Image).where(
+                Image.setor == setor_efetivo,
+                Image.nome_arquivo.in_(refs_corpo),
+            )
+        )
+        mapa_imagens = {img.nome_arquivo: str(img.id) for img in result_img.scalars().all()}
+    imagens_nao_encontradas = sorted(refs_corpo - set(mapa_imagens.keys()))
+
+    metadatas = []
+    for i, chunk in enumerate(chunks):
+        meta = {**metadata_base, "chunk_index": i}
+        ids_chunk = [mapa_imagens[r] for r in _refs_imagem(chunk) if r in mapa_imagens]
+        if ids_chunk:
+            # Chroma só aceita primitivos em metadata → CSV de UUIDs.
+            meta["image_ids"] = ",".join(dict.fromkeys(ids_chunk))
+        metadatas.append(meta)
 
     try:
         chroma_service.add_documents(
@@ -340,6 +396,58 @@ async def upload_documento(
         nome_arquivo=nome,
         titulo=titulo_final,
         total_chunks=len(chunks),
+        imagens_nao_encontradas=imagens_nao_encontradas,
+    )
+
+
+@router.post(
+    "/redigir",
+    summary="Redigir documento .md a partir de texto livre (SSE)",
+)
+async def redigir_documento(
+    request: RedigirRequest,
+    current_user: TokenData = Depends(require_role(["gerente", "admin"])),
+):
+    """
+    Recebe texto livre do colaborador e usa o LLM para devolver, via SSE, um
+    documento Markdown no padrão da base (front-matter + seções + perguntas).
+    O setor é sempre o do JWT; nada é indexado aqui — é só a redação.
+    """
+    if not request.texto.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Envie o texto do documento.",
+        )
+
+    system_prompt = construir_prompt_redacao(setor=current_user.setor, tipo=request.tipo)
+    user_prompt = request.texto.strip()
+
+    async def gerar_sse():
+        """Streama o Markdown gerado em chunks SSE (type: chunk | error | done)."""
+        try:
+            async for chunk in ollama_service.generate_response(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                stream=True,
+            ):
+                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+        except Exception as e:
+            logger.error(
+                "Erro ao redigir documento.",
+                extra={"erro": str(e), "usuario": current_user.username},
+            )
+            yield f"data: {json.dumps({'type': 'error', 'content': 'Erro ao gerar o documento.'})}\n\n"
+
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+    return StreamingResponse(
+        gerar_sse(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 
@@ -349,7 +457,7 @@ async def upload_documento(
     summary="Listar documentos do setor",
 )
 async def listar_documentos(
-    current_user: TokenData = Depends(require_role(["lider_setor", "admin"])),
+    current_user: TokenData = Depends(require_role(["gerente", "admin"])),
 ):
     """Lista todos os documentos indexados no namespace do setor do usuário."""
     # Admin pode listar de qualquer setor, mas por padrão lista do seu
@@ -387,7 +495,7 @@ async def listar_documentos(
 )
 async def deletar_documento(
     document_id: str,
-    current_user: TokenData = Depends(require_role(["lider_setor", "admin"])),
+    current_user: TokenData = Depends(require_role(["gerente", "admin"])),
 ):
     """Remove um documento e todos os seus chunks do namespace do setor."""
     try:

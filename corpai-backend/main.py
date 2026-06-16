@@ -15,7 +15,10 @@ from config import settings
 from models import Base
 from models.user import User           # noqa: F401 — registra na metadata
 from models.conversation import Conversation, Message  # noqa: F401
-from routers import auth, users, documents, chat, health
+from models.prompt_config import PromptConfig  # noqa: F401 — registra na metadata
+from models.image import Image         # noqa: F401 — registra na metadata
+from models.usage import UsageEvent    # noqa: F401 — registra na metadata
+from routers import auth, users, documents, chat, health, prompts, images, usage
 
 # ─── Configuração de Logs em JSON ───────────────────────────
 logger = logging.getLogger()
@@ -96,6 +99,12 @@ async def lifespan(app: FastAPI):
     # Startup: criar tabelas e admin
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # create_all não ALTERA tabelas já existentes; a coluna nova de
+        # `messages` precisa deste ADD COLUMN idempotente (sem Alembic no projeto).
+        from sqlalchemy import text
+        await conn.execute(
+            text("ALTER TABLE messages ADD COLUMN IF NOT EXISTS images TEXT")
+        )
 
     await criar_admin_inicial()
     logging.info("CorpAI Backend iniciado com sucesso.")
@@ -131,6 +140,9 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Autenticação"])
 app.include_router(users.router, prefix="/api/users", tags=["Usuários"])
 app.include_router(documents.router, prefix="/api/documents", tags=["Documentos"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(images.router, prefix="/api/images", tags=["Imagens"])
+app.include_router(prompts.router, prefix="/api/prompts", tags=["Prompts"])
+app.include_router(usage.router, prefix="/api/usage", tags=["Uso"])
 app.include_router(health.router, prefix="/api", tags=["Saúde"])
 
 

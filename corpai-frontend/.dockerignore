@@ -1,0 +1,14 @@
+# Reduz o contexto de build enviado ao Docker (node_modules tinha ~200 MB).
+# As deps são reinstaladas dentro da imagem via `npm install`.
+node_modules
+dist
+.git
+.gitignore
+*.log
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+.vscode
+.idea
+# Artefatos do preview de fontes (não fazem parte do app)
+font-preview-data

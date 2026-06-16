@@ -85,7 +85,7 @@ class Settings(BaseSettings):
     # ─── Roles Válidos ───────────────────────────────────
     ROLES_VALIDOS: List[str] = [
         "colaborador",
-        "lider_setor",
+        "gerente",
         "admin",
     ]
 
@@ -99,6 +99,29 @@ class Settings(BaseSettings):
     # de propósito — não dispare dezenas de requisições simultâneas.
     EMBED_BATCH_SIZE: int = 16
     EMBED_CONCURRENCY: int = 4
+
+    # Máximo de imagens anexadas a uma resposta (coletadas do retrieval).
+    RAG_MAX_IMAGES: int = 3
+
+    # ─── Imagens da base de conhecimento ─────────────────────
+    # Armazenamento físico fora do StaticFiles (servido só via endpoint
+    # autenticado). Subpasta por setor: {IMAGES_DIR}/{setor}/{uuid}.{ext}.
+    IMAGES_DIR: str = "/data/images"
+    IMAGE_MAX_MB: int = 5
+    EXTENSOES_IMAGEM: List[str] = [".png", ".jpg", ".jpeg", ".webp", ".gif"]
+
+    # ─── Proteção / limites de uso ───────────────────────────
+    # Rate limit por janela de 60s.
+    RATE_LIMIT_USER_PER_MIN: int = 12       # por usuário
+    RATE_LIMIT_INSTANCE_PER_MIN: int = 30   # agregado do deploy inteiro
+
+    # Teto de tamanho da mensagem de entrada (caracteres). Bloqueia prompts
+    # gigantes que pinariam o modelo. ~8000 chars ≈ alguns milhares de tokens.
+    MAX_INPUT_CHARS: int = 8000
+
+    # Teto de tokens de saída por resposta (num_predict da Ollama). Impede o
+    # "me escreva 50 mil palavras" de segurar a GPU por minutos.
+    LLM_MAX_OUTPUT_TOKENS: int = 1024
 
     class Config:
         env_file = ".env"
